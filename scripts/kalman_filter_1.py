@@ -3,6 +3,7 @@
 import rospy
 import numpy as np
 from geometry_msgs.msg import Vector3, Twist
+from sensor_fusion.msg import target_position_fuse
 
 class KalmanFilter(object):
     def __init__(self, F = None, B = None, H = None, Q = None, R = None, P = None, x0 = None):

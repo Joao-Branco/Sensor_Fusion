@@ -1,12 +1,11 @@
 #! /usr/bin/env python
 
 import rospy
-from geometry_msgs.msg import Vector3 
+from sensor_fusion.msg import target_position_fuse
 
 def target(self, x, y, z):
     self.x = x
     self.y = y
-    self.z = z
 
 if __name__ == "__main__":
     rospy.init_node("target_py")
@@ -20,7 +19,7 @@ if __name__ == "__main__":
     v = 1
     dt = 0.4
 
-    pub = rospy.Publisher("/target_position", Vector3, queue_size=10)
+    pub = rospy.Publisher("/target_position", target_position_fuse, queue_size=10)
 
 
 
@@ -28,8 +27,8 @@ if __name__ == "__main__":
 
 
     while not rospy.is_shutdown():
-        rospy.loginfo("X: %f, Y: %f, Z: %f", target.x, target.y, target.z) 
+        rospy.loginfo("X: %f, Y: %f", target.x, target.y) 
         #target.x = target.x + v * dt
-        pub.publish(target.x, target.y, target.z)
+        pub.publish(target.x, target.y)
         rate.sleep()
     
