@@ -71,12 +71,12 @@ class Fusion:
 
         # P ----Covariance matrix
         
-        self.Q = np.array([     [0.05, 0, 0, 0, 0, 0],
-                                [0, 0.05, 0, 0, 0, 0],
-                                [0, 0, 0.05, 0, 0, 0],
-                                [0, 0, 0, 0.05, 0, 0],
-                                [0, 0, 0, 0, 0.05, 0],
-                                [0, 0, 0, 0, 0, 0.05]])
+        self.Q = np.array([     [0.005, 0, 0, 0, 0, 0],
+                                [0, 0.005, 0, 0, 0, 0],
+                                [0, 0, 0.005, 0, 0, 0],
+                                [0, 0, 0, 0.005, 0, 0],
+                                [0, 0, 0, 0, 0.005, 0],
+                                [0, 0, 0, 0, 0, 0.005]])
 
         # Q ----Process Noise
 
@@ -121,6 +121,7 @@ class Fusion:
 
         self.kf.update(measurment, self.R, self.H)
         rospy.loginfo("Kalman 1 ---------Update was made 1")
+        #self.predict()
 
     def target_callback_uav1_fuse(self, msg):
         measurment = np.array([   [msg.linear.x], [msg.linear.y], [msg.linear.z], [msg.angular.x], [msg.angular.y], [msg.angular.z] ])
@@ -129,6 +130,7 @@ class Fusion:
 
         self.kf.update(measurment, self.R_fuse, self.H_fuse)
         rospy.loginfo("Kalman 1 ---------Update fuse was made 1")
+        #self.predict()
 
     def target_callback_uav2_fuse(self, msg):
         measurment = np.array([   [msg.linear.x], [msg.linear.y], [msg.linear.z], [msg.angular.x], [msg.angular.y], [msg.angular.z] ])
@@ -137,6 +139,7 @@ class Fusion:
 
         self.kf.update(measurment, self.R_fuse, self.H_fuse)
         rospy.loginfo("Kalman 1 ---------Update fuse was made 2")
+        #self.predict()
 
     def target_callback_uav3(self, msg):
         measurment = np.array([[msg.x], [msg.y], [msg.z]])
@@ -144,12 +147,14 @@ class Fusion:
 
         self.kf.update(measurment, self.R, self.H)
         rospy.loginfo("Kalman 1 ---------Update was made 3")
+        #self.predict()
 
     def target_callback_uav4(self, msg):
         measurment = np.array([[msg.x], [msg.y], [msg.z]])
 
         self.kf.update(measurment, self.R, self.H)
         rospy.loginfo("Kalman 1 ---------Update was made 4")
+        #self.predict()
 
 
 if __name__ == "__main__":

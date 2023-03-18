@@ -11,22 +11,23 @@ class Noise:
     def __init__(self):
 
         self.i = 0
-        self.noise_uav1_x = np.random.normal(0,0.5,1000)
-        self.noise_uav1_y = np.random.normal(0,0.5,1000)
-        self.noise_uav1_z = np.random.normal(0,0.5,1000)
+        self.std = 1.3
+        self.noise_uav1_x = np.random.normal(0,self.std,1000)
+        self.noise_uav1_y = np.random.normal(0,self.std,1000)
+        self.noise_uav1_z = np.random.normal(0,self.std,1000)
         
 
-        self.noise_uav2_x = np.random.normal(0,0.5,1000)
-        self.noise_uav2_y = np.random.normal(0,0.5,1000)
-        self.noise_uav2_z = np.random.normal(0,0.5,1000)
+        self.noise_uav2_x = np.random.normal(0,self.std,1000)
+        self.noise_uav2_y = np.random.normal(0,self.std,1000)
+        self.noise_uav2_z = np.random.normal(0,self.std,1000)
 
-        self.noise_uav3_x = np.random.normal(0,0.5,1000)
-        self.noise_uav3_y = np.random.normal(0,0.5,1000)
-        self.noise_uav3_z = np.random.normal(0,0.5,1000)
+        self.noise_uav3_x = np.random.normal(0,self.std,1000)
+        self.noise_uav3_y = np.random.normal(0,self.std,1000)
+        self.noise_uav3_z = np.random.normal(0,self.std,1000)
 
-        self.noise_uav4_x = np.random.normal(0,0.5,1000)
-        self.noise_uav4_y = np.random.normal(0,0.5,1000)
-        self.noise_uav4_z = np.random.normal(0,0.5,1000)
+        self.noise_uav4_x = np.random.normal(0,self.std,1000)
+        self.noise_uav4_y = np.random.normal(0,self.std,1000)
+        self.noise_uav4_z = np.random.normal(0,self.std,1000)
 
         self.values = []
         self.mean = 0
@@ -56,21 +57,21 @@ class Noise:
         rospy.loginfo("Mean: %f--------Deviation: %f--------i: %f", self.mean, self.std, len(self.values))
 
         if self.i == 999:
-            self.noise_uav1_x = np.random.normal(0,0.5,1000)
-            self.noise_uav1_y = np.random.normal(0,0.5,1000)
-            self.noise_uav1_z = np.random.normal(0,0.5,1000)
+            self.noise_uav1_x = np.random.normal(0,self.std,1000)
+            self.noise_uav1_y = np.random.normal(0,self.std,1000)
+            self.noise_uav1_z = np.random.normal(0,self.std,1000)
 
-            self.noise_uav2_x = np.random.normal(0,0.5,1000)
-            self.noise_uav2_y = np.random.normal(0,0.5,1000)
-            self.noise_uav2_z = np.random.normal(0,0.5,1000)
+            self.noise_uav2_x = np.random.normal(0,self.std,1000)
+            self.noise_uav2_y = np.random.normal(0,self.std,1000)
+            self.noise_uav2_z = np.random.normal(0,self.std,1000)
 
-            self.noise_uav3_x = np.random.normal(0,0.5,1000)
-            self.noise_uav3_y = np.random.normal(0,0.5,1000)
-            self.noise_uav3_z = np.random.normal(0,0.5,1000)
+            self.noise_uav3_x = np.random.normal(0,self.std,1000)
+            self.noise_uav3_y = np.random.normal(0,self.std,1000)
+            self.noise_uav3_z = np.random.normal(0,self.std,1000)
 
-            self.noise_uav4_x = np.random.normal(0,0.5,1000)
-            self.noise_uav4_y = np.random.normal(0,0.5,1000)
-            self.noise_uav4_z = np.random.normal(0,0.5,1000)
+            self.noise_uav4_x = np.random.normal(0,self.std,1000)
+            self.noise_uav4_y = np.random.normal(0,self.std,1000)
+            self.noise_uav4_z = np.random.normal(0,self.std,1000)
             self.i = 0
             
 
