@@ -11,7 +11,7 @@ class Noise:
     def __init__(self):
 
         self.i = 0
-        self.std = 1.3
+        self.std = 0.4
         self.noise_uav1_x = np.random.normal(0,self.std,1000)
         self.noise_uav1_y = np.random.normal(0,self.std,1000)
         

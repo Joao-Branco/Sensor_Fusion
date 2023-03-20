@@ -36,9 +36,10 @@ class KalmanFilter(object):
         	(I - np.dot(K, H)).T) + np.dot(np.dot(K, R), K.T)
 
 class Fusion:
-    def __init__(self):
+    def __init__(self, f):
 
-        dt = 1/5
+        dt = 1 / f
+        
 
         #self.x = np.array([0, 0, 0, 0, 0, 0])
 
@@ -66,10 +67,10 @@ class Fusion:
 
         # P ----Covariance matrix
         
-        self.Q = np.array([     [0.005, 0, 0, 0],
-                                [0, 0.005, 0, 0],
-                                [0, 0, 0.005, 0],
-                                [0, 0, 0, 0.005]])
+        self.Q = np.array([     [0.0001, 0, 0, 0],
+                                [0, 0.0001, 0, 0],
+                                [0, 0, 0.0001, 0],
+                                [0, 0, 0, 0.0001]])
 
         # Q ----Process Noise
 
@@ -131,10 +132,14 @@ if __name__ == "__main__":
     rospy.loginfo("Fusion Kalman filter 1 start")
 
     pub_UAV1 = rospy.Publisher("/uav1/target_position_fuse", target_position_fuse, queue_size=10)
-    ss = Fusion()
     
+    
+    f = 20
+    
+    #frequency of the Kalman filter
+    ss = Fusion(f)
 
-    rate = rospy.Rate(5)
+    rate = rospy.Rate(f) 
 
     while not rospy.is_shutdown(): 
         ss.predict()
