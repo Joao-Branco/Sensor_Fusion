@@ -29,6 +29,6 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         rospy.loginfo("X: %f, Y: %f", target.x, target.y) 
         #target.x = target.x + v * dt
-        pub.publish(target.x, target.y)
+        pub.publish(target.x, target.y, 0 ,0)
         rate.sleep()
     

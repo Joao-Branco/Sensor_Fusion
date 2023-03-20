@@ -10,6 +10,7 @@ project(sensor_fusion)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   message_generation
+  std_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -103,7 +104,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES sensor_fusion
-#  CATKIN_DEPENDS rospy
+  CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib
 )
 
@@ -114,7 +115,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+include
   ${catkin_INCLUDE_DIRS}
 )
 
