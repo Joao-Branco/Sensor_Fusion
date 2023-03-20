@@ -134,7 +134,7 @@ if __name__ == "__main__":
     pub_UAV1 = rospy.Publisher("/uav1/target_position_fuse", target_position_fuse, queue_size=10)
     
     
-    f = 20
+    f = 40
     
     #frequency of the Kalman filter
     ss = Fusion(f)
