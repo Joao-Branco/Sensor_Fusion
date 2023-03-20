@@ -3,7 +3,7 @@
 import rospy
 from sensor_fusion.msg import target_position_fuse
 
-def target(self, x, y, z):
+def target(self, x, y):
     self.x = x
     self.y = y
 
@@ -14,7 +14,6 @@ if __name__ == "__main__":
 
     target.x = 0.0 
     target.y = 0.0
-    target.z = 0.0
 
     v = 1
     dt = 0.4
