@@ -56,7 +56,7 @@ class Fusion:
                                 [0, 1, 0, 0]])
         
 
-        self.H_fuse = np.array([     [1, 0, 0, 0],
+        self.H_fuse = np.array([    [1, 0, 0, 0],
                                     [0, 1, 0, 0],
                                     [0, 0, 1, 0],
                                     [0, 0, 0, 1]])
@@ -67,15 +67,15 @@ class Fusion:
 
         # P ----Covariance matrix
         
-        self.Q = np.array([     [0.0001, 0, 0, 0],
-                                [0, 0.0001, 0, 0],
-                                [0, 0, 0.0001, 0],
-                                [0, 0, 0, 0.0001]])
+        self.Q = np.array([     [0.1, 0, 0, 0],
+                                [0, 0.1, 0, 0],
+                                [0, 0, 0.1, 0],
+                                [0, 0, 0, 0.1]])
 
         # Q ----Process Noise
 
-        self.R = np.array([     [1, 0],
-                                [0, 1]])
+        self.R = np.array([     [0.001, 0],
+                                [0, 0.001]])
         
         self.R_fuse = np.array([    [0.5, 0, 0, 0],
                                     [0, 0.5, 0, 0],
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     pub_UAV1 = rospy.Publisher("/uav1/target_position_fuse", target_position_fuse, queue_size=10)
     
     
-    f = 40
+    f = 20
     
     #frequency of the Kalman filter
     ss = Fusion(f)

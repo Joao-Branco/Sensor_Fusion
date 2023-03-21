@@ -33,8 +33,9 @@ if __name__ == "__main__":
     target.v_y = 0.0
 
     v = 1
-    dt = 1/60
-    dtt = 0
+    f = 5
+    dt = 1/f
+    t = 0
     std = 0.5
     mean = 0
     i = 0
@@ -51,13 +52,13 @@ if __name__ == "__main__":
 
 
 
-    rate = rospy.Rate(60)
+    rate = rospy.Rate(f)
 
 
     while not rospy.is_shutdown():
         rospy.loginfo("X: %f, Y: %f", target.x, target.y) 
-        target.x = 4 * math.sin(2*dtt)
-        dtt = dtt + dt
+        target.x = 10 * math.sin(2*t)
+        t = t + dt
         pub.publish(target.x, target.y, 0 ,0)
         if (i == 999):
             i = 0
