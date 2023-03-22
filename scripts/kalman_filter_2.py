@@ -36,9 +36,10 @@ class KalmanFilter(object):
         	(I - np.dot(K, H)).T) + np.dot(np.dot(K, R), K.T)
 
 class Fusion:
-    def __init__(self):
+    def __init__(self, f):
 
-        dt = 1/5
+        dt = 1 / f
+        
 
         #self.x = np.array([0, 0, 0, 0, 0, 0])
 
@@ -55,7 +56,7 @@ class Fusion:
                                 [0, 1, 0, 0]])
         
 
-        self.H_fuse = np.array([     [1, 0, 0, 0],
+        self.H_fuse = np.array([    [1, 0, 0, 0],
                                     [0, 1, 0, 0],
                                     [0, 0, 1, 0],
                                     [0, 0, 0, 1]])
@@ -66,24 +67,24 @@ class Fusion:
 
         # P ----Covariance matrix
         
-        self.Q = np.array([     [0.005, 0, 0, 0],
-                                [0, 0.005, 0, 0],
-                                [0, 0, 0.005, 0],
-                                [0, 0, 0, 0.005]])
+        self.Q = np.array([     [0.1, 0, 0, 0],
+                                [0, 0.1, 0, 0],
+                                [0, 0, 0.1, 0],
+                                [0, 0, 0, 0.1]])
 
         # Q ----Process Noise
 
-        self.R = np.array([     [1, 0],
-                                [0, 1]])
+        self.R = np.array([     [0.001, 0],
+                                [0, 0.001]])
         
-        self.R_fuse = np.array([    [0.5, 0, 0, 0],
-                                    [0, 0.5, 0, 0],
-                                    [0, 0, 1, 0],
-                                    [0, 0, 0, 1]])
+        self.R_fuse = np.array([    [0.001, 0, 0, 0],
+                                    [0, 0.001, 0, 0],
+                                    [0, 0, 0.1, 0],
+                                    [0, 0, 0, 0.1]])
 
         # R ----Measurement Noise
 
-        sub_UAV2_fuse = rospy.Subscriber("/uav2/target_position", target_position_fuse, self.target_callback_uav2)
+        sub_UAV2 = rospy.Subscriber("/uav2/target_position", target_position_fuse, self.target_callback_uav2)
 
         sub_UAV1_fuse = rospy.Subscriber("/uav1/target_position_fuse", target_position_fuse, self.target_callback_uav1_fuse)
 
@@ -131,10 +132,14 @@ if __name__ == "__main__":
     rospy.loginfo("Fusion Kalman filter 2 start")
 
     pub_UAV2 = rospy.Publisher("/uav2/target_position_fuse", target_position_fuse, queue_size=10)
-    ss = Fusion()
     
+    
+    f = 20
+    
+    #frequency of the Kalman filter
+    ss = Fusion(f)
 
-    rate = rospy.Rate(5)
+    rate = rospy.Rate(f) 
 
     while not rospy.is_shutdown(): 
         ss.predict()
