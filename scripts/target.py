@@ -24,7 +24,8 @@ if __name__ == "__main__":
     pub_uav3 = rospy.Publisher("/uav3/target_position", target_position_fuse, queue_size=10)
     
     
-    
+    # definition of parameters of target
+    # x,y - starting position (m)   v_x,v_y - starting velocity (m/s)
 
     
     target.x = 0.0 
@@ -32,10 +33,10 @@ if __name__ == "__main__":
     target.v_x = 0.0
     target.v_y = 0.0
 
-    v = 1
-    f = 5
-    dt = 1/f
-    t = 0
+    
+    # definition of parameters of noise
+    # std - standard deviation     mean
+    
     std = 0.5
     mean = 0
     i = 0
@@ -50,14 +51,27 @@ if __name__ == "__main__":
     noise_uav3_y = np.random.normal(mean,std,1000)
     
 
-
+    
+    # definition of parameters of wave
+    # w - frequency of the wave (rad/s)     A - amplitude
+    
+    w = 2
+    A = 10
+    
+    # definition of parameters of position of target
+    # f - frequency (Hz)     dt - period     t - starting time
+    
+    f = 5
+    dt = 1/f
+    t = 0
 
     rate = rospy.Rate(f)
 
 
     while not rospy.is_shutdown():
         rospy.loginfo("X: %f, Y: %f", target.x, target.y) 
-        target.x = 10 * math.sin(2*t)
+        target.x = A * math.sin(w*t)
+        target.v_x = A * w *math.cos(w*t)
         t = t + dt
         pub.publish(target.x, target.y, 0 ,0)
         if (i == 999):
