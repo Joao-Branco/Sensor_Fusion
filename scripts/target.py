@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # definition of parameters of noise
     # std - standard deviation     mean
     
-    std = 0.5
+    std = 2
     mean = 0
     i = 0
     
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     # w - frequency of the wave (rad/s)     A - amplitude
     
     w = 2
-    A = 10
+    A = 100
     
     # definition of parameters of position of target
     # f - frequency (Hz)     dt - period     t - starting time

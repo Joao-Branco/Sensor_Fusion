@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+    <param name="total_uav" value="2"/>
+    <node pkg="sensor_fusion" type="target.py" name="targetwithNoise" required="True" output="screen">
+	</node>
+
+    <group kalman = "kalman1">
+        <param name="id" value="1"/>
+        <node pkg="sensor_fusion" type="kalman_filter_2.py" name="kalman_filter_1" required="True" args="id total_uav" output="screen">
+        </node>
+    </group>
+
+    <group kalman = "kalman2">
+        <param name="id" value="2"/>
+        <node pkg="sensor_fusion" type="kalman_filter_2.py" name="kalman_filter_2" required="True" args="id total_uav" output="screen">
+        </node>
+    </group>
+</launch>
+    
+   
