@@ -89,11 +89,11 @@ class Fusion:
 
 
 
-        sub_UAV = rospy.Subscriber('/uav' + str(uav_id) + '/target_position_fuse', target_position_fuse, self.target_callback)
+        sub_UAV = rospy.Subscriber('/uav' + str(uav_id) + '/target_position', target_position_fuse, self.target_callback)
             
         for i in range(uav_total - 1):
-            if i != uav_id:
-                rospy.Subscriber('/uav' + str(i) + '/target_position_fuse', target_position_fuse, self.target_callback_fuse)
+            if (i != uav_id and i != 0):
+                sub_UAV_fuse = rospy.Subscriber('/uav' + str(i) + '/target_position_fuse', target_position_fuse, self.target_callback_fuse)
 
 
         self.kf = KalmanFilter(F = self.F, H = self.H , Q = self.Q , R = self.R)
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
 
     rospy.init_node("kalman_filter")
-    uav_id = rospy.get_param("/id")
+    uav_id = rospy.get_param("~uav_id")
     uav_total = rospy.get_param("/total_uav")
     rospy.loginfo('Fusion Kalman filter %d start', uav_id)
         
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     f = 20
     
     #frequency of the Kalman filter
-    ss = Fusion(f, uav_id -1, uav_total -1)
+    ss = Fusion(f, uav_id, uav_total)
 
     rate = rospy.Rate(f) 
 
