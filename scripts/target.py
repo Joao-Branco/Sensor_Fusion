@@ -69,18 +69,17 @@ if __name__ == "__main__":
 
 
     while not rospy.is_shutdown():
-        rospy.loginfo("X: %f, Y: %f", target.x, target.y) 
+        time = rospy.Time.now()
+        rospy.loginfo("X: %f, Y: %f,   time: %f   secs ,   %f   nsecs", target.x, target.y, time.secs, time.nsecs) 
         target.x = A * math.sin(w*t)
         target.v_x = A * w *math.cos(w*t)
-        t = t + dt
-        pub.publish(target.x, target.y, 0 ,0)
+        t = t + dt  
+        pub.publish(target.x, target.y, target.v_x ,0, rospy.Time.now())
         if (i == 999):
-            i = 0
-            
-            
-        pub_uav1.publish(target.x + noise_uav1_x[i], target.y + noise_uav1_y[i], target.v_x, target.v_y)
-        pub_uav2.publish(target.x + noise_uav2_x[i], target.y + noise_uav2_y[i], target.v_x, target.v_y)
-        pub_uav3.publish(target.x + noise_uav3_x[i], target.y + noise_uav3_y[i], target.v_x, target.v_y)
+            i = 0  
+        pub_uav1.publish(target.x + noise_uav1_x[i], target.y + noise_uav1_y[i], target.v_x, target.v_y, rospy.Time.now())
+        pub_uav2.publish(target.x + noise_uav2_x[i], target.y + noise_uav2_y[i], target.v_x, target.v_y, rospy.Time.now())
+        pub_uav3.publish(target.x + noise_uav3_x[i], target.y + noise_uav3_y[i], target.v_x, target.v_y, rospy.Time.now())
         
         i = i + 1
         
