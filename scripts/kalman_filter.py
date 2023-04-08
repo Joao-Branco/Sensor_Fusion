@@ -3,6 +3,7 @@
 import rospy
 import numpy as np
 from sensor_fusion.msg import target_position_fuse
+from sensor_fusion.msg import target_position
 
 
 class KalmanFilter(object):
@@ -89,7 +90,7 @@ class Fusion:
 
 
 
-        sub_UAV = rospy.Subscriber('/uav' + str(uav_id) + '/target_position', target_position_fuse, self.target_callback)
+        sub_UAV = rospy.Subscriber('/uav' + str(uav_id) + '/target_position', target_position, self.target_callback)
             
         for i in range(uav_total - 1):
             if (i != uav_id and i != 0):
@@ -106,7 +107,7 @@ class Fusion:
         state.y = self.kf.x[1]
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
-        state.clock = rospy.Time.now()
+        #state.clock = rospy.Time.now()
         pub_UAV1.publish(state)
         rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
 
@@ -120,7 +121,7 @@ class Fusion:
         state.y = self.kf.x[1]
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
-        state.clock = rospy.Time.now()
+        #state.clock = rospy.Time.now()
         pub_UAV1.publish(state)
         rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Update was made')
 
@@ -145,7 +146,7 @@ if __name__ == "__main__":
     pub_UAV1 = rospy.Publisher('/uav' + str(uav_id) + '/target_position_fuse', target_position_fuse, queue_size=10)
     
     
-    f = 20
+    f = 80
     
     #frequency of the Kalman filter
     ss = Fusion(f, uav_id, uav_total)

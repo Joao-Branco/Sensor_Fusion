@@ -4,6 +4,7 @@ import rospy
 import math
 import numpy as np
 from sensor_fusion.msg import target_position_fuse
+from sensor_fusion.msg import target_position
 
 
 def target(self, x, y, v_x, v_y):
@@ -17,11 +18,11 @@ if __name__ == "__main__":
     rospy.loginfo("Node Target has started")
 
 
-    pub = rospy.Publisher("/target_position", target_position_fuse, queue_size=10)
+    pub = rospy.Publisher("/target_position", target_position, queue_size=10)
     
-    pub_uav1 = rospy.Publisher("/uav1/target_position", target_position_fuse, queue_size=10)
-    pub_uav2 = rospy.Publisher("/uav2/target_position", target_position_fuse, queue_size=10)
-    pub_uav3 = rospy.Publisher("/uav3/target_position", target_position_fuse, queue_size=10)
+    pub_uav1 = rospy.Publisher("/uav1/target_position", target_position, queue_size=10)
+    pub_uav2 = rospy.Publisher("/uav2/target_position", target_position, queue_size=10)
+    pub_uav3 = rospy.Publisher("/uav3/target_position", target_position, queue_size=10)
     
     
     # definition of parameters of target
@@ -37,7 +38,7 @@ if __name__ == "__main__":
     # definition of parameters of noise
     # std - standard deviation     mean
     
-    std = 2
+    std = 0.2
     mean = 0
     i = 0
     
@@ -50,20 +51,15 @@ if __name__ == "__main__":
     noise_uav3_x = np.random.normal(mean,std,1000)
     noise_uav3_y = np.random.normal(mean,std,1000)
     
-
-    
-    # definition of parameters of wave
-    # w - frequency of the wave (rad/s)     A - amplitude
-    
-    w = 2
-    A = 100
     
     # definition of parameters of position of target
     # f - frequency (Hz)     dt - period     t - starting time
     
-    f = 5
+    f = 20
     dt = 1/f
     t = 0
+    
+    w = 2.5
 
     rate = rospy.Rate(f)
 
@@ -71,15 +67,21 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         time = rospy.Time.now()
         rospy.loginfo("X: %f, Y: %f,   time: %f   secs ,   %f   nsecs", target.x, target.y, time.secs, time.nsecs) 
-        target.x = A * math.sin(w*t)
-        target.v_x = A * w *math.cos(w*t)
+        
+        r = 1.5 * w * t
+        
+        target.x = r  * math.cos(w*t)
+
+        target.y = r * math.sin(w*t)
+        
         t = t + dt  
-        pub.publish(target.x, target.y, target.v_x ,0, rospy.Time.now())
+        
+        pub.publish(target.x, target.y)  #, rospy.Time.now())
         if (i == 999):
             i = 0  
-        pub_uav1.publish(target.x + noise_uav1_x[i], target.y + noise_uav1_y[i], target.v_x, target.v_y, rospy.Time.now())
-        pub_uav2.publish(target.x + noise_uav2_x[i], target.y + noise_uav2_y[i], target.v_x, target.v_y, rospy.Time.now())
-        pub_uav3.publish(target.x + noise_uav3_x[i], target.y + noise_uav3_y[i], target.v_x, target.v_y, rospy.Time.now())
+        pub_uav1.publish(target.x + noise_uav1_x[i], target.y + noise_uav1_y[i])  #, rospy.Time.now())
+        pub_uav2.publish(target.x + noise_uav2_x[i], target.y + noise_uav2_y[i])  #, rospy.Time.now())
+        pub_uav3.publish(target.x + noise_uav3_x[i], target.y + noise_uav3_y[i])  #, rospy.Time.now())
         
         i = i + 1
         

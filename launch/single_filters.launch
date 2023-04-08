@@ -9,9 +9,6 @@
     <node pkg="sensor_fusion" type="kalman_filter.py" name="kalman_filter_1" required="True" args="total_uav" output="screen">
         <param name = "uav_id" value = "1"/>
     </node>
-    <node pkg="sensor_fusion" type="kalman_filter.py" name="kalman_filter_2" required="True" args="total_uav" output="screen">
-        <param name = "uav_id" value = "2"/>
-    </node>
 
 
 </launch>

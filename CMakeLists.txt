@@ -50,6 +50,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
    FILES
    target_position_fuse.msg
+   target_position.msg
  )
 
 ## Generate services in the 'srv' folder
