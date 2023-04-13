@@ -71,18 +71,18 @@ class Fusion:
 
         # P ----Covariance matrix
         
-        self.Q = np.array([     [0.1, 0, 0, 0],
-                                [0, 0.1, 0, 0],
-                                [0, 0, 0.1, 0],
-                                [0, 0, 0, 0.1]])
+        self.Q = np.array([     [0.001, 0, 0, 0],
+                                [0, 0.001, 0, 0],
+                                [0, 0, 0.001, 0],
+                                [0, 0, 0, 0.001]])
 
         # Q ----Process Noise
 
-        self.R = np.array([     [0.001, 0],
-                                [0, 0.001]])
+        self.R = np.array([     [2, 0],
+                                [0, 2]])
         
-        self.R_fuse = np.array([    [0.5, 0, 0, 0],
-                                    [0, 0.5, 0, 0],
+        self.R_fuse = np.array([    [1, 0, 0, 0],
+                                    [0, 1, 0, 0],
                                     [0, 0, 1, 0],
                                     [0, 0, 0, 1]])
 
@@ -90,11 +90,11 @@ class Fusion:
 
 
 
-        sub_UAV = rospy.Subscriber('/uav' + str(uav_id) + '/target_position', target_position, self.target_callback)
+        rospy.Subscriber('/uav' + str(uav_id) + '/target_position', target_position, self.target_callback)
             
-        for i in range(uav_total - 1):
+        for i in range(uav_total + 1):
             if (i != uav_id and i != 0):
-                sub_UAV_fuse = rospy.Subscriber('/uav' + str(i) + '/target_position_fuse', target_position_fuse, self.target_callback_fuse)
+                rospy.Subscriber('/uav' + str(i) + '/target_position_fuse', target_position_fuse, self.target_callback_fuse)
 
 
         self.kf = KalmanFilter(F = self.F, H = self.H , Q = self.Q , R = self.R)
@@ -108,7 +108,7 @@ class Fusion:
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
         #state.clock = rospy.Time.now()
-        pub_UAV1.publish(state)
+        pub_fuse.publish(state)
         rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
 
         
@@ -122,7 +122,7 @@ class Fusion:
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
         #state.clock = rospy.Time.now()
-        pub_UAV1.publish(state)
+        pub_fuse.publish(state)
         rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Update was made')
 
 
@@ -143,10 +143,10 @@ if __name__ == "__main__":
         
     
 
-    pub_UAV1 = rospy.Publisher('/uav' + str(uav_id) + '/target_position_fuse', target_position_fuse, queue_size=10)
+    pub_fuse = rospy.Publisher('/uav' + str(uav_id) + '/target_position_fuse', target_position_fuse, queue_size=10)
     
     
-    f = 80
+    f = 20
     
     #frequency of the Kalman filter
     ss = Fusion(f, uav_id, uav_total)

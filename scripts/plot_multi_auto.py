@@ -11,17 +11,14 @@ import sklearn.metrics
 
 #bag_fn = r'/home/branco/catkin_ws/src/sensor_fusion/bags/multi_2023-04-10-15-23-07.bag'
 
-def run_multi_plots(bag_fn, folder=None):
+def run_multi_plots(bag_fn, folder=None, uav_total):
 
-
-    topics = [
-    '/target_position',
-    '/uav1/target_position',
-    '/uav1/target_position_fuse',
-    '/uav2/target_position',
-    '/uav2/target_position_fuse'
-    ]
-
+    topics = ['/target_position']
+    
+    for i in range(uav_total + 1):
+        if (i != 0):
+            topics.append('/uav' + i + 'target_position')
+            topics.append('/uav' + i + 'target_position_fuse')
 
     # Give filename of rosbag
     b = bagreader(bag_fn)
@@ -35,41 +32,7 @@ def run_multi_plots(bag_fn, folder=None):
         print(type(data))
         df = pd.read_csv(data)
         dataframes[topic] = df
-
-    # Rename all position cols
-
-
-    dataframes['/target_position'].rename(columns={
-    'target_position.x': 'x',
-    'target_position.y': 'y',
-    'target_position.v_x': 'v_x',
-    'target_position.v_y': 'v_y'
-    }, inplace=True)
-
-    dataframes['/uav1/target_position'].rename(columns={
-    'target_position.x': 'x',
-    'target_position.y': 'y'
-    }, inplace=True)
-
-    dataframes['/uav1/target_position_fuse'].rename(columns={
-    'target_position.x': 'x',
-    'target_position.y': 'y',
-    'target_position.v_x': 'v_x',
-    'target_position.v_y': 'v_y'
-    }, inplace=True)
-
-    dataframes['/uav2/target_position'].rename(columns={
-    'target_position.x': 'x',
-    'target_position.y': 'y'
-    }, inplace=True)
-
-    dataframes['/uav2/target_position_fuse'].rename(columns={
-    'target_position.x': 'x',
-    'target_position.y': 'y',
-    'target_position.v_x': 'v_x',
-    'target_position.v_y': 'v_y'
-    }, inplace=True)
-
+    
     # Init fig
     plt.figure(figsize=(18, 8))
 
@@ -84,7 +47,7 @@ def run_multi_plots(bag_fn, folder=None):
     uav2_target_position = dataframes['/uav2/target_position'].to_numpy()
     uav2_target_position_fuse = dataframes['/uav2/target_position_fuse'].to_numpy()
 
-    minimo = target_position[0,0]
+    minimo = min(target_position[0,0], uav1_target_position[0,0], uav1_target_position_fuse[0,0], uav2_target_position[0,0], uav2_target_position_fuse[0,0])
     maximo_UAV1 = max(target_position[0:,0].size, uav1_target_position[0:,0].size, uav1_target_position_fuse[0:,0].size)
     maximo_UAV2 = max(target_position[0:,0].size, uav2_target_position[0:,0].size, uav2_target_position_fuse[0:,0].size)
     

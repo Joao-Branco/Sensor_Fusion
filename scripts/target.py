@@ -20,10 +20,6 @@ if __name__ == "__main__":
 
     pub = rospy.Publisher("/target_position", target_position, queue_size=10)
     
-    pub_uav1 = rospy.Publisher("/uav1/target_position", target_position, queue_size=10)
-    pub_uav2 = rospy.Publisher("/uav2/target_position", target_position, queue_size=10)
-    pub_uav3 = rospy.Publisher("/uav3/target_position", target_position, queue_size=10)
-    
     
     # definition of parameters of target
     # x,y - starting position (m)   v_x,v_y - starting velocity (m/s)
@@ -34,58 +30,38 @@ if __name__ == "__main__":
     target.v_x = 0.0
     target.v_y = 0.0
 
-    
-    # definition of parameters of noise
-    # std - standard deviation     mean
-    
-    std = 0.2
-    mean = 0
-    i = 0
-    
-    noise_uav1_x = np.random.normal(mean,std,1000)
-    noise_uav1_y = np.random.normal(mean,std,1000)        
-    
-    noise_uav2_x = np.random.normal(mean,std,1000)
-    noise_uav2_y = np.random.normal(mean,std,1000)
+    # frenquency of publication of position
+    f = 5
 
-    noise_uav3_x = np.random.normal(mean,std,1000)
-    noise_uav3_y = np.random.normal(mean,std,1000)
     
-    
-    # definition of parameters of position of target
-    # f - frequency (Hz)     dt - period     t - starting time
-    
-    f = 20
-    dt = 1/f
-    t = 0
-    
-    w = 2.5
 
     rate = rospy.Rate(f)
-
+    
+    t_0 = rospy.Time.now()
+    
 
     while not rospy.is_shutdown():
-        time = rospy.Time.now()
-        rospy.loginfo("X: %f, Y: %f,   time: %f   secs ,   %f   nsecs", target.x, target.y, time.secs, time.nsecs) 
         
-        r = 1.5 * w * t
+        # = 0
+        t = rospy.Time.now()
         
-        target.x = r  * math.cos(w*t)
-
-        target.y = r * math.sin(w*t)
+        t = (t-t_0).to_sec()
         
-        t = t + dt  
+        
+        rospy.loginfo("X: %f, Y: %f", target.x, target.y) 
+        
+        #Target not moving
+        #target.x = 0 * t
+        #target.y = 0 * t
+        
+        #Trget Moving with constant speed
+        target.x = 2 * t
+        target.y = 2 * t
         
         pub.publish(target.x, target.y)  #, rospy.Time.now())
-        if (i == 999):
-            i = 0  
-        pub_uav1.publish(target.x + noise_uav1_x[i], target.y + noise_uav1_y[i])  #, rospy.Time.now())
-        pub_uav2.publish(target.x + noise_uav2_x[i], target.y + noise_uav2_y[i])  #, rospy.Time.now())
-        pub_uav3.publish(target.x + noise_uav3_x[i], target.y + noise_uav3_y[i])  #, rospy.Time.now())
+
         
-        i = i + 1
-        
-        rospy.loginfo("Noise has been published")
+        rospy.loginfo("Target has been publish")
         
 
 
