@@ -31,7 +31,7 @@ if __name__ == "__main__":
     target.v_y = 0.0
 
     # frenquency of publication of position
-    f = 5
+    f = 100
 
     
 

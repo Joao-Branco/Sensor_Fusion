@@ -76,13 +76,6 @@ def run_single_plots(bag_fn, folder=None):
 
     t = uav1_target_position_fuse[0:,0]
 
-    #w = 2.5
-
-    #r = 1.5 * w * t
-            
-    target_x = 0 * t
-
-
 
     tgt_pos_resample_x = signal.resample(target_position[0:,1], maximo)
 

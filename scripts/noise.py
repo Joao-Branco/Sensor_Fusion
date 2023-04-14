@@ -23,15 +23,20 @@ def target_callback(msg):
 if __name__ == "__main__":
     rospy.init_node("Noise_py")
     rospy.loginfo("Node Noise has started")
-    uav_id = rospy.get_param("~uav_id")
+    #uav_id = rospy.get_param("~uav_id")
+    uav_id = 1
 
-
-    rospy.Subscriber('/target_position', target_position, target_callback)
+    rospy.Subscriber('/target_position', target_position, target_callback, queue_size=1)
     
     
     pub_uav = rospy.Publisher('/uav' + str(uav_id) + '/target_position', target_position, queue_size=10)
     
+    f = 5
+
+    
+
+    rate = rospy.Rate(f)
     
 
     while not rospy.is_shutdown():
-        rospy.spin()
+        rate.sleep()
