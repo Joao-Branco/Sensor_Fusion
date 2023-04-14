@@ -5,13 +5,9 @@ import os
 import signal
 from pathlib import Path
 
-from plot_single import run_single_plots
-from plot_multi import run_multi_plots
-
 SIMTIME = 50
 SIM_ID = int(time.time())
 sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims")
-sim_dir.mkdir()
 
 bag_fn_single = sim_dir.joinpath(f"target_noise{SIM_ID}.bag")
 
