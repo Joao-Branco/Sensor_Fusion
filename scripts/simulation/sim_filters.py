@@ -5,6 +5,10 @@ import os
 import signal
 from pathlib import Path
 
+from plot_auto import run_auto_plots
+
+uav_total = 5
+
 SIMTIME = 10
 SIM_ID = int(time.time())
 sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-single{SIM_ID}")
@@ -31,8 +35,9 @@ os.kill(p_bag_single.pid, signal.SIGINT)
 
 time.sleep(2)
 
+single = True
 
-run_single_plots(str(bag_fn_single), folder=str(sim_dir))
+run_auto_plots(str(bag_fn_single), folder=str(sim_dir), uav_total, single)
 
 
 print("Now MULTI")
@@ -63,4 +68,6 @@ os.kill(p_bag_multi.pid, signal.SIGINT)
 time.sleep(2)
 
 
-run_multi_plots(str(bag_fn_multi), folder=str(sim_dir))
+single = False
+
+run_auto_plots(str(bag_fn_single), folder=str(sim_dir), uav_total, single)
