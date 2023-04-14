@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-    <param name="total_uav" value="2"/>
+
+    <node pkg="rosbag" type="play" name="rosbag" args="eeeeeeee.bag"/>
+
+    <param name="total_uav" value="1"/>
     <node pkg="sensor_fusion" type="target.py" name="target" required="True" output="screen">
 	</node>
     <node pkg="sensor_fusion" type="noise.py" name="targetwithNoise" required="True" output="screen">

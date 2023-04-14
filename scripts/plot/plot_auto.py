@@ -11,8 +11,11 @@ import sklearn.metrics
 
 bag_fn = r'/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi1681381667/multi1681381667.bag'
 
-#def run_multi_plots(bag_fn, folder=None):
-uav_total = 2
+#def run_multi_plots(bag_fn, folder=None, uav_total, single):
+
+if single == True:
+    uav_total = 1
+
 topics = ['/target_position']
 
 
@@ -80,11 +83,72 @@ for i in range(1, uav_total+1):
     data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "euclidean", euclidean)
     
     
-    print(data_error[f'uav{str(i)}'])
+plt.figure(figsize=(18, 8))
+
+plt.subplot(2, 1, 1)
+plt.title("Erro absoluto")
+
+for i in range(1, uav_total+1):
+    plt.plot(data_error[f'uav{str(i)}'].Time, data_error[f'uav{str(i)}'].error_x, label='UAV ' + str(i))
+
+plt.xlabel('Tempo (s)')
+plt.ylabel('X (m)')
+plt.legend()
+plt.grid()
+
+plt.subplot(2, 1, 2)
+
+for i in range(1, uav_total+1):
+    plt.plot(data_error[f'uav{str(i)}'].Time, data_error[f'uav{str(i)}'].error_y, label='UAV ' + str(i))
+
+plt.xlabel('Tempo (s)')
+plt.ylabel('Y (m)')
+plt.legend()
+plt.grid()
+
+if (single == True):
+    im_basename = "Errors_ single.png"
+    
+else:
+    im_basename = "Errors_ multi.png"
+    
+im_fn = os.path.join(folder, im_basename) if folder else im_basename
+plt.savefig(im_fn)
+
+
+plt.figure(figsize=(18, 8))
+
+plt.plot(target.x, target.y, 'k', label="Alvo")
+
+for i in range(1, uav_total+1):
+    plt.plot(data_error[f'uav{str(i)}'].x, data_error[f'uav{str(i)}'].y, label='UAV ' + str(i))
+
+plt.title("Posição")
+plt.xlabel('X (m)')
+plt.ylabel('Y (m)')
+plt.legend()
+plt.grid()
+
+
+if (single == True):
+    im_basename = "Position_single.png"
+    
+else:
+    im_basename = "Position_ multi.png"
+    
+
+im_fn = os.path.join(folder, im_basename) if folder else im_basename
+plt.savefig(im_fn)
+
+if (single == True):
+    data_error['uav1'].to_csv('error_uav1')
+else:
+    for i in range(1, uav_total+1):
+        data_error[f'uav{str(i)}'].to_csv('error_uav' + str(i))
     
 
 
-    
+
     
 
 

@@ -1,5 +1,11 @@
 <?xml version="1.0"?>
 <launch>
+
+    <node pkg="rosbag" type="play" name="rosbag" args="eeeeeeee.bag"/>
+
+
+
+    
     <param name="total_uav" value="3"/>
     <node pkg="sensor_fusion" type="target.py" name="target" required="True" output="screen">
 	</node>
