@@ -1,9 +1,16 @@
 <?xml version="1.0"?>
 <launch>
 
-    <node pkg="rosbag" type="play" name="rosbag" args="eeeeeeee.bag"/>
-
     <param name="total_uav" value="1"/>
+
+    
+    <node pkg="sensor_fusion" type="target.py" name="target" required="True" output="screen">
+	</node>
+    
+
+    <node pkg="sensor_fusion" type="noise.py" name="targetwithNoise_1" required="True" output="screen">
+        <param name = "uav_id" value = "1"/>
+	</node>
 
     <node pkg="sensor_fusion" type="kalman_filter.py" name="kalman_filter_1" required="True" args="total_uav" output="screen">
         <param name = "uav_id" value = "1"/>

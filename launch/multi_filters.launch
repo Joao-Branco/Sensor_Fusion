@@ -1,9 +1,26 @@
 <?xml version="1.0"?>
 <launch>
 
-    <node pkg="rosbag" type="play" name="rosbag" output="screen" args="--clock /home/branco/catkin_ws/src/sensor_fusion/sims/target_noise1681486648.bag"/>
+    <param name="total_uav" value="5"/>
+    <node pkg="sensor_fusion" type="target.py" name="target" required="True" output="screen">
+	</node>
+    
 
-    <param name="total_uav" value="1"/>
+    <node pkg="sensor_fusion" type="noise.py" name="targetwithNoise_1" required="True" output="screen">
+        <param name = "uav_id" value = "1"/>
+	</node>
+    <node pkg="sensor_fusion" type="noise.py" name="targetwithNoise_2" required="True" output="screen">
+        <param name = "uav_id" value = "2"/>
+	</node>
+    <node pkg="sensor_fusion" type="noise.py" name="targetwithNoise_3" required="True" output="screen">
+        <param name = "uav_id" value = "3"/>
+	</node>
+    <node pkg="sensor_fusion" type="noise.py" name="targetwithNoise_4" required="True" output="screen">
+        <param name = "uav_id" value = "4"/>
+	</node>
+    <node pkg="sensor_fusion" type="noise.py" name="targetwithNoise_5" required="True" output="screen">
+        <param name = "uav_id" value = "5"/>
+	</node>
 
 
 
@@ -16,6 +33,12 @@
     </node>
     <node pkg="sensor_fusion" type="kalman_filter.py" name="kalman_filter_3" required="True" args="total_uav" output="screen">
         <param name = "uav_id" value = "3"/>
+    </node>
+    <node pkg="sensor_fusion" type="kalman_filter.py" name="kalman_filter_4" required="True" args="total_uav" output="screen">
+        <param name = "uav_id" value = "4"/>
+    </node>
+    <node pkg="sensor_fusion" type="kalman_filter.py" name="kalman_filter_5" required="True" args="total_uav" output="screen">
+        <param name = "uav_id" value = "5"/>
     </node>
 
 

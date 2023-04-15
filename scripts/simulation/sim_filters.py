@@ -37,7 +37,7 @@ time.sleep(2)
 
 single = True
 
-run_auto_plots(str(bag_fn_single), folder=str(sim_dir), uav_total, single)
+run_auto_plots(str(bag_fn_single), uav_total, single, folder=str(sim_dir))
 
 
 print("Now MULTI")
@@ -70,4 +70,4 @@ time.sleep(2)
 
 single = False
 
-run_auto_plots(str(bag_fn_single), folder=str(sim_dir), uav_total, single)
+run_auto_plots(str(bag_fn_multi), uav_total, single, folder=str(sim_dir))
