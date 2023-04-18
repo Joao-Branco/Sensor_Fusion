@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <launch>
 
-    <param name="total_uav" value="5"/>
+    <param name="total_uav" value="2"/>
+
     <node pkg="sensor_fusion" type="target.py" name="target" required="True" output="screen">
 	</node>
     
@@ -12,34 +13,16 @@
     <node pkg="sensor_fusion" type="noise.py" name="targetwithNoise_2" required="True" output="screen">
         <param name = "uav_id" value = "2"/>
 	</node>
-    <node pkg="sensor_fusion" type="noise.py" name="targetwithNoise_3" required="True" output="screen">
-        <param name = "uav_id" value = "3"/>
-	</node>
-    <node pkg="sensor_fusion" type="noise.py" name="targetwithNoise_4" required="True" output="screen">
-        <param name = "uav_id" value = "4"/>
-	</node>
-    <node pkg="sensor_fusion" type="noise.py" name="targetwithNoise_5" required="True" output="screen">
-        <param name = "uav_id" value = "5"/>
-	</node>
 
-
-
-    
+  
     <node pkg="sensor_fusion" type="kalman_filter.py" name="kalman_filter_1" required="True" args="total_uav" output="screen">
         <param name = "uav_id" value = "1"/>
     </node>
     <node pkg="sensor_fusion" type="kalman_filter.py" name="kalman_filter_2" required="True" args="total_uav" output="screen">
         <param name = "uav_id" value = "2"/>
     </node>
-    <node pkg="sensor_fusion" type="kalman_filter.py" name="kalman_filter_3" required="True" args="total_uav" output="screen">
-        <param name = "uav_id" value = "3"/>
-    </node>
-    <node pkg="sensor_fusion" type="kalman_filter.py" name="kalman_filter_4" required="True" args="total_uav" output="screen">
-        <param name = "uav_id" value = "4"/>
-    </node>
-    <node pkg="sensor_fusion" type="kalman_filter.py" name="kalman_filter_5" required="True" args="total_uav" output="screen">
-        <param name = "uav_id" value = "5"/>
-    </node>
+
+
 
 
 </launch>

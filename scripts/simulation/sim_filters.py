@@ -7,9 +7,9 @@ from pathlib import Path
 
 from plot_auto import run_auto_plots
 
-uav_total = 5
+uav_total = 2
 
-SIMTIME = 10
+SIMTIME = 40
 SIM_ID = int(time.time())
 sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-single{SIM_ID}")
 sim_dir.mkdir()
@@ -42,6 +42,7 @@ run_auto_plots(str(bag_fn_single), uav_total, single, folder=str(sim_dir))
 
 print("Now MULTI")
 
+SIMTIME = 120
 SIM_ID = int(time.time())
 sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi{SIM_ID}")
 sim_dir.mkdir()

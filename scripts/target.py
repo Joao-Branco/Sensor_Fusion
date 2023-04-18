@@ -31,21 +31,21 @@ if __name__ == "__main__":
     target.v_y = 0.0
 
     # frenquency of publication of position
-    f = 100
+    f = 20
 
     
 
     rate = rospy.Rate(f)
     
-    t_0 = rospy.Time.now()
+    #t_0 = rospy.Time.now()
     
 
     while not rospy.is_shutdown():
         
         # = 0
-        t = rospy.Time.now()
+        #t = rospy.Time.now()
         
-        t = (t-t_0).to_sec()
+        #t = (t-t_0).to_sec()
         
         
         rospy.loginfo("X: %f, Y: %f", target.x, target.y) 
@@ -55,8 +55,10 @@ if __name__ == "__main__":
         #target.y = 0 * t
         
         #Trget Moving with constant speed
-        target.x = 2 * t
-        target.y = 2 * t
+        #target.x = 2 * t 
+        #target.y = 2 * t 
+        target.x = target.x + 1 * (1 / f)
+        target.y = target.y + 1 * (1 / f) 
         
         pub.publish(target.x, target.y)  #, rospy.Time.now())
 

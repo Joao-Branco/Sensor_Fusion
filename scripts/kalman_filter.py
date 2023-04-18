@@ -7,7 +7,7 @@ from sensor_fusion.msg import target_position
 
 
 class KalmanFilter(object):
-    def __init__(self, F = None, B = None, H = None, Q = None, R = None, P = None, x0 = None):
+    def __init__(self, F = None, B = None, H = None, H_fuse = None, Q = None, R = None, R_fuse = None, P = None, x0 = None):
 
         if(F is None or H is None):
             raise ValueError("Set proper system dynamics.")
@@ -17,9 +17,11 @@ class KalmanFilter(object):
 
         self.F = F
         self.H = H
+        self.H_fuse = H_fuse
         self.B = 0 if B is None else B
         self.Q = np.eye(self.n) if Q is None else Q
         self.R = np.eye(self.n) if R is None else R
+        self.R_fuse = np.eye(self.n) if R_fuse is None else R_fuse
         self.P = np.eye(self.n) if P is None else P
         self.x = np.zeros((self.n, 1)) if x0 is None else x0
 
@@ -28,19 +30,33 @@ class KalmanFilter(object):
         self.P = np.dot(np.dot(self.F, self.P), self.F.T) + self.Q
         return self.x
 
-    def update(self, z, R, H):
-        y = z - np.dot(H, self.x)
-        S = R + np.dot(H, np.dot(self.P, H.T))
-        K = np.dot(np.dot(self.P, H.T), np.linalg.inv(S))
+    def update(self, z):
+        y = z - np.dot(self.H, self.x)
+        S = self.R + np.dot(self.H, np.dot(self.P, self.H.T))
+        K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
         self.x = self.x + np.dot(K, y)
         I = np.eye(self.n)
-        self.P = np.dot(np.dot(I - np.dot(K, H), self.P), 
-        	(I - np.dot(K, H)).T) + np.dot(np.dot(K, R), K.T)
+        self.P = np.dot(np.dot(I - np.dot(K, self.H), self.P), 
+        	(I - np.dot(K, self.H)).T) + np.dot(np.dot(K, self.R), K.T)
+             
+    def update_fuse(self, z):
+        y = z - np.dot(self.H_fuse, self.x)
+        S = self.R_fuse + np.dot(self.H_fuse, np.dot(self.P, self.H_fuse.T))
+        K = np.dot(np.dot(self.P, self.H_fuse.T), np.linalg.inv(S))
+        self.x = self.x + np.dot(K, y)
+        I = np.eye(self.n)
+        self.P = np.dot(np.dot(I - np.dot(K, self.H_fuse), self.P), 
+        	(I - np.dot(K, self.H_fuse)).T) + np.dot(np.dot(K, self.R_fuse), K.T)
 
 class Fusion:
     def __init__(self, f, uav_id, uav_total):
 
+        #self.offset = 0
         dt = 1 / f
+        #self.dt = (1 / f) - self.offset
+        #self.t_0 = rospy.Time.now()
+        #self.t_predict = 0
+        #self.t_m = 0
         
         self.uav_id = uav_id
         self.uav_total = uav_total
@@ -91,44 +107,56 @@ class Fusion:
 
 
         rospy.Subscriber('/uav' + str(uav_id) + '/target_position', target_position, self.target_callback)
+        
+        #rospy.Subscriber('/target_position', target_position, self.target_callback)
             
         for i in range(uav_total + 1):
             if (i != uav_id and i != 0):
                 rospy.Subscriber('/uav' + str(i) + '/target_position_fuse', target_position_fuse, self.target_callback_fuse)
+                
+
+            
 
 
-        self.kf = KalmanFilter(F = self.F, H = self.H , Q = self.Q , R = self.R)
+        self.kf = KalmanFilter(F = self.F, H = self.H, H_fuse = self.H_fuse , Q = self.Q , R = self.R, R_fuse = self.R_fuse)
 
         
     def predict(self):
+        
+        #self.offset = self.t_m - self.t_predict
         self.kf.predict()
         state = target_position_fuse()
         state.x = self.kf.x[0]
         state.y = self.kf.x[1]
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
-        #state.clock = rospy.Time.now()
+
         pub_fuse.publish(state)
         rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
+        
 
         
     def target_callback(self, msg):
         measurment = np.array([[msg.x], [msg.y]])
 
-        self.kf.update(measurment, self.R, self.H)
+        self.kf.update(measurment)
         state = target_position_fuse()
         state.x = self.kf.x[0]
         state.y = self.kf.x[1]
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
-        #state.clock = rospy.Time.now()
-        pub_fuse.publish(state)
         rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Update was made')
 
 
     def target_callback_fuse(self, msg):
         measurment = np.array([[msg.x], [msg.y], [msg.v_x], [msg.v_y]])
-        self.kf.update(measurment, self.R_fuse, self.H_fuse)
+        print(measurment)
+        self.kf.update_fuse(measurment)
+        state = target_position_fuse()
+        state.x = self.kf.x[0]
+        state.y = self.kf.x[1]
+        state.v_x = self.kf.x[2]
+        state.v_y = self.kf.x[3]
         rospy.loginfo('Kalman %d ---------Update fuse was made', self.uav_id)
 
 
