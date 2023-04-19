@@ -25,6 +25,7 @@ def run_auto_plots(bag_fn, uav_total, single, folder=None):
 
         topics.append('/uav' + str(i) + '/target_position')
         topics.append('/uav' + str(i) + '/target_position_fuse')
+        topics.append('/uav' + str(i) + '/target_position_estimation')
 
 
 
@@ -37,6 +38,7 @@ def run_auto_plots(bag_fn, uav_total, single, folder=None):
 
     for topic in topics:
         data = b.message_by_topic(topic)
+        print(data)
         df = pd.read_csv(data)
         dataframes[topic] = df
         minimos.append(dataframes[topic].iloc[0,0])
@@ -47,6 +49,7 @@ def run_auto_plots(bag_fn, uav_total, single, folder=None):
     for i in range(1, uav_total+1):
         dataframes[f'/uav{str(i)}/target_position'].iloc[:,0] = dataframes[f'/uav{str(i)}/target_position'].iloc[:,0] - minimo 
         dataframes[f'/uav{str(i)}/target_position_fuse'].iloc[:,0] = dataframes[f'/uav{str(i)}/target_position_fuse'].iloc[:,0] - minimo
+        dataframes[f'/uav{str(i)}/target_position_estimation'].iloc[:,0] = dataframes[f'/uav{str(i)}/target_position_estimation'].iloc[:,0] - minimo
 
 
 
@@ -68,8 +71,9 @@ def run_auto_plots(bag_fn, uav_total, single, folder=None):
 
     for i in range(1, uav_total+1):
 
-        data[f'uav{str(i)}'] = dataframes[f'/uav{str(i)}/target_position_fuse']
+        data[f'uav{str(i)}'] = dataframes[f'/uav{str(i)}/target_position_estimation']
         data[f'uav{str(i)}'].drop(data[f'uav{str(i)}'].tail(5).index, inplace = True)
+        data[f'uav{str(i)}'].drop(data[f'uav{str(i)}'].index[:4], inplace = True)
         #data_noise[f'uav{str(i)}'] = dataframes[f'/uav{str(i)}/target_position']
         #data_noise[f'uav{str(i)}'].columns = ['Time', 'x_noise', 'y_noise']
         #data_noise_index = data_noise[f'uav{str(i)}'].set_index('Time')
@@ -162,12 +166,17 @@ def run_auto_plots(bag_fn, uav_total, single, folder=None):
 
     if (single == True):
         data_error['uav1'].to_csv('/home/branco/catkin_ws/src/sensor_fusion/sims/error_uav_single.csv')
+        print(data_error[f'uav{str(i)}'].x_target)
+        print(data_error[f'uav{str(i)}'].x)
         error_fusion.loc[len(error_fusion)] = ['uav1' , np.mean(data_error['uav1'].error_x) , np.mean(data_error['uav1'].error_y), math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].x_target, data_error['uav1'].x)),  math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].y_target, data_error['uav1'].y)), np.mean(data_error['uav1'].euclidean)]
         error_fusion.to_csv(f'/home/branco/catkin_ws/src/sensor_fusion/sims/error_med_single.csv')
         
     else:    
         for i in range(1, uav_total+1):
             data_error[f'uav{str(i)}'].to_csv(f'/home/branco/catkin_ws/src/sensor_fusion/sims/uav{str(i)}.csv')
+            print(data_error[f'uav{str(i)}'].x_target)
+            print(data_error[f'uav{str(i)}'].x)
+            
             error_fusion.loc[len(error_fusion)] = [f'uav{str(i)}' , np.mean(data_error[f'uav{str(i)}'].error_x) , np.mean(data_error[f'uav{str(i)}'].error_y), math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].x_target, data_error[f'uav{str(i)}'].x)),  math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].y_target, data_error[f'uav{str(i)}'].y)), np.mean(data_error[f'uav{str(i)}'].euclidean)]
             
             

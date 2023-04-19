@@ -38,11 +38,13 @@ if __name__ == "__main__":
     rate = rospy.Rate(f)
     
     #t_0 = rospy.Time.now()
-    
+    time_ref=0
 
     while not rospy.is_shutdown():
         
-        # = 0
+        time_ref = time_ref+ 1/f
+        
+        
         #t = rospy.Time.now()
         
         #t = (t-t_0).to_sec()
@@ -57,8 +59,8 @@ if __name__ == "__main__":
         #Trget Moving with constant speed
         #target.x = 2 * t 
         #target.y = 2 * t 
-        target.x = target.x + 1 * (1 / f)
-        target.y = target.y + 1 * (1 / f) 
+        target.y = 4 * math.cos( 0.2 * time_ref)
+        target.x = target.x + 1 * (1 / f) 
         
         pub.publish(target.x, target.y)  #, rospy.Time.now())
 

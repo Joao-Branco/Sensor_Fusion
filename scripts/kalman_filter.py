@@ -61,7 +61,7 @@ class Fusion:
         self.uav_id = uav_id
         self.uav_total = uav_total
 
-        #self.x = np.array([0, 0, 0, 0, 0, 0])
+        #x0 = np.array([[0, 0, 2, 2]])
 
         # x ----Initial value for the state
 
@@ -97,10 +97,10 @@ class Fusion:
         self.R = np.array([     [2, 0],
                                 [0, 2]])
         
-        self.R_fuse = np.array([    [1, 0, 0, 0],
-                                    [0, 1, 0, 0],
-                                    [0, 0, 1, 0],
-                                    [0, 0, 0, 1]])
+        self.R_fuse = np.array([    [0.5, 0, 0, 0],
+                                    [0, 0.5, 0, 0],
+                                    [0, 0, 0.5, 0],
+                                    [0, 0, 0, 0.5]])
 
         # R ----Measurement Noise
 
@@ -131,7 +131,7 @@ class Fusion:
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
 
-        pub_fuse.publish(state)
+        return state
         rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
         
 
@@ -157,7 +157,10 @@ class Fusion:
         state.y = self.kf.x[1]
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
-        rospy.loginfo('Kalman %d ---------Update fuse was made', self.uav_id)
+        rospy.loginfo('Kalman %d ---------Update estimation was made', self.uav_id)
+        
+
+
 
 
 
@@ -171,7 +174,8 @@ if __name__ == "__main__":
         
     
 
-    pub_fuse = rospy.Publisher('/uav' + str(uav_id) + '/target_position_fuse', target_position_fuse, queue_size=10)
+    
+    pub_estimation = rospy.Publisher('target_position_estimation', target_position_fuse, queue_size=1)
     
     
     f = 20
@@ -180,7 +184,15 @@ if __name__ == "__main__":
     ss = Fusion(f, uav_id, uav_total)
 
     rate = rospy.Rate(f) 
+    time_ref=0
 
     while not rospy.is_shutdown(): 
-        ss.predict()
+        state = ss.predict()
+        
+        pub_estimation.publish(state)
+        #time_ref = time_ref+ 1/f
+        #if time_ref >= 1:
+            #pub_fuse.publish(state)
+            #rospy.loginfo('Kalman %d ---------Fuse was published was made', uav_id)
+            #time_ref = 0
         rate.sleep()
