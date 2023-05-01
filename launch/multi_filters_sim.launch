@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-    <param name="total_uav" value="6"/>
+    <param name="total_uav" value="3"/>
 
     <node pkg="sensor_fusion" type="target.py" name="target" required="True" output="screen">
 	</node>
@@ -21,24 +21,6 @@
     <group ns = "uav3">
         <include file="$(find sensor_fusion)/launch/uav.launch">
             <arg name="ID" value="3"/>
-        </include>
-    </group>
-
-    <group ns = "uav4">
-        <include file="$(find sensor_fusion)/launch/uav.launch">
-            <arg name="ID" value="4"/>
-        </include>
-    </group>
-
-    <group ns = "uav5">
-        <include file="$(find sensor_fusion)/launch/uav.launch">
-            <arg name="ID" value="5"/>
-        </include>
-    </group>
-
-    <group ns = "uav6">
-        <include file="$(find sensor_fusion)/launch/uav.launch">
-            <arg name="ID" value="6"/>
         </include>
     </group>
 

@@ -18,7 +18,7 @@ if __name__ == "__main__":
     rospy.loginfo("Node Target has started")
 
 
-    pub = rospy.Publisher("/target_position", target_position, queue_size=10)
+    pub = rospy.Publisher("/target_position", target_position_fuse, queue_size=10)
     
     
     # definition of parameters of target
@@ -56,13 +56,20 @@ if __name__ == "__main__":
         #target.x = 0 * t
         #target.y = 0 * t
         
-        #Trget Moving with constant speed
+        #Target Moving with constant speed
         #target.x = 2 * t 
         #target.y = 2 * t 
-        target.y = 4 * math.cos( 0.2 * time_ref)
-        target.x = target.x + 1 * (1 / f) 
         
-        pub.publish(target.x, target.y)  #, rospy.Time.now())
+        #Target Moving with aceleration not constant
+        
+        target.x = 5 * math.cos( 0.09 * time_ref) 
+        target.v_x =  -0.45 * math.sin(0.09 * time_ref)
+        
+        target.y = 5 * math.sin( 0.09 * time_ref)
+        target.v_y = 0.45 * math.cos(0.09 * time_ref)
+        
+        
+        pub.publish(target.x, target.y, target.v_x, target.v_y)  #, rospy.Time.now())
 
         
         rospy.loginfo("Target has been publish")

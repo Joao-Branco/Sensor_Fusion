@@ -2,6 +2,14 @@ import math
 from bagpy import bagreader
 import pandas as pd
 import seaborn as sea
+import matplotlib
+matplotlib.use("pgf")
+matplotlib.rcParams.update({
+    "pgf.texsystem": "pdflatex",
+    'font.family': 'serif',
+    'text.usetex': True,
+    'pgf.rcfonts': False,
+})
 import matplotlib.pyplot as plt
 import numpy as np
 from functools import reduce
@@ -11,7 +19,8 @@ import sklearn.metrics
 
 
 
-def run_auto_plots(bag_fn, uav_total, single, folder=None):
+
+def run_auto_plots(bag_fn, uav_total, single, folder_png=None, folder_pgf=None):
     if single == True:
         uav_total = 1
         
@@ -54,12 +63,12 @@ def run_auto_plots(bag_fn, uav_total, single, folder=None):
 
 
     target = dataframes['/target_position']
-    target.columns = ['Time', 'x_target', 'y_target']
+    target.columns = ['Time', 'x_target', 'y_target', 'v_x_target', 'v_y_target']
     #target.Time = pd.to_timedelta( target.Time, "sec")
     target_index = target.set_index('Time')
     data = {}
     data_error = {}
-    data_noise = {}
+    #data_noise = {}
     
 
 
@@ -73,7 +82,7 @@ def run_auto_plots(bag_fn, uav_total, single, folder=None):
 
         data[f'uav{str(i)}'] = dataframes[f'/uav{str(i)}/target_position_estimation']
         data[f'uav{str(i)}'].drop(data[f'uav{str(i)}'].tail(5).index, inplace = True)
-        data[f'uav{str(i)}'].drop(data[f'uav{str(i)}'].index[:4], inplace = True)
+        data[f'uav{str(i)}'].drop(data[f'uav{str(i)}'].index[:5], inplace = True)
         #data_noise[f'uav{str(i)}'] = dataframes[f'/uav{str(i)}/target_position']
         #data_noise[f'uav{str(i)}'].columns = ['Time', 'x_noise', 'y_noise']
         #data_noise_index = data_noise[f'uav{str(i)}'].set_index('Time')
@@ -88,96 +97,121 @@ def run_auto_plots(bag_fn, uav_total, single, folder=None):
 
         error_x = (data_error[f'uav{str(i)}'].x_target - data_error[f'uav{str(i)}'].x)
         error_y = (data_error[f'uav{str(i)}'].y_target - data_error[f'uav{str(i)}'].y)
+        
         euclidean = np.sqrt(error_x * error_x + error_y * error_y)
+        
+        error_v_x = (data_error[f'uav{str(i)}'].v_x_target - data_error[f'uav{str(i)}'].v_x)
+        error_v_y = (data_error[f'uav{str(i)}'].v_y_target - data_error[f'uav{str(i)}'].v_y)
 
 
         data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "error_x", error_x)
         data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "error_y", error_y)
+        
         data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "euclidean", euclidean)
+        
+        data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "error_v_x", error_v_x)
+        data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "error_v_y", error_v_y)
+        
         data_error[f'uav{str(i)}'].reset_index(inplace=True)
 
 
-    plt.figure(figsize=(18, 8))
+    plt.figure(figsize=(15, 5))
 
-    plt.subplot(2, 1, 1)
-    plt.title("Erro absoluto")
+    plt.subplot(1, 2, 1)
+    plt.title("Erro absoluto", fontsize=15)
 
     for i in range(1, uav_total+1):
         plt.plot(data_error[f'uav{str(i)}'].Time, data_error[f'uav{str(i)}'].error_x, 'x', label='UAV ' + str(i))
 
-    plt.xlabel('Tempo (s)')
-    plt.ylabel('X (m)')
-    plt.legend()
+    plt.xlabel('Tempo (s)', fontsize=15)
+    plt.ylabel('X (m)', fontsize=15)
+    if (single == False):
+        plt.legend(fontsize=10)
     plt.grid()
 
-    plt.subplot(2, 1, 2)
+    plt.subplot(1, 2, 2)
+    plt.title("Erro absoluto", fontsize=15)
 
     for i in range(1, uav_total+1):
         plt.plot(data_error[f'uav{str(i)}'].Time, data_error[f'uav{str(i)}'].error_y, 'x', label='UAV ' + str(i))
 
-    plt.xlabel('Tempo (s)')
-    plt.ylabel('Y (m)')
-    plt.legend()
+    plt.xlabel('Tempo (s)', fontsize=15)
+    plt.ylabel('Y (m)', fontsize=15)
+    if (single == False):
+        plt.legend(fontsize=10)
     plt.grid()
 
     if (single == True):
-        im_basename = "Errors_ single.png"
+        im_basename_png = "Errors_single.png"
+        
+        im_basename_pgf = "Errors_single.pgf"
 
     else:
-        im_basename = "Errors_ multi.png"
+        im_basename_png = "Errors_multi.png"
+        
+        im_basename_pgf = "Errors_multi.pgf"
 
-    im_fn = os.path.join(folder, im_basename) if folder else im_basename
-    plt.savefig(im_fn)
+
+    im_fn_png = os.path.join(folder_png, im_basename_png) if folder_png else im_basename_png
+    plt.savefig(im_fn_png)
+    im_fn_pgf = os.path.join(folder_pgf, im_basename_pgf) if folder_pgf else im_basename_pgf
+    plt.savefig(im_fn_pgf)
 
 
-    plt.figure(figsize=(18, 8))
+    plt.figure(figsize=(6, 6))
 
-    plt.plot(target.x_target, target.y_target, 'k', label="Alvo")
-    
     
     if (single == True):
-        plt.plot(data_error['uav1'].x, data_error['uav1'].y, 'x', markersize=10, label='UAV 1')
-        plt.plot(dataframes['/uav1/target_position'].x, dataframes['/uav1/target_position'].y, '.', markersize=5, label="Alvo com ruido")
+        plt.plot(data_error['uav1'].x, data_error['uav1'].y, 'x', markersize=4, label='UAV 1')
+        plt.plot(dataframes['/uav1/target_position'].x, dataframes['/uav1/target_position'].y, 'm.', markersize=2, label="Alvo com ruido")
         
     else:
         for i in range(1, uav_total+1):
-            plt.plot(data_error[f'uav{str(i)}'].x, data_error[f'uav{str(i)}'].y, 'x', markersize=7, label='UAV ' + str(i))
-            plt.plot(dataframes[f'/uav{str(i)}/target_position'].x, dataframes[f'/uav{str(i)}/target_position'].y, '.', markersize=3, label="Alvo com ruido")
+            plt.plot(data_error[f'uav{str(i)}'].x, data_error[f'uav{str(i)}'].y, 'x', markersize=5, label='UAV ' + str(i))
+            #plt.plot(dataframes[f'/uav{str(i)}/target_position'].x, dataframes[f'/uav{str(i)}/target_position'].y, '.', markersize=2, label="Alvo com ruido")
 
-    plt.title("Posição")
-    plt.xlabel('X (m)')
-    plt.ylabel('Y (m)')
-    plt.legend()
+
+    plt.plot(target.x_target, target.y_target, 'k',linewidth='3', label="Alvo")
+    plt.plot(target.iloc[0,1], target.iloc[0,2], 'go', markersize=8)
+    plt.plot(target.iloc[-1,1], target.iloc[-1,2], 'ro',  markersize=8)
+    
+    
+    
+    plt.title("Posição", fontsize=20)
+    plt.xlabel('X (m)', fontsize=15)
+    plt.ylabel('Y (m)', fontsize=15)
+    plt.legend(fontsize=10)
     plt.grid()
 
 
     if (single == True):
-        im_basename = "Position_single.png"
+        im_basename_png = "Position_single.png"
+        im_basename_pgf = "Position_single.pgf"
+
 
     else:
-        im_basename = "Position_ multi.png"
+        im_basename_png = "Position_multi.png"
+        im_basename_pgf = "Position_multi.pgf"
 
 
-    im_fn = os.path.join(folder, im_basename) if folder else im_basename
-    plt.savefig(im_fn)
+
+    im_fn_png = os.path.join(folder_png, im_basename_png) if folder_png else im_basename_png
+    plt.savefig(im_fn_png)
+    im_fn_pgf = os.path.join(folder_pgf, im_basename_pgf) if folder_pgf else im_basename_pgf
+    plt.savefig(im_fn_pgf)
     
-    error_fusion = pd.DataFrame(columns=['UAV','error_x', 'error_y', 'RMSE_x', 'RMSE_y', 'euclidean'])
+    error_fusion = pd.DataFrame(columns=['UAV','error_x', 'error_y', 'RMSE_x', 'RMSE_y', 'euclidean', 'error_v_x', 'error_v_y', 'RMSE_v_x', 'RMSE_v_y'])
     
 
     if (single == True):
         data_error['uav1'].to_csv('/home/branco/catkin_ws/src/sensor_fusion/sims/error_uav_single.csv')
-        print(data_error[f'uav{str(i)}'].x_target)
-        print(data_error[f'uav{str(i)}'].x)
-        error_fusion.loc[len(error_fusion)] = ['uav1' , np.mean(data_error['uav1'].error_x) , np.mean(data_error['uav1'].error_y), math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].x_target, data_error['uav1'].x)),  math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].y_target, data_error['uav1'].y)), np.mean(data_error['uav1'].euclidean)]
+        error_fusion.loc[len(error_fusion)] = ['uav1' , np.mean(data_error['uav1'].error_x) , np.mean(data_error['uav1'].error_y), math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].x_target, data_error['uav1'].x)),  math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].y_target, data_error['uav1'].y)), np.mean(data_error['uav1'].euclidean), np.mean(data_error['uav1'].error_v_x), np.mean(data_error['uav1'].error_v_y), math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].v_x_target, data_error['uav1'].v_x)), math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].v_y_target, data_error['uav1'].v_y))]
         error_fusion.to_csv(f'/home/branco/catkin_ws/src/sensor_fusion/sims/error_med_single.csv')
         
     else:    
         for i in range(1, uav_total+1):
             data_error[f'uav{str(i)}'].to_csv(f'/home/branco/catkin_ws/src/sensor_fusion/sims/uav{str(i)}.csv')
-            print(data_error[f'uav{str(i)}'].x_target)
-            print(data_error[f'uav{str(i)}'].x)
-            
-            error_fusion.loc[len(error_fusion)] = [f'uav{str(i)}' , np.mean(data_error[f'uav{str(i)}'].error_x) , np.mean(data_error[f'uav{str(i)}'].error_y), math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].x_target, data_error[f'uav{str(i)}'].x)),  math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].y_target, data_error[f'uav{str(i)}'].y)), np.mean(data_error[f'uav{str(i)}'].euclidean)]
+            error_fusion.loc[len(error_fusion)] = [f'uav{str(i)}' , np.mean(data_error[f'uav{str(i)}'].error_x) , np.mean(data_error[f'uav{str(i)}'].error_y), math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].x_target, data_error[f'uav{str(i)}'].x)),  math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].y_target, data_error[f'uav{str(i)}'].y)), np.mean(data_error[f'uav{str(i)}'].euclidean), np.mean(data_error[f'uav{str(i)}'].error_v_x), np.mean(data_error[f'uav{str(i)}'].error_v_y), math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].v_x_target, data_error['uav1'].v_x)), math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].v_y_target, data_error['uav1'].v_y))]
             
             
         error_fusion.to_csv(f'/home/branco/catkin_ws/src/sensor_fusion/sims/error_fusion.csv')

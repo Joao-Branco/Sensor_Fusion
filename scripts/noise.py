@@ -25,7 +25,7 @@ if __name__ == "__main__":
     rospy.loginfo("Node Noise has started")
     uav_id = rospy.get_param("~uav_id")
 
-    rospy.Subscriber('/target_position', target_position, target_callback, queue_size=1)
+    rospy.Subscriber('/target_position', target_position_fuse, target_callback, queue_size=1)
     
     
     pub_uav = rospy.Publisher('target_position', target_position, queue_size=10)
