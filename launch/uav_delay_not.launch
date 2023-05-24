@@ -12,8 +12,16 @@
         <param name = "uav_id" value = "$(arg ID)"/>
     </node>
 
-    <node pkg="topic_tools" type="throttle" name="throttle_$(arg ID)" required="True" output="screen" 
+    <node pkg="sensor_fusion" type="buffer.py" name="buffer_$(arg ID)" required="True" args="total_uav delay_mean delay_std" output="screen">
+        <param name = "uav_id" value = "$(arg ID)"/>
+    </node>
+
+    <!--node pkg="topic_tools" type="throttle" name="throttle_$(arg ID)" required="True" output="screen" 
     args= "messages /uav$(arg ID)/target_position_estimation 1 /uav$(arg ID)/target_position_fuse">   
+    </node-->
+
+    <node pkg="topic_tools" type="throttle" name="throttle_$(arg ID)" required="True" output="screen" 
+    args= "messages /uav$(arg ID)/target_position_estimation 1 /uav$(arg ID)/target_position_delay">   
     </node>
 
 </launch>

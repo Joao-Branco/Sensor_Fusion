@@ -17,7 +17,7 @@ def target_callback(msg):
     noise_uav_y = np.random.normal(mean,std)        
     
     
-    pub_uav.publish(msg.x + noise_uav_x, msg.y + noise_uav_y)
+    pub_uav.publish(msg.x + noise_uav_x, msg.y + noise_uav_y, msg.timestamp)
     rospy.loginfo("Noise has been published in UAV" + str(uav_id))
 
 if __name__ == "__main__":

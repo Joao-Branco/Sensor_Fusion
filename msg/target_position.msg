@@ -1,3 +1,3 @@
 float64 x
 float64 y
-#time clock
+time timestamp

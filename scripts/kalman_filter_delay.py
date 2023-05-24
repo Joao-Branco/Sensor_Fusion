@@ -4,6 +4,7 @@ import rospy
 import numpy as np
 from sensor_fusion.msg import target_position_fuse
 from sensor_fusion.msg import target_position
+from std_msgs.msg import Float64, Int64
 
 
 class KalmanFilter(object):
@@ -42,17 +43,19 @@ class KalmanFilter(object):
     def update_fuse(self, z):
         y = z - np.dot(self.H_fuse, self.x)
         S = self.R_fuse + np.dot(self.H_fuse, np.dot(self.P, self.H_fuse.T))
-        K = np.dot(np.dot(self.P, self.H_fuse.T), np.linalg.inv(S))
-        self.x = self.x + np.dot(K, y)
+        self.K = np.dot(np.dot(self.P, self.H_fuse.T), np.linalg.inv(S))
+        self.x = self.x + np.dot(self.K, y)
         I = np.eye(self.n)
-        self.P = np.dot(np.dot(I - np.dot(K, self.H_fuse), self.P), 
-        	(I - np.dot(K, self.H_fuse)).T) + np.dot(np.dot(K, self.R_fuse), K.T)
+        self.P = np.dot(np.dot(I - np.dot(self.K, self.H_fuse), self.P), 
+        	(I - np.dot(self.K, self.H_fuse)).T) + np.dot(np.dot(self.K, self.R_fuse), self.K.T)
+        
 
 class Fusion:
     def __init__(self, f, uav_id, uav_total):
 
         dt = 1 / f
 
+        
         self.uav_id = uav_id
         self.uav_total = uav_total
 
@@ -99,7 +102,7 @@ class Fusion:
 
         # R ----Measurement Noise
 
-
+        self.K_mem = []
 
         rospy.Subscriber('/uav' + str(uav_id) + '/target_position', target_position, self.target_callback)
         
@@ -124,13 +127,14 @@ class Fusion:
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
         state.timestamp = rospy.Time.now()
+        predicts_mem.append([self.kf.x , state.timestamp.to_nsec() * 1e-9])
 
         rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
         return state
-        
 
         
     def target_callback(self, msg):
+        
         measurment = np.array([[msg.x], [msg.y]])
 
         self.kf.update(measurment)
@@ -144,8 +148,28 @@ class Fusion:
 
 
     def target_callback_fuse(self, msg):
+        
+        
+        timestamp = msg.timestamp.to_nsec() * 1e-9
+        time_now = rospy.Time.now().to_nsec() * 1e-9
+        delay = time_now - timestamp
+        
+        rospy.loginfo('Timestamp %f, T_now %f, Delay %f', timestamp, time_now, delay)
+        
+        pub_delay.publish(delay)
+        
+        N = round(delay * f)
+                        
+        msg.x = msg.x + delay * msg.v_x
+        msg.y = msg.y + delay * msg.v_y
+                
+        
         measurment = np.array([[msg.x], [msg.y], [msg.v_x], [msg.v_y]])
-        print(measurment)
+
+        rospy.loginfo('N %f', N)
+        
+        pub_samples.publish(N)
+        
         self.kf.update_fuse(measurment)
         state = target_position_fuse()
         state.x = self.kf.x[0]
@@ -153,6 +177,7 @@ class Fusion:
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
         state.timestamp = rospy.Time.now()
+        k_mem.append(self.kf.K)
         rospy.loginfo('Kalman %d ---------Update estimation was made', self.uav_id)
         
 
@@ -168,24 +193,27 @@ if __name__ == "__main__":
     uav_total = rospy.get_param("/total_uav")
     rospy.loginfo('Fusion Kalman filter %d start', uav_id)
         
-    
+    predicts_mem = []
+    k_mem = []
 
     
     pub_estimation = rospy.Publisher('target_position_estimation', target_position_fuse, queue_size=1)
+    
+    pub_delay = rospy.Publisher('delay_estimation', Float64, queue_size=1)
+    
+    pub_samples = rospy.Publisher('samples_delay', Int64, queue_size=1)
+    
     
     
     f = 20
     
     #frequency of the Kalman filter
-    
-    
     ss = Fusion(f, uav_id, uav_total)
 
     rate = rospy.Rate(f) 
-    time_ref=0
 
     while not rospy.is_shutdown(): 
         state = ss.predict()
         pub_estimation.publish(state)
-        
         rate.sleep()
+        

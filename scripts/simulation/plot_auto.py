@@ -20,7 +20,7 @@ import sklearn.metrics
 
 
 
-def run_auto_plots(bag_fn, uav_total, single, folder_png=None, folder_pgf=None):
+def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_png=None, folder_pgf=None, folder_sim=None):
     if single == True:
         uav_total = 1
         
@@ -28,6 +28,7 @@ def run_auto_plots(bag_fn, uav_total, single, folder_png=None, folder_pgf=None):
     
     
     topics = ['/target_position']
+    
 
 
     for i in range(1, uav_total + 1):
@@ -35,6 +36,10 @@ def run_auto_plots(bag_fn, uav_total, single, folder_png=None, folder_pgf=None):
         topics.append('/uav' + str(i) + '/target_position')
         topics.append('/uav' + str(i) + '/target_position_fuse')
         topics.append('/uav' + str(i) + '/target_position_estimation')
+        if (delay == True):
+            topics.append('/uav' + str(i) + '/delay')
+        if (delay_estimation == True):
+            topics.append('/uav' + str(i) + '/delay_estimation')
 
 
 
@@ -59,11 +64,16 @@ def run_auto_plots(bag_fn, uav_total, single, folder_png=None, folder_pgf=None):
         dataframes[f'/uav{str(i)}/target_position'].iloc[:,0] = dataframes[f'/uav{str(i)}/target_position'].iloc[:,0] - minimo 
         dataframes[f'/uav{str(i)}/target_position_fuse'].iloc[:,0] = dataframes[f'/uav{str(i)}/target_position_fuse'].iloc[:,0] - minimo
         dataframes[f'/uav{str(i)}/target_position_estimation'].iloc[:,0] = dataframes[f'/uav{str(i)}/target_position_estimation'].iloc[:,0] - minimo
+        if (delay == True):
+            dataframes[f'/uav{str(i)}/delay'].iloc[:,0] = dataframes[f'/uav{str(i)}/delay'].iloc[:,0] - minimo
+        if (delay_estimation == True):
+            dataframes[f'/uav{str(i)}/delay_estimation'].iloc[:,0] = dataframes[f'/uav{str(i)}/delay_estimation'].iloc[:,0] - minimo
+            
 
 
 
     target = dataframes['/target_position']
-    target.columns = ['Time', 'x_target', 'y_target', 'v_x_target', 'v_y_target']
+    target.columns = ['Time', 'x_target', 'y_target', 'v_x_target', 'v_y_target', 'Timestamp_sec', 'Timestamp_nsec']
     #target.Time = pd.to_timedelta( target.Time, "sec")
     target_index = target.set_index('Time')
     data = {}
@@ -200,21 +210,43 @@ def run_auto_plots(bag_fn, uav_total, single, folder_png=None, folder_pgf=None):
     im_fn_pgf = os.path.join(folder_pgf, im_basename_pgf) if folder_pgf else im_basename_pgf
     plt.savefig(im_fn_pgf)
     
+    if (delay == True):
+        for i in range(1, uav_total+1):
+            plt.figure(figsize=(15, 5))
+            plt.plot(dataframes[f'/uav{str(i)}/delay'].Time, dataframes[f'/uav{str(i)}/delay'].data, 'x', markersize=5, label='true value')
+            if (delay_estimation == True):
+                plt.plot(dataframes[f'/uav{str(i)}/delay_estimation'].Time, dataframes[f'/uav{str(i)}/delay_estimation'].data, 'x', markersize=5, label='estimation')
+            plt.title('UAV ' + str(i), fontsize=20)
+            plt.xlabel('t (s)', fontsize=15)
+            plt.ylabel('Delay (s)', fontsize=15)
+            plt.legend(fontsize=10)
+            plt.grid()
+            im_basename_png = 'Delay_UAV' + str(i) + '.png'
+            im_basename_pgf = 'Delay_UAV' + str(i) + '.pgf'
+            im_fn_png = os.path.join(folder_png, im_basename_png) if folder_png else im_basename_png
+            plt.savefig(im_fn_png)
+            im_fn_pgf = os.path.join(folder_pgf, im_basename_pgf) if folder_pgf else im_basename_pgf
+            plt.savefig(im_fn_pgf)
+            
+        
+    
+    
+    
     error_fusion = pd.DataFrame(columns=['UAV','error_x', 'error_y', 'RMSE_x', 'RMSE_y', 'euclidean', 'error_v_x', 'error_v_y', 'RMSE_v_x', 'RMSE_v_y'])
     
 
     if (single == True):
-        data_error['uav1'].to_csv('/home/branco/catkin_ws/src/sensor_fusion/sims/error_uav_single.csv')
+        data_error['uav1'].to_csv( folder_sim + '/error_uav_single.csv')
         error_fusion.loc[len(error_fusion)] = ['uav1' , np.mean(data_error['uav1'].error_x) , np.mean(data_error['uav1'].error_y), math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].x_target, data_error['uav1'].x)),  math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].y_target, data_error['uav1'].y)), np.mean(data_error['uav1'].euclidean), np.mean(data_error['uav1'].error_v_x), np.mean(data_error['uav1'].error_v_y), math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].v_x_target, data_error['uav1'].v_x)), math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].v_y_target, data_error['uav1'].v_y))]
-        error_fusion.to_csv(f'/home/branco/catkin_ws/src/sensor_fusion/sims/error_med_single.csv')
+        error_fusion.to_csv( folder_sim + f'/error_med_single.csv')
         
     else:    
         for i in range(1, uav_total+1):
-            data_error[f'uav{str(i)}'].to_csv(f'/home/branco/catkin_ws/src/sensor_fusion/sims/uav{str(i)}.csv')
+            data_error[f'uav{str(i)}'].to_csv( folder_sim + f'/uav{str(i)}.csv')
             error_fusion.loc[len(error_fusion)] = [f'uav{str(i)}' , np.mean(data_error[f'uav{str(i)}'].error_x) , np.mean(data_error[f'uav{str(i)}'].error_y), math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].x_target, data_error[f'uav{str(i)}'].x)),  math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].y_target, data_error[f'uav{str(i)}'].y)), np.mean(data_error[f'uav{str(i)}'].euclidean), np.mean(data_error[f'uav{str(i)}'].error_v_x), np.mean(data_error[f'uav{str(i)}'].error_v_y), math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].v_x_target, data_error['uav1'].v_x)), math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].v_y_target, data_error['uav1'].v_y))]
             
             
-        error_fusion.to_csv(f'/home/branco/catkin_ws/src/sensor_fusion/sims/error_fusion.csv')
+        error_fusion.to_csv( folder_sim + f'/error_fusion.csv')
 
 
 

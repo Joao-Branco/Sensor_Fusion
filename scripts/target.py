@@ -37,17 +37,19 @@ if __name__ == "__main__":
 
     rate = rospy.Rate(f)
     
-    #t_0 = rospy.Time.now()
-    time_ref=0
+    t_0 = rospy.Time.now()
+    
+    #t=0
 
     while not rospy.is_shutdown():
         
-        time_ref = time_ref+ 1/f
         
         
-        #t = rospy.Time.now()
+        t = rospy.Time.now()
         
-        #t = (t-t_0).to_sec()
+        t = (t-t_0).to_sec()
+        
+        t = t + 1/f
         
         
         rospy.loginfo("X: %f, Y: %f", target.x, target.y) 
@@ -62,14 +64,14 @@ if __name__ == "__main__":
         
         #Target Moving with aceleration not constant
         
-        target.x = 5 * math.cos( 0.09 * time_ref) 
-        target.v_x =  -0.45 * math.sin(0.09 * time_ref)
+        target.x = 5 * math.cos( 0.09 * t) 
+        target.v_x =  -0.45 * math.sin(0.09 * t)
         
-        target.y = 5 * math.sin( 0.09 * time_ref)
-        target.v_y = 0.45 * math.cos(0.09 * time_ref)
+        target.y = 5 * math.sin( 0.09 * t)
+        target.v_y = 0.45 * math.cos(0.09 * t)
         
         
-        pub.publish(target.x, target.y, target.v_x, target.v_y)  #, rospy.Time.now())
+        pub.publish(target.x, target.y, target.v_x, target.v_y, rospy.Time.now())
 
         
         rospy.loginfo("Target has been publish")
