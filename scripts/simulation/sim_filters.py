@@ -42,7 +42,7 @@ os.kill(p_launch_single.pid, signal.SIGINT)
 
 os.kill(p_bag_single.pid, signal.SIGINT)
 
-time.sleep(2)
+time.sleep(15)
 
 single = True
 
@@ -70,6 +70,7 @@ bag_fn_multi = sim_dir.joinpath(f"multi{SIM_ID}.bag")
 
 cmd_launch_multi = "roslaunch sensor_fusion multi_filters_sim.launch"
 cmd_bag_multi = f"rosbag record -a -O {str(bag_fn_multi)}"
+cmd_rosclean = "rosclean"
 
 
 p_bag_multi = sp.Popen(cmd_bag_multi.split())
@@ -88,7 +89,7 @@ os.kill(p_launch_multi.pid, signal.SIGINT)
 
 os.kill(p_bag_multi.pid, signal.SIGINT)
 
-time.sleep(6)
+time.sleep(15)
 
 
 single = False
@@ -130,7 +131,7 @@ os.kill(p_launch_multi.pid, signal.SIGINT)
 
 os.kill(p_bag_multi.pid, signal.SIGINT)
 
-time.sleep(6)
+time.sleep(20)
 
 
 single = False
@@ -177,7 +178,7 @@ os.kill(p_launch_multi.pid, signal.SIGINT)
 
 os.kill(p_bag_multi.pid, signal.SIGINT)
 
-time.sleep(6)
+time.sleep(20)
 
 
 single = False

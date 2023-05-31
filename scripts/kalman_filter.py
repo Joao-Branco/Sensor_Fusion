@@ -145,7 +145,6 @@ class Fusion:
 
     def target_callback_fuse(self, msg):
         measurment = np.array([[msg.x], [msg.y], [msg.v_x], [msg.v_y]])
-        print(measurment)
         self.kf.update_fuse(measurment)
         state = target_position_fuse()
         state.x = self.kf.x[0]

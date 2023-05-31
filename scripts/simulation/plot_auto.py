@@ -78,8 +78,6 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_pn
     target_index = target.set_index('Time')
     data = {}
     data_error = {}
-    #data_noise = {}
-    
 
 
 
@@ -125,6 +123,8 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_pn
         data_error[f'uav{str(i)}'].reset_index(inplace=True)
 
 
+    #Graphs of errors in estimation of uavs in x and y
+    
     plt.figure(figsize=(15, 5))
 
     plt.subplot(1, 2, 1)
@@ -168,17 +168,19 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_pn
     plt.savefig(im_fn_pgf)
 
 
+    #Graphs of position target and estimation of uavs
+    
     plt.figure(figsize=(6, 6))
-
     
     if (single == True):
         plt.plot(data_error['uav1'].x, data_error['uav1'].y, 'x', markersize=4, label='UAV 1')
         plt.plot(dataframes['/uav1/target_position'].x, dataframes['/uav1/target_position'].y, 'm.', markersize=2, label="Alvo com ruido")
+
+            
         
     else:
         for i in range(1, uav_total+1):
             plt.plot(data_error[f'uav{str(i)}'].x, data_error[f'uav{str(i)}'].y, 'x', markersize=5, label='UAV ' + str(i))
-            #plt.plot(dataframes[f'/uav{str(i)}/target_position'].x, dataframes[f'/uav{str(i)}/target_position'].y, '.', markersize=2, label="Alvo com ruido")
 
 
     plt.plot(target.x_target, target.y_target, 'k',linewidth='3', label="Alvo")
@@ -202,13 +204,19 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_pn
     else:
         im_basename_png = "Position_multi.png"
         im_basename_pgf = "Position_multi.pgf"
-
-
+        
 
     im_fn_png = os.path.join(folder_png, im_basename_png) if folder_png else im_basename_png
     plt.savefig(im_fn_png)
     im_fn_pgf = os.path.join(folder_pgf, im_basename_pgf) if folder_pgf else im_basename_pgf
     plt.savefig(im_fn_pgf)
+    
+    
+    #GIFs of position of target and estimation of uavs
+    
+    
+    
+    #Graphs of delays
     
     if (delay == True):
         for i in range(1, uav_total+1):
@@ -229,7 +237,7 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_pn
             plt.savefig(im_fn_pgf)
             
         
-    
+    # data of errors and measurments
     
     
     error_fusion = pd.DataFrame(columns=['UAV','error_x', 'error_y', 'RMSE_x', 'RMSE_y', 'euclidean', 'error_v_x', 'error_v_y', 'RMSE_v_x', 'RMSE_v_y'])

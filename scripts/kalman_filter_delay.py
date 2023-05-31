@@ -54,7 +54,7 @@ class Fusion:
     def __init__(self, f, uav_id, uav_total):
 
         dt = 1 / f
-
+        self.timestamp_ant = 0
         
         self.uav_id = uav_id
         self.uav_total = uav_total
@@ -102,7 +102,6 @@ class Fusion:
 
         # R ----Measurement Noise
 
-        self.K_mem = []
 
         rospy.Subscriber('/uav' + str(uav_id) + '/target_position', target_position, self.target_callback)
         
@@ -149,20 +148,35 @@ class Fusion:
 
     def target_callback_fuse(self, msg):
         
-        
         timestamp = msg.timestamp.to_nsec() * 1e-9
         time_now = rospy.Time.now().to_nsec() * 1e-9
         delay = time_now - timestamp
         
-        rospy.loginfo('Timestamp %f, T_now %f, Delay %f', timestamp, time_now, delay)
+        rospy.loginfo('Timestamp %f, T_now %f, Delay %f, timestamp_ant %f', timestamp, time_now, delay, self.timestamp_ant)
         
         pub_delay.publish(delay)
         
         N = round(delay * f)
+        
+        rospy.loginfo('MSG  %f, %f, %f, %f', msg.x, msg.y, msg.v_x, msg.v_y)
                         
-        msg.x = msg.x + delay * msg.v_x
-        msg.y = msg.y + delay * msg.v_y
-                
+        #msg.x = self.kf.x[0] + (msg.x - self.kf.x[0]) / (time_now - self.kf.time) * (timestamp - self.kf.time)
+        #msg.y = self.kf.x[1] + (msg.y - self.kf.x[1]) / (time_now - self.kf.time) * (timestamp - self.kf.time)
+        #msg.v_x = self.kf.x[2] + (msg.v_x - self.kf.x[2]) / (time_now - self.kf.time) * (timestamp - self.kf.time)
+        #msg.v_y = self.kf.x[3] + (msg.v_x - self.kf.x[3]) / (time_now - self.kf.time) * (timestamp - self.kf.time)
+        
+        
+        
+        if (self.timestamp_ant > 0):
+            msg.x = self.msg_ant.x + (msg.x - self.msg_ant.x) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
+            msg.y = self.msg_ant.y + (msg.y - self.msg_ant.y) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
+            msg.v_x = self.msg_ant.v_x + (msg.v_x - self.msg_ant.v_x) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
+            msg.v_y = self.msg_ant.v_y + (msg.v_y - self.msg_ant.v_y) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
+        
+        self.timestamp_ant = timestamp
+        self.msg_ant = msg
+        
+        rospy.loginfo('MSG correction %f, %f, %f, %f', msg.x, msg.y, msg.v_x, msg.v_y) 
         
         measurment = np.array([[msg.x], [msg.y], [msg.v_x], [msg.v_y]])
 
@@ -177,7 +191,6 @@ class Fusion:
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
         state.timestamp = rospy.Time.now()
-        k_mem.append(self.kf.K)
         rospy.loginfo('Kalman %d ---------Update estimation was made', self.uav_id)
         
 

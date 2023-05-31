@@ -67,8 +67,11 @@ if __name__ == "__main__":
         target.x = 5 * math.cos( 0.09 * t) 
         target.v_x =  -0.45 * math.sin(0.09 * t)
         
-        target.y = 5 * math.sin( 0.09 * t)
-        target.v_y = 0.45 * math.cos(0.09 * t)
+        #target.y = 5 * math.sin( 0.09 * t)
+        #target.v_y = 0.45 * math.cos(0.09 * t)
+        
+        target.y = 1 * t
+        target.v_y = 1
         
         
         pub.publish(target.x, target.y, target.v_x, target.v_y, rospy.Time.now())
