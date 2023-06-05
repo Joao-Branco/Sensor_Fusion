@@ -16,6 +16,7 @@ from functools import reduce
 from scipy import signal
 import os.path
 import sklearn.metrics
+from matplotlib.animation import FuncAnimation, PillowWriter
 
 
 
@@ -214,6 +215,53 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_pn
     
     #GIFs of position of target and estimation of uavs
     
+    
+    
+    if (single == True):
+        fig,ax = plt.subplots()
+        def animate(i):
+            ax.clear()
+            line, = ax.plot(target.iloc[0:i,1], target.iloc[0:i,2], 'k',linewidth='3', label="Alvo")
+            setpoints1, = ax.plot(data_error['uav1'].iloc[0:i,1], data_error['uav1'].iloc[0:i,2], 'x', markersize=4, label='UAV 1')
+            setpoints2, = ax.plot(dataframes['/uav1/target_position'].iloc[0:i,1], dataframes['/uav1/target_position'].iloc[0:i,2], 'm.', markersize=2, label="Alvo com ruido")
+            point1, = ax.plot(target.iloc[0,1], target.iloc[0,2], 'go', markersize=8)
+            point2, = ax.plot(target.iloc[-1,1], target.iloc[-1,2], 'ro',  markersize=8)
+            point3, = ax.plot(target.iloc[i,1], target.iloc[i,2], 'ko',  markersize=8)
+            return line, setpoints1, setpoints2 , point1, point2, point3,
+        
+        im_basename_gif = "Position_single.gif"
+        ax.title("Posição", fontsize=20)
+        ax.xlabel('X (m)', fontsize=15)
+        ax.ylabel('Y (m)', fontsize=15)
+        ax.legend(fontsize=10)
+        ax.grid()
+        im_fn_gif = os.path.join(folder_png, im_basename_gif) if folder_png else im_basename_gif
+        ani = FuncAnimation(fig, animate, interval=40, blit=True, repeat=True)    
+        ani.save(im_fn_gif, writer=PillowWriter(fps=20))
+        
+    else:
+        fig,ax = plt.subplots()
+        def animate(i):
+            ax.clear()
+            setpoints = []
+            line, = ax.plot(target.iloc[0:i,1], target.iloc[0:i,2], 'k',linewidth='3', label="Alvo")
+            for j in range(1, uav_total+1):
+                setpoints.append(ax.plot(data_error[f'uav{str(j)}'].iloc[0:i,1], data_error[f'uav{str(j)}'].iloc[0:i,2], 'x', markersize=5, label='UAV ' + str(i)))
+            point1, = ax.plot(target.iloc[0,1], target.iloc[0,2], 'go', markersize=8)
+            point2, = ax.plot(target.iloc[-1,1], target.iloc[-1,2], 'ro',  markersize=8)
+            point3, = ax.plot(target.iloc[i,1], target.iloc[i,2], 'ko',  markersize=8)
+            return line, setpoints, point1, point2, point3,
+        
+        im_basename_gif = "Position_multi.gif"
+        ax.title("Posição", fontsize=20)
+        ax.xlabel('X (m)', fontsize=15)
+        ax.ylabel('Y (m)', fontsize=15)
+        ax.legend(fontsize=10)
+        ax.grid()
+        im_fn_gif = os.path.join(folder_png, im_basename_gif) if folder_png else im_basename_gif
+        ani = FuncAnimation(fig, animate, interval=40, blit=True, repeat=True)    
+        ani.save(im_fn_gif, writer=PillowWriter(fps=20))
+        
     
     
     #Graphs of delays

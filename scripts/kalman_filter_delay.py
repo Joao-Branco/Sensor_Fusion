@@ -159,6 +159,8 @@ class Fusion:
         N = round(delay * f)
         
         rospy.loginfo('MSG  %f, %f, %f, %f', msg.x, msg.y, msg.v_x, msg.v_y)
+        
+        pub_msg_true.publish(msg)
                         
         #msg.x = self.kf.x[0] + (msg.x - self.kf.x[0]) / (time_now - self.kf.time) * (timestamp - self.kf.time)
         #msg.y = self.kf.x[1] + (msg.y - self.kf.x[1]) / (time_now - self.kf.time) * (timestamp - self.kf.time)
@@ -175,6 +177,8 @@ class Fusion:
         
         self.timestamp_ant = timestamp
         self.msg_ant = msg
+        
+        pub_msg_correction.publish(msg)
         
         rospy.loginfo('MSG correction %f, %f, %f, %f', msg.x, msg.y, msg.v_x, msg.v_y) 
         
@@ -215,6 +219,10 @@ if __name__ == "__main__":
     pub_delay = rospy.Publisher('delay_estimation', Float64, queue_size=1)
     
     pub_samples = rospy.Publisher('samples_delay', Int64, queue_size=1)
+    
+    pub_msg_true = rospy.Publisher('msg_true', Int64, queue_size=1)
+    
+    pub_msg_correction = rospy.Publisher('msg_correction', Int64, queue_size=1)
     
     
     
