@@ -128,7 +128,7 @@ class Fusion:
         state.timestamp = rospy.Time.now()
         predicts_mem.append([self.kf.x , state.timestamp.to_nsec() * 1e-9])
 
-        rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
+        #rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
         return state
 
         
@@ -143,7 +143,7 @@ class Fusion:
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
         state.timestamp = rospy.Time.now()
-        rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Update was made')
+        #rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Update was made')
 
 
     def target_callback_fuse(self, msg):
@@ -152,15 +152,15 @@ class Fusion:
         time_now = rospy.Time.now().to_nsec() * 1e-9
         delay = time_now - timestamp
         
-        rospy.loginfo('Timestamp %f, T_now %f, Delay %f, timestamp_ant %f', timestamp, time_now, delay, self.timestamp_ant)
+        #rospy.loginfo('Timestamp %f, T_now %f, Delay %f, timestamp_ant %f', timestamp, time_now, delay, self.timestamp_ant)
         
         pub_delay.publish(delay)
         
         N = round(delay * f)
         
-        rospy.loginfo('MSG  %f, %f, %f, %f', msg.x, msg.y, msg.v_x, msg.v_y)
+        #rospy.loginfo('MSG  %f, %f, %f, %f', msg.x, msg.y, msg.v_x, msg.v_y)
         
-        pub_msg_true.publish(msg)
+        #pub_msg_true.publish(msg)
                         
         #msg.x = self.kf.x[0] + (msg.x - self.kf.x[0]) / (time_now - self.kf.time) * (timestamp - self.kf.time)
         #msg.y = self.kf.x[1] + (msg.y - self.kf.x[1]) / (time_now - self.kf.time) * (timestamp - self.kf.time)
@@ -178,13 +178,13 @@ class Fusion:
         self.timestamp_ant = timestamp
         self.msg_ant = msg
         
-        pub_msg_correction.publish(msg)
+        #pub_msg_correction.publish(msg)
         
-        rospy.loginfo('MSG correction %f, %f, %f, %f', msg.x, msg.y, msg.v_x, msg.v_y) 
+        #rospy.loginfo('MSG correction %f, %f, %f, %f', msg.x, msg.y, msg.v_x, msg.v_y) 
         
         measurment = np.array([[msg.x], [msg.y], [msg.v_x], [msg.v_y]])
 
-        rospy.loginfo('N %f', N)
+        #rospy.loginfo('N %f', N)
         
         pub_samples.publish(N)
         
@@ -195,7 +195,7 @@ class Fusion:
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
         state.timestamp = rospy.Time.now()
-        rospy.loginfo('Kalman %d ---------Update estimation was made', self.uav_id)
+        #rospy.loginfo('Kalman %d ---------Update estimation was made', self.uav_id)
         
 
 
@@ -220,9 +220,9 @@ if __name__ == "__main__":
     
     pub_samples = rospy.Publisher('samples_delay', Int64, queue_size=1)
     
-    pub_msg_true = rospy.Publisher('msg_true', Int64, queue_size=1)
+    pub_msg_true = rospy.Publisher('msg_true', target_position_fuse, queue_size=1)
     
-    pub_msg_correction = rospy.Publisher('msg_correction', Int64, queue_size=1)
+    pub_msg_correction = rospy.Publisher('msg_correction', target_position_fuse, queue_size=1)
     
     
     

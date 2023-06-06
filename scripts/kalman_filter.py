@@ -125,7 +125,7 @@ class Fusion:
         state.v_y = self.kf.x[3]
         state.timestamp = rospy.Time.now()
 
-        rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
+        #rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
         return state
         
 
@@ -140,7 +140,7 @@ class Fusion:
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
         state.timestamp = rospy.Time.now()
-        rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Update was made')
+        #rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Update was made')
 
 
     def target_callback_fuse(self, msg):
@@ -152,7 +152,7 @@ class Fusion:
         state.v_x = self.kf.x[2]
         state.v_y = self.kf.x[3]
         state.timestamp = rospy.Time.now()
-        rospy.loginfo('Kalman %d ---------Update estimation was made', self.uav_id)
+        #rospy.loginfo('Kalman %d ---------Update estimation was made', self.uav_id)
         
 
 

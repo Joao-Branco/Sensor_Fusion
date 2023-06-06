@@ -21,7 +21,7 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 
 
 
-def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_png=None, folder_pgf=None, folder_sim=None):
+def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, folder_png=None, folder_pgf=None, folder_sim=None):
     if single == True:
         uav_total = 1
         
@@ -34,9 +34,10 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_pn
 
     for i in range(1, uav_total + 1):
 
-        topics.append('/uav' + str(i) + '/target_position')
-        topics.append('/uav' + str(i) + '/target_position_fuse')
-        topics.append('/uav' + str(i) + '/target_position_estimation')
+        topics.append('/uav' + str(i) + '/target_position') # Noise
+        if (fuse == True):
+            topics.append('/uav' + str(i) + '/target_position_fuse') # After throotle or after buffer
+        topics.append('/uav' + str(i) + '/target_position_estimation') # Kalman filter
         if (delay == True):
             topics.append('/uav' + str(i) + '/delay')
         if (delay_estimation == True):
@@ -55,6 +56,8 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_pn
         data = b.message_by_topic(topic)
         print(data)
         df = pd.read_csv(data)
+        df['Timestamp'] = df['timestamp.secs'] + df['timestamp.nsecs'] * 1e-9
+        df.drop(['timestamp.secs','timestamp.nsecs'], axis='columns', inplace=True)
         dataframes[topic] = df
         minimos.append(dataframes[topic].iloc[0,0])
 
@@ -63,7 +66,8 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_pn
 
     for i in range(1, uav_total+1):
         dataframes[f'/uav{str(i)}/target_position'].iloc[:,0] = dataframes[f'/uav{str(i)}/target_position'].iloc[:,0] - minimo 
-        dataframes[f'/uav{str(i)}/target_position_fuse'].iloc[:,0] = dataframes[f'/uav{str(i)}/target_position_fuse'].iloc[:,0] - minimo
+        if (fuse == True):
+            dataframes[f'/uav{str(i)}/target_position_fuse'].iloc[:,0] = dataframes[f'/uav{str(i)}/target_position_fuse'].iloc[:,0] - minimo
         dataframes[f'/uav{str(i)}/target_position_estimation'].iloc[:,0] = dataframes[f'/uav{str(i)}/target_position_estimation'].iloc[:,0] - minimo
         if (delay == True):
             dataframes[f'/uav{str(i)}/delay'].iloc[:,0] = dataframes[f'/uav{str(i)}/delay'].iloc[:,0] - minimo
@@ -74,7 +78,8 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_pn
 
 
     target = dataframes['/target_position']
-    target.columns = ['Time', 'x_target', 'y_target', 'v_x_target', 'v_y_target', 'Timestamp_sec', 'Timestamp_nsec']
+    print(target)
+    target.columns = ['Time', 'x_target', 'y_target', 'v_x_target', 'v_y_target', 'Timestamp_target']
     #target.Time = pd.to_timedelta( target.Time, "sec")
     target_index = target.set_index('Time')
     data = {}
@@ -90,8 +95,8 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_pn
     for i in range(1, uav_total+1):
 
         data[f'uav{str(i)}'] = dataframes[f'/uav{str(i)}/target_position_estimation']
-        data[f'uav{str(i)}'].drop(data[f'uav{str(i)}'].tail(5).index, inplace = True)
-        data[f'uav{str(i)}'].drop(data[f'uav{str(i)}'].index[:5], inplace = True)
+        #data[f'uav{str(i)}'].drop(data[f'uav{str(i)}'].tail(5).index, inplace = True)
+        #data[f'uav{str(i)}'].drop(data[f'uav{str(i)}'].index[:5], inplace = True)
         #data_noise[f'uav{str(i)}'] = dataframes[f'/uav{str(i)}/target_position']
         #data_noise[f'uav{str(i)}'].columns = ['Time', 'x_noise', 'y_noise']
         #data_noise_index = data_noise[f'uav{str(i)}'].set_index('Time')
@@ -104,13 +109,13 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_pn
 
         data_error[f'uav{str(i)}'] = data[f'uav{str(i)}'].interpolate().loc[real_index]
 
-        error_x = (data_error[f'uav{str(i)}'].x_target - data_error[f'uav{str(i)}'].x)
-        error_y = (data_error[f'uav{str(i)}'].y_target - data_error[f'uav{str(i)}'].y)
+        error_x = abs(data_error[f'uav{str(i)}'].x_target - data_error[f'uav{str(i)}'].x)
+        error_y = abs(data_error[f'uav{str(i)}'].y_target - data_error[f'uav{str(i)}'].y)
         
         euclidean = np.sqrt(error_x * error_x + error_y * error_y)
         
-        error_v_x = (data_error[f'uav{str(i)}'].v_x_target - data_error[f'uav{str(i)}'].v_x)
-        error_v_y = (data_error[f'uav{str(i)}'].v_y_target - data_error[f'uav{str(i)}'].v_y)
+        error_v_x = abs(data_error[f'uav{str(i)}'].v_x_target - data_error[f'uav{str(i)}'].v_x)
+        error_v_y = abs(data_error[f'uav{str(i)}'].v_y_target - data_error[f'uav{str(i)}'].v_y)
 
 
         data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "error_x", error_x)
@@ -217,50 +222,41 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, folder_pn
     
     
     
-    if (single == True):
-        fig,ax = plt.subplots()
-        def animate(i):
-            ax.clear()
-            line, = ax.plot(target.iloc[0:i,1], target.iloc[0:i,2], 'k',linewidth='3', label="Alvo")
-            setpoints1, = ax.plot(data_error['uav1'].iloc[0:i,1], data_error['uav1'].iloc[0:i,2], 'x', markersize=4, label='UAV 1')
-            setpoints2, = ax.plot(dataframes['/uav1/target_position'].iloc[0:i,1], dataframes['/uav1/target_position'].iloc[0:i,2], 'm.', markersize=2, label="Alvo com ruido")
-            point1, = ax.plot(target.iloc[0,1], target.iloc[0,2], 'go', markersize=8)
-            point2, = ax.plot(target.iloc[-1,1], target.iloc[-1,2], 'ro',  markersize=8)
-            point3, = ax.plot(target.iloc[i,1], target.iloc[i,2], 'ko',  markersize=8)
-            return line, setpoints1, setpoints2 , point1, point2, point3,
+    # if (single == True):
+    #     fig,ax = plt.subplots()
+    #     def animate(i):
+    #         ax.clear()
+    #         line, = ax.plot(target.iloc[0:i,1], target.iloc[0:i,2], 'k',linewidth='3', label="Alvo")
+    #         setpoints1, = ax.plot(data_error['uav1'].iloc[0:i,1], data_error['uav1'].iloc[0:i,2], 'x', markersize=4, label='UAV 1')
+    #         setpoints2, = ax.plot(dataframes['/uav1/target_position'].iloc[0:i,1], dataframes['/uav1/target_position'].iloc[0:i,2], 'm.', markersize=2, label="Alvo com ruido")
+    #         point1, = ax.plot(target.iloc[0,1], target.iloc[0,2], 'go', markersize=8)
+    #         point2, = ax.plot(target.iloc[-1,1], target.iloc[-1,2], 'ro',  markersize=8)
+    #         point3, = ax.plot(target.iloc[i,1], target.iloc[i,2], 'ko',  markersize=8)
+    #         return line, setpoints1, setpoints2 , point1, point2, point3,
         
-        im_basename_gif = "Position_single.gif"
-        ax.title("Posição", fontsize=20)
-        ax.xlabel('X (m)', fontsize=15)
-        ax.ylabel('Y (m)', fontsize=15)
-        ax.legend(fontsize=10)
-        ax.grid()
-        im_fn_gif = os.path.join(folder_png, im_basename_gif) if folder_png else im_basename_gif
-        ani = FuncAnimation(fig, animate, interval=40, blit=True, repeat=True)    
-        ani.save(im_fn_gif, writer=PillowWriter(fps=20))
+
+    #     im_basename_gif = "Position_single.gif"
+    #     im_fn_gif = os.path.join(folder_png, im_basename_gif) if folder_png else im_basename_gif
+    #     ani = FuncAnimation(fig, animate, interval=40, blit=True, repeat=True, frames = len(target.index))    
+    #     ani.save(im_fn_gif, writer=PillowWriter(fps=20))
         
-    else:
-        fig,ax = plt.subplots()
-        def animate(i):
-            ax.clear()
-            setpoints = []
-            line, = ax.plot(target.iloc[0:i,1], target.iloc[0:i,2], 'k',linewidth='3', label="Alvo")
-            for j in range(1, uav_total+1):
-                setpoints.append(ax.plot(data_error[f'uav{str(j)}'].iloc[0:i,1], data_error[f'uav{str(j)}'].iloc[0:i,2], 'x', markersize=5, label='UAV ' + str(i)))
-            point1, = ax.plot(target.iloc[0,1], target.iloc[0,2], 'go', markersize=8)
-            point2, = ax.plot(target.iloc[-1,1], target.iloc[-1,2], 'ro',  markersize=8)
-            point3, = ax.plot(target.iloc[i,1], target.iloc[i,2], 'ko',  markersize=8)
-            return line, setpoints, point1, point2, point3,
+    # else:
+    #     fig,ax = plt.subplots()
+    #     def animate(i):
+    #         ax.clear()
+    #         setpoints = []
+    #         line, = ax.plot(target.iloc[0:i,1], target.iloc[0:i,2], 'k',linewidth='3', label="Alvo")
+    #         for j in range(1, uav_total+1):
+    #             setpoints.append(ax.plot(data_error[f'uav{str(j)}'].iloc[0:i,1], data_error[f'uav{str(j)}'].iloc[0:i,2], 'x', markersize=5, label='UAV ' + str(i)))
+    #         point1, = ax.plot(target.iloc[0,1], target.iloc[0,2], 'go', markersize=8)
+    #         point2, = ax.plot(target.iloc[-1,1], target.iloc[-1,2], 'ro',  markersize=8)
+    #         point3, = ax.plot(target.iloc[i,1], target.iloc[i,2], 'ko',  markersize=8)
+    #         return line, setpoints, point1, point2, point3,
         
-        im_basename_gif = "Position_multi.gif"
-        ax.title("Posição", fontsize=20)
-        ax.xlabel('X (m)', fontsize=15)
-        ax.ylabel('Y (m)', fontsize=15)
-        ax.legend(fontsize=10)
-        ax.grid()
-        im_fn_gif = os.path.join(folder_png, im_basename_gif) if folder_png else im_basename_gif
-        ani = FuncAnimation(fig, animate, interval=40, blit=True, repeat=True)    
-        ani.save(im_fn_gif, writer=PillowWriter(fps=20))
+    #     im_basename_gif = "Position_multi.gif"
+    #     im_fn_gif = os.path.join(folder_png, im_basename_gif) if folder_png else im_basename_gif
+    #     ani = FuncAnimation(fig, animate, interval=40, blit=True, repeat=True, frames = len(target.index))    
+    #     ani.save(im_fn_gif, writer=PillowWriter(fps=20))
         
     
     

@@ -7,182 +7,392 @@ from pathlib import Path
 
 from plot_auto import run_auto_plots
 
-uav_total = 3
+record_topics = '''/rosout
+    /rosout_agg
+    /target_position
+    /uav1/delay
+    /uav1/delay_estimation
+    /uav1/msg_correction
+    /uav1/msg_true
+    /uav1/samples_delay
+    /uav1/target_position
+    /uav1/target_position_delay
+    /uav1/target_position_estimation
+    /uav1/target_position_fuse
+    /uav2/delay
+    /uav2/delay_estimation
+    /uav2/msg_correction
+    /uav2/msg_true
+    /uav2/samples_delay
+    /uav2/target_position
+    /uav2/target_position_delay
+    /uav2/target_position_estimation
+    /uav2/target_position_fuse
+    /uav3/delay
+    /uav3/delay_estimation
+    /uav3/msg_correction
+    /uav3/msg_true
+    /uav3/samples_delay
+    /uav3/target_position
+    /uav3/target_position_delay
+    /uav3/target_position_estimation
+    /uav3/target_position_fuse
+    /uav4/delay
+    /uav4/delay_estimation
+    /uav4/msg_correction
+    /uav4/msg_true
+    /uav4/samples_delay
+    /uav4/target_position
+    /uav4/target_position_delay
+    /uav4/target_position_estimation
+    /uav4/target_position_fuse
+    /uav5/delay
+    /uav5/delay_estimation
+    /uav5/msg_correction
+    /uav5/msg_true
+    /uav5/samples_delay
+    /uav5/target_position
+    /uav5/target_position_delay
+    /uav5/target_position_estimation
+    /uav5/target_position_fuse
+    /uav6/delay
+    /uav6/delay_estimation
+    /uav6/msg_correction
+    /uav6/msg_true
+    /uav6/samples_delay
+    /uav6/target_position
+    /uav6/target_position_delay
+    /uav6/target_position_estimation
+    /uav6/target_position_fuse
+    '''
 
-SIMTIME = 65
-SIM_ID = int(time.time())
-sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-single{SIM_ID}")
-sim_dir.mkdir()
 
-png_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-single{SIM_ID}/png")
-png_dir.mkdir()
+def single(SIMTIME):
 
-pgf_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-single{SIM_ID}/pgf")
-pgf_dir.mkdir()
+    print("Now SINGLE")
 
-bag_fn_single = sim_dir.joinpath(f"single{SIM_ID}.bag")
+    uav_total = 3
 
-cmd_launch_single = "roslaunch sensor_fusion single_filters_sim.launch"
-cmd_bag_single = f"rosbag record -a -O {str(bag_fn_single)}"
+    SIM_ID = int(time.time())
+    sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-single{SIM_ID}")
+    sim_dir.mkdir()
 
+    png_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-single{SIM_ID}/png")
+    png_dir.mkdir()
 
-p_bag_single = sp.Popen(cmd_bag_single.split())
+    pgf_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-single{SIM_ID}/pgf")
+    pgf_dir.mkdir()
 
+    bag_fn_single = sim_dir.joinpath(f"single{SIM_ID}.bag")
 
-p_launch_single = sp.Popen(cmd_launch_single.split())
+    cmd_roscore = "roscore"
+    cmd_launch = "roslaunch sensor_fusion single_filters_sim.launch"
+    cmd_bag = f"rosbag record -a -O {str(bag_fn_single)}"
 
 
-t_0 = time.time()
 
-while time.time() - t_0 < SIMTIME :
-    continue
+    p_roscore = sp.Popen(cmd_roscore.split())
 
+    time.sleep(1)
 
-os.kill(p_launch_single.pid, signal.SIGINT)
+    p_bag = sp.Popen(cmd_bag.split())
 
-os.kill(p_bag_single.pid, signal.SIGINT)
+    time.sleep(10)
 
-time.sleep(15)
+    p_launch = sp.Popen(cmd_launch.split())
 
-single = True
 
-delay = False
+    t_0 = time.time()
 
-delay_estimation = False
+    while time.time() - t_0 < SIMTIME :
+        continue
 
-run_auto_plots(str(bag_fn_single), uav_total, single, delay, delay_estimation, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))
 
+    os.kill(p_bag.pid, signal.SIGINT)
 
-print("Now MULTI")
+    time.sleep(1)
 
-SIMTIME = 65
-SIM_ID = int(time.time())
-sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi{SIM_ID}")
-sim_dir.mkdir()
+    os.kill(p_launch.pid, signal.SIGINT)
 
-png_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi{SIM_ID}/png")
-png_dir.mkdir()
+    time.sleep(1)
 
-pgf_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi{SIM_ID}/pgf")
-pgf_dir.mkdir()
+    os.kill(p_roscore.pid, signal.SIGINT)
 
-bag_fn_multi = sim_dir.joinpath(f"multi{SIM_ID}.bag")
+    time.sleep(4)
 
-cmd_launch_multi = "roslaunch sensor_fusion multi_filters_sim.launch"
-cmd_bag_multi = f"rosbag record -a -O {str(bag_fn_multi)}"
-cmd_rosclean = "rosclean"
+    single = True
 
+    delay = False
 
-p_bag_multi = sp.Popen(cmd_bag_multi.split())
+    delay_estimation = False
 
+    fuse = False
 
-p_launch_multi = sp.Popen(cmd_launch_multi.split())
+    run_auto_plots(str(bag_fn_single), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))
 
+def multi_fuse(SIMTIME):
 
-t_0 = time.time()
+    print("Now MULTI FUSE")
 
-while time.time() - t_0 < SIMTIME :
-    continue
+    uav_total = 3
+    SIM_ID = int(time.time())
+    sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi-fuse{SIM_ID}")
+    sim_dir.mkdir()
 
+    png_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi-fuse{SIM_ID}/png")
+    png_dir.mkdir()
 
-os.kill(p_launch_multi.pid, signal.SIGINT)
+    pgf_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi-fuse{SIM_ID}/pgf")
+    pgf_dir.mkdir()
 
-os.kill(p_bag_multi.pid, signal.SIGINT)
+    bag_fn_multi = sim_dir.joinpath(f"multi{SIM_ID}.bag")
 
-time.sleep(15)
+    cmd_roscore = "roscore"
+    cmd_launch_multi = "roslaunch sensor_fusion multi_filters_sim.launch"
 
+    
+    record_topics = record_topics.splitlines()
+    record_topics = [t.strip() for t in record_topics if t.strip() != '']
 
-single = False
+    cmd_bag_multi = f"rosbag record -O {str(bag_fn_multi)} {' '.join(record_topics)}"
 
-run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))
+    p_roscore = sp.Popen(cmd_roscore.split())
 
-print("Now MULTI Delay  not estimation")
+    time.sleep(1)
 
-SIMTIME = 65
-SIM_ID = int(time.time())
-sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi_delay_not{SIM_ID}")
-sim_dir.mkdir()
+    p_bag_multi = sp.Popen(cmd_bag_multi.split())
 
-png_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi_delay_not{SIM_ID}/png")
-png_dir.mkdir()
+    time.sleep(10)
 
-pgf_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi_delay_not{SIM_ID}/pgf")
-pgf_dir.mkdir()
+    p_launch_multi = sp.Popen(cmd_launch_multi.split())
 
-bag_fn_multi = sim_dir.joinpath(f"multi_delay{SIM_ID}.bag")
 
-cmd_launch_multi = "roslaunch sensor_fusion multi_filters_sim_delay_not.launch"
-cmd_bag_multi = f"rosbag record -a -O {str(bag_fn_multi)}"
 
+ 
 
-p_bag_multi = sp.Popen(cmd_bag_multi.split())
 
+    t_0 = time.time()
 
-p_launch_multi = sp.Popen(cmd_launch_multi.split())
+    while time.time() - t_0 < SIMTIME :
+        continue
 
 
-t_0 = time.time()
+    os.kill(p_bag_multi.pid, signal.SIGINT)
 
-while time.time() - t_0 < SIMTIME :
-    continue
+    time.sleep(1)
 
+    os.kill(p_launch_multi.pid, signal.SIGINT)
 
-os.kill(p_launch_multi.pid, signal.SIGINT)
+    time.sleep(1)
 
-os.kill(p_bag_multi.pid, signal.SIGINT)
+    os.kill(p_roscore.pid, signal.SIGINT)
 
-time.sleep(20)
+    time.sleep(4)
 
 
-single = False
 
-delay = True
+    single = False
 
-delay_estimation = False
+    delay = False
 
-run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))
+    delay_estimation = False
 
+    fuse = True
 
-print("Now MULTI Delay estimation")
+    run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))
 
-SIMTIME = 65
-SIM_ID = int(time.time())
-sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi_delay{SIM_ID}")
-sim_dir.mkdir()
+def multi(SIMTIME):
 
-png_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi_delay{SIM_ID}/png")
-png_dir.mkdir()
+    print("Now MULTI")
 
-pgf_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi_delay{SIM_ID}/pgf")
-pgf_dir.mkdir()
+    uav_total = 3
+    SIM_ID = int(time.time())
+    sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi{SIM_ID}")
+    sim_dir.mkdir()
 
-bag_fn_multi = sim_dir.joinpath(f"multi_delay{SIM_ID}.bag")
+    png_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi{SIM_ID}/png")
+    png_dir.mkdir()
 
-cmd_launch_multi = "roslaunch sensor_fusion multi_filters_sim_delay.launch"
-cmd_bag_multi = f"rosbag record -a -O {str(bag_fn_multi)}"
+    pgf_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi{SIM_ID}/pgf")
+    pgf_dir.mkdir()
 
+    bag_fn_multi = sim_dir.joinpath(f"multi{SIM_ID}.bag")
 
-p_bag_multi = sp.Popen(cmd_bag_multi.split())
+    cmd_roscore = "roscore"
+    record_topics = record_topics.splitlines()
+    record_topics = [t.strip() for t in record_topics if t.strip() != '']
 
+    cmd_bag_multi = f"rosbag record -O {str(bag_fn_multi)} {' '.join(record_topics)}"
+    cmd_launch_multi = "roslaunch sensor_fusion multi_filters_sim_not_fuse.launch"
 
-p_launch_multi = sp.Popen(cmd_launch_multi.split())
 
 
-t_0 = time.time()
+    p_roscore = sp.Popen(cmd_roscore.split())
 
-while time.time() - t_0 < SIMTIME :
-    continue
+    time.sleep(1)
 
+    p_bag_multi = sp.Popen(cmd_bag_multi.split())
 
-os.kill(p_launch_multi.pid, signal.SIGINT)
+    time.sleep(1)
 
-os.kill(p_bag_multi.pid, signal.SIGINT)
+    p_launch_multi = sp.Popen(cmd_launch_multi.split())
 
-time.sleep(20)
 
+    t_0 = time.time()
 
-single = False
+    while time.time() - t_0 < SIMTIME :
+        continue
 
-delay_estimation = True
 
-run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))
+
+    os.kill(p_bag_multi.pid, signal.SIGINT)
+
+    time.sleep(1)
+
+    os.kill(p_launch_multi.pid, signal.SIGINT)
+
+    time.sleep(1)
+
+    os.kill(p_roscore.pid, signal.SIGINT)
+
+    time.sleep(4)
+
+
+    single = False
+
+    delay = False
+
+    delay_estimation = False
+
+    fuse = False
+
+    run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))
+
+def multi_fuse_delay_not(SIMTIME):
+
+    print("Now MULTI Delay  not estimation")
+
+    uav_total = 3
+    SIM_ID = int(time.time())
+    sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi_delay_not{SIM_ID}")
+    sim_dir.mkdir()
+
+    png_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi_delay_not{SIM_ID}/png")
+    png_dir.mkdir()
+
+    pgf_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi_delay_not{SIM_ID}/pgf")
+    pgf_dir.mkdir()
+
+    bag_fn_multi = sim_dir.joinpath(f"multi_delay{SIM_ID}.bag")
+
+    cmd_roscore = "roscore"
+    cmd_launch_multi = "roslaunch sensor_fusion multi_filters_sim_delay_not.launch"
+    record_topics = record_topics.splitlines()
+    record_topics = [t.strip() for t in record_topics if t.strip() != '']
+
+    cmd_bag_multi = f"rosbag record -O {str(bag_fn_multi)} {' '.join(record_topics)}"
+
+
+    p_roscore = sp.Popen(cmd_roscore.split())
+
+    time.sleep(1)
+
+    p_bag_multi = sp.Popen(cmd_bag_multi.split())
+
+    time.sleep(1)
+
+    p_launch_multi = sp.Popen(cmd_launch_multi.split())
+
+
+    t_0 = time.time()
+
+    while time.time() - t_0 < SIMTIME :
+        continue
+
+
+    os.kill(p_bag_multi.pid, signal.SIGINT)
+
+    time.sleep(1)
+
+    os.kill(p_launch_multi.pid, signal.SIGINT)
+
+    time.sleep(1)
+
+    os.kill(p_roscore.pid, signal.SIGINT)
+
+    time.sleep(4)
+
+
+    single = False
+
+    delay = True
+
+    delay_estimation = False
+
+    fuse = True
+
+    run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))
+
+def multi_fuse_delay(SIMTIME):
+    print("Now MULTI Delay estimation")
+
+    uav_total = 3
+    SIM_ID = int(time.time())
+    sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi_delay{SIM_ID}")
+    sim_dir.mkdir()
+
+    png_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi_delay{SIM_ID}/png")
+    png_dir.mkdir()
+
+    pgf_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-multi_delay{SIM_ID}/pgf")
+    pgf_dir.mkdir()
+
+    bag_fn_multi = sim_dir.joinpath(f"multi_delay{SIM_ID}.bag")
+
+    cmd_roscore = "roscore"
+    cmd_launch_multi = "roslaunch sensor_fusion multi_filters_sim_delay.launch"
+    record_topics = record_topics.splitlines()
+    record_topics = [t.strip() for t in record_topics if t.strip() != '']
+
+    cmd_bag_multi = f"rosbag record -O {str(bag_fn_multi)} {' '.join(record_topics)}"
+
+
+    p_roscore = sp.Popen(cmd_roscore.split())
+
+    time.sleep(1)
+
+    p_bag_multi = sp.Popen(cmd_bag_multi.split())
+
+    time.sleep(1)
+
+    p_launch_multi = sp.Popen(cmd_launch_multi.split())
+
+
+    t_0 = time.time()
+
+    while time.time() - t_0 < SIMTIME :
+        continue
+
+
+    os.kill(p_bag_multi.pid, signal.SIGINT)
+
+    time.sleep(1)
+
+    os.kill(p_launch_multi.pid, signal.SIGINT)
+
+    time.sleep(1)
+
+    os.kill(p_roscore.pid, signal.SIGINT)
+
+    time.sleep(4)
+
+
+    single = False
+
+    delay = True
+
+    delay_estimation = True
+
+    fuse = True
+
+    run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))

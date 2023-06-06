@@ -18,7 +18,7 @@ def target_callback(msg):
     
     
     pub_uav.publish(msg.x + noise_uav_x, msg.y + noise_uav_y, msg.timestamp)
-    rospy.loginfo("Noise has been published in UAV" + str(uav_id))
+    #rospy.loginfo("Noise has been published in UAV" + str(uav_id))
 
 if __name__ == "__main__":
     rospy.init_node("Noise_py")
