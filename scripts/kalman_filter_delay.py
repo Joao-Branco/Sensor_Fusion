@@ -5,79 +5,42 @@ import numpy as np
 from sensor_fusion.msg import target_position_fuse
 from sensor_fusion.msg import target_position
 from std_msgs.msg import Float64, Int64
-
-
-class KalmanFilter(object):
-    def __init__(self, F = None, B = None, H = None, H_fuse = None, Q = None, R = None, R_fuse = None, P = None, x0 = None):
-
-        if(F is None or H is None):
-            raise ValueError("Set proper system dynamics.")
-
-        self.n = F.shape[1]
-        self.m = H.shape[1]
-
-        self.F = F
-        self.H = H
-        self.H_fuse = H_fuse
-        self.B = 0 if B is None else B
-        self.Q = np.eye(self.n) if Q is None else Q
-        self.R = np.eye(self.n) if R is None else R
-        self.R_fuse = np.eye(self.n) if R_fuse is None else R_fuse
-        self.P = np.eye(self.n) if P is None else P
-        self.x = np.zeros((self.n, 1)) if x0 is None else x0
-
-    def predict(self, u = 0):
-        self.x = np.dot(self.F, self.x) + np.dot(self.B, u)
-        self.P = np.dot(np.dot(self.F, self.P), self.F.T) + self.Q
-        return self.x
-
-    def update(self, z):
-        y = z - np.dot(self.H, self.x)
-        S = self.R + np.dot(self.H, np.dot(self.P, self.H.T))
-        K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
-        self.x = self.x + np.dot(K, y)
-        I = np.eye(self.n)
-        self.P = np.dot(np.dot(I - np.dot(K, self.H), self.P), 
-        	(I - np.dot(K, self.H)).T) + np.dot(np.dot(K, self.R), K.T)
-             
-    def update_fuse(self, z):
-        y = z - np.dot(self.H_fuse, self.x)
-        S = self.R_fuse + np.dot(self.H_fuse, np.dot(self.P, self.H_fuse.T))
-        self.K = np.dot(np.dot(self.P, self.H_fuse.T), np.linalg.inv(S))
-        self.x = self.x + np.dot(self.K, y)
-        I = np.eye(self.n)
-        self.P = np.dot(np.dot(I - np.dot(self.K, self.H_fuse), self.P), 
-        	(I - np.dot(self.K, self.H_fuse)).T) + np.dot(np.dot(self.K, self.R_fuse), self.K.T)
-        
+from kalman_filter import KalmanFilter
 
 class Fusion:
     def __init__(self, f, uav_id, uav_total):
 
-        dt = 1 / f
         self.timestamp_ant = 0
         
+        self.dt = 1 / f
+
         self.uav_id = uav_id
         self.uav_total = uav_total
 
-        #x0 = np.array([[0, 0, 2, 2]])
+        self.x0 = np.array([    [0],
+                                 [0],
+                                 [0],
+                                 [0],
+                                 [0]])
 
         # x ----Initial value for the state
 
-        self.F = np.array([     [1, 0, dt, 0],
-                                [0, 1, 0, dt],
+        self.F = np.array([     [1, 0, self.dt, 0],
+                                [0, 1, 0, self.dt],
                                 [0, 0, 1, 0],
                                 [0, 0, 0, 1],])
 
         # F ----State trasition(A) (Dynamic Model)
 
-        self.H = np.array([     [1, 0, 0, 0],
-                                [0, 1, 0, 0]])
+        self.H = np.array([     [1, 0, 0, 0, 0],
+                                [0, 1, 0, 0, 0]])
         
 
-        self.H_fuse = np.array([    [1, 0, 0, 0],
-                                    [0, 1, 0, 0],
-                                    [0, 0, 1, 0],
-                                    [0, 0, 0, 1]])
+        self.H_fuse = np.array([    [1, 0, 0, 0, 0],
+                                    [0, 1, 0, 0, 0],
+                                    [0, 0, 1, 0, 0],
+                                    [0, 0, 0, 1, 0],
+                                    [0, 0, 0, 0, 1]])
 
         # H ----Measurement function (y) 
 
@@ -85,20 +48,22 @@ class Fusion:
 
         # P ----Covariance matrix
         
-        self.Q = np.array([     [0.001, 0, 0, 0],
-                                [0, 0.001, 0, 0],
-                                [0, 0, 0.001, 0],
-                                [0, 0, 0, 0.001]])
+        self.Q = np.array([     [0.001, 0, 0, 0, 0],
+                                [0, 0.001, 0, 0, 0],
+                                [0, 0, 0.001, 0, 0],
+                                [0, 0, 0, 0.001, 0],
+                                [0, 0, 0, 0, 0.001]])
 
         # Q ----Process Noise
 
         self.R = np.array([     [2, 0],
                                 [0, 2]])
         
-        self.R_fuse = np.array([    [0.5, 0, 0, 0],
-                                    [0, 0.5, 0, 0],
-                                    [0, 0, 0.1, 0],
-                                    [0, 0, 0, 0.1]])
+        self.R_fuse = np.array([    [0.5, 0, 0, 0, 0],
+                                    [0, 0.5, 0, 0, 0],
+                                    [0, 0, 0.1, 0, 0],
+                                    [0, 0, 0, 0.1, 0],
+                                    [0, 0, 0, 0, 0.1]])
 
         # R ----Measurement Noise
 
@@ -114,19 +79,18 @@ class Fusion:
             
 
 
-        self.kf = KalmanFilter(F = self.F, H = self.H, H_fuse = self.H_fuse , Q = self.Q , R = self.R, R_fuse = self.R_fuse)
-
+        self.kf = KalmanFilter(F = self.F, H = self.H, H_fuse = self.H_fuse , Q = self.Q , R = self.R, R_fuse = self.R_fuse, x0= self.x0, dt = self.dt)
         
     def predict(self):
         
-        self.kf.predict()
+        self.kf.predict_nonlinear()
         state = target_position_fuse()
         state.x = self.kf.x[0]
         state.y = self.kf.x[1]
-        state.v_x = self.kf.x[2]
-        state.v_y = self.kf.x[3]
+        state.theta = self.kf.x[2]
+        state.v = self.kf.x[3]
+        state.w = self.kf.x[4]
         state.timestamp = rospy.Time.now()
-        predicts_mem.append([self.kf.x , state.timestamp.to_nsec() * 1e-9])
 
         #rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
         return state
@@ -140,8 +104,9 @@ class Fusion:
         state = target_position_fuse()
         state.x = self.kf.x[0]
         state.y = self.kf.x[1]
-        state.v_x = self.kf.x[2]
-        state.v_y = self.kf.x[3]
+        state.theta = self.kf.x[2]
+        state.v = self.kf.x[3]
+        state.w = self.kf.x[4]
         state.timestamp = rospy.Time.now()
         #rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Update was made')
 
@@ -172,8 +137,9 @@ class Fusion:
         if (self.timestamp_ant > 0):
             msg.x = self.msg_ant.x + (msg.x - self.msg_ant.x) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
             msg.y = self.msg_ant.y + (msg.y - self.msg_ant.y) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
-            msg.v_x = self.msg_ant.v_x + (msg.v_x - self.msg_ant.v_x) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
-            msg.v_y = self.msg_ant.v_y + (msg.v_y - self.msg_ant.v_y) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
+            msg.theta = self.msg_ant.theta + (msg.theta - self.msg_ant.theta) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
+            msg.v = self.msg_ant.v + (msg.v - self.msg_ant.v) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
+            msg.w = self.msg_ant.w + (msg.w - self.msg_ant.w) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
         
         self.timestamp_ant = timestamp
         self.msg_ant = msg
@@ -182,7 +148,7 @@ class Fusion:
         
         #rospy.loginfo('MSG correction %f, %f, %f, %f', msg.x, msg.y, msg.v_x, msg.v_y) 
         
-        measurment = np.array([[msg.x], [msg.y], [msg.v_x], [msg.v_y]])
+        measurment = np.array([[msg.x], [msg.y], [msg.theta], [msg.v], [msg.w]])
 
         #rospy.loginfo('N %f', N)
         
@@ -192,8 +158,9 @@ class Fusion:
         state = target_position_fuse()
         state.x = self.kf.x[0]
         state.y = self.kf.x[1]
-        state.v_x = self.kf.x[2]
-        state.v_y = self.kf.x[3]
+        state.theta = self.kf.x[2]
+        state.v = self.kf.x[3]
+        state.w = self.kf.x[4]
         state.timestamp = rospy.Time.now()
         #rospy.loginfo('Kalman %d ---------Update estimation was made', self.uav_id)
         
@@ -210,8 +177,6 @@ if __name__ == "__main__":
     uav_total = rospy.get_param("/total_uav")
     rospy.loginfo('Fusion Kalman filter %d start', uav_id)
         
-    predicts_mem = []
-    k_mem = []
 
     
     pub_estimation = rospy.Publisher('target_position_estimation', target_position_fuse, queue_size=1)

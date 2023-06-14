@@ -18,7 +18,7 @@ if __name__ == "__main__":
     rospy.loginfo("Node Target has started")
 
 
-    pub = rospy.Publisher("/target_position", target_position_fuse, queue_size=10)
+    pub = rospy.Publisher("/target_position", target_position, queue_size=10)
     
     
     # definition of parameters of target
@@ -31,7 +31,9 @@ if __name__ == "__main__":
     target.v_y = 0.0
 
     # frenquency of publication of position
-    f = 20
+    f = 10
+
+    #10 - 25 Hz (Computer Vision)
 
     
 
@@ -60,23 +62,26 @@ if __name__ == "__main__":
         
         #Target Moving with constant speed
         #target.x = 2 * t 
+        #target.v_x = 2
+
         #target.y = 2 * t 
+        #target.v_y = 2
         
         #Target Moving with aceleration not constant
         
-        #target.x = 5 * math.cos( 0.09 * t) 
-        #target.v_x =  -0.45 * math.sin(0.09 * t)
+        target.x = 5 * math.cos( 0.09 * t) 
+        target.v_x =  -0.45 * math.sin(0.09 * t)
         
-        #target.y = 5 * math.sin( 0.09 * t)
-        #target.v_y = 0.45 * math.cos(0.09 * t)
+        target.y = 5 * math.sin( 0.09 * t)
+        target.v_y = 0.45 * math.cos(0.09 * t)
 
         #Target moving sinosoidal 
         
-        target.x = 5 * math.cos( 0.2 * t) 
-        target.v_x =  -1 * math.sin(0.2 * t)
+        #target.x = 5 * math.cos( 0.2 * t) 
+        #target.v_x =  -0.1 * math.sin(0.2 * t)
 
-        target.y = 1 * t
-        target.v_y = 1
+        #target.y = 1 * t
+        #target.v_y = 1
         
         
         pub.publish(target.x, target.y, target.v_x, target.v_y, rospy.Time.now())
