@@ -4,10 +4,13 @@ import rospy
 import math
 import numpy as np
 from sensor_fusion.msg import target_position
-    
+
+#target_x, target_y = 0,0
+
 def target_callback(msg):
     # definition of parameters of noise
     # std - standard deviation     mean
+    #target_x, target_y = msg.x, msg.y
     
     std = 2
     mean = 0

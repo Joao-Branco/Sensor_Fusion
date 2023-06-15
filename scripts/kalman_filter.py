@@ -9,8 +9,8 @@ from sensor_fusion.msg import target_position
 
 def f_nonlinear(x, dt):
 
-    F = np.array([  [x[0,0] + x[3,0] * dt * np.cos(x[4,0] * dt + x[2,0])],
-                    [x[1,0] + x[3,0] * dt * np.sin(x[4,0] * dt + x[2,0])],
+    F = np.array([  [x[0,0] + x[3,0] * dt * np.cos(x[2,0])],
+                    [x[1,0] + x[3,0] * dt * np.sin(x[2,0])],
                     [x[4,0] * dt + x[2,0]],
                     [x[3,0]],
                     [x[4,0]]])
@@ -19,8 +19,8 @@ def f_nonlinear(x, dt):
 
 def Jacobian(x, dt):
 
-    J = np.array([  [1, 0, -x[3,0] * dt *np.sin(x[4,0] * dt + x[2,0]),    dt *np.cos(x[4,0] * dt + x[2,0]),   -x[3,0] * dt ** 2 *np.sin(x[4,0] * dt + x[2,0])],
-                    [0, 1, x[3,0] * dt *np.cos(x[4,0] * dt + x[2,0]),     dt *np.sin(x[4,0] * dt + x[2,0]),    x[3,0] * dt ** 2 *np.cos(x[4,0] * dt + x[2,0])],
+    J = np.array([  [1, 0, -x[3,0] * dt *np.sin(x[2,0]),    dt *np.cos(x[2,0]),   0],
+                    [0, 1, x[3,0] * dt *np.cos(x[2,0]),     dt *np.sin(x[2,0]),    0],
                     [0, 0, 1,                                       0,                              dt],
                     [0, 0, 0,                                       1,                              0],
                     [0, 0, 0,                                       0,                              1]])    
@@ -88,11 +88,17 @@ class Fusion:
         self.uav_id = uav_id
         self.uav_total = uav_total
 
-        self.x0 = np.array([    [0],
+        self.x0 = np.array([    [5],
                                  [0],
                                  [0],
                                  [0],
                                  [0]])
+        
+        # self.x0 = np.array([    [5],
+        #                          [0],
+        #                          [0],
+        #                          [0]])
+        
 
         # x ----Initial value for the state
 
@@ -106,6 +112,9 @@ class Fusion:
 
         self.H = np.array([     [1, 0, 0, 0, 0],
                                 [0, 1, 0, 0, 0]])
+
+        # self.H = np.array([     [1, 0, 0, 0],
+        #                         [0, 1, 0, 0]])
         
 
         self.H_fuse = np.array([    [1, 0, 0, 0, 0],
@@ -113,6 +122,12 @@ class Fusion:
                                     [0, 0, 1, 0, 0],
                                     [0, 0, 0, 1, 0],
                                     [0, 0, 0, 0, 1]])
+        
+        # self.H_fuse = np.array([    [1, 0, 0, 0],
+        #                             [0, 1, 0, 0],
+        #                             [0, 0, 1, 0],
+        #                             [0, 0, 0, 1]])
+        
 
         # H ----Measurement function (y) 
 
@@ -126,6 +141,12 @@ class Fusion:
                                 [0, 0, 0, 0.001, 0],
                                 [0, 0, 0, 0, 0.001]])
 
+        # self.Q = np.array([     [0.001, 0, 0, 0],
+        #                         [0, 0.001, 0, 0],
+        #                         [0, 0, 0.001, 0],
+        #                         [0, 0, 0, 0.001]])
+        
+
         # Q ----Process Noise
 
         self.R = np.array([     [2, 0],
@@ -136,6 +157,11 @@ class Fusion:
                                     [0, 0, 0.1, 0, 0],
                                     [0, 0, 0, 0.1, 0],
                                     [0, 0, 0, 0, 0.1]])
+        
+        # self.R_fuse = np.array([    [0.5, 0, 0, 0],
+        #                             [0, 0.5, 0, 0],
+        #                             [0, 0, 0.1, 0],
+        #                             [0, 0, 0, 0.1]])
 
         # R ----Measurement Noise
 
@@ -164,6 +190,8 @@ class Fusion:
         state.theta = self.kf.x[2]
         state.v = self.kf.x[3]
         state.w = self.kf.x[4]
+        # state.v_x = self.kf.x[2]
+        # state.v_y = self.kf.x[3]
         state.timestamp = rospy.Time.now()
 
         #rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
@@ -181,6 +209,8 @@ class Fusion:
         state.theta = self.kf.x[2]
         state.v = self.kf.x[3]
         state.w = self.kf.x[4]
+        # state.v_x = self.kf.x[2]
+        # state.v_y = self.kf.x[3]
         state.timestamp = rospy.Time.now()
         #rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Update was made')
 
@@ -194,6 +224,8 @@ class Fusion:
         state.theta = self.kf.x[2]
         state.v = self.kf.x[3]
         state.w = self.kf.x[4]
+        # state.v_x = self.kf.x[2]
+        # state.v_y = self.kf.x[3]
         state.timestamp = rospy.Time.now()
         #rospy.loginfo('Kalman %d ---------Update estimation was made', self.uav_id)
         

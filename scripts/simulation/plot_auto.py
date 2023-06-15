@@ -109,7 +109,7 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
         data_all = data_all.join(data[f'uav{str(i)}'][['x', 'y']].add_suffix(f'_{str(i)}'), how='outer')
         data[f'uav{str(i)}'] = data[f'uav{str(i)}'].join(target_index, how='outer')
 
-        data_error[f'uav{str(i)}'] = data[f'uav{str(i)}'].interpolate().loc[real_index]
+        data_error[f'uav{str(i)}'] = data[f'uav{str(i)}'].interpolate(limit_direction ='both').loc[real_index]
 
         error_x = abs(data_error[f'uav{str(i)}'].x_target - data_error[f'uav{str(i)}'].x)
         error_y = abs(data_error[f'uav{str(i)}'].y_target - data_error[f'uav{str(i)}'].y)
@@ -118,6 +118,9 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
         
         v_x = data_error[f'uav{str(i)}'].v * np.cos(data_error[f'uav{str(i)}'].theta)
         v_y = data_error[f'uav{str(i)}'].v * np.sin(data_error[f'uav{str(i)}'].theta)
+        #v_x = data_error[f'uav{str(i)}'].v_x
+        #v_y = data_error[f'uav{str(i)}'].v_y
+
         error_v_x = abs(data_error[f'uav{str(i)}'].v_x_target - v_x)
         error_v_y = abs(data_error[f'uav{str(i)}'].v_y_target - v_y)
 

@@ -5,10 +5,10 @@ import time as pytime
 import matplotlib.pyplot as plt
 
 f = 100
-sim_time = 20
+sim_time = 120
 f_sample = 10
 f_kf = 20
-f_share = 1
+f_share = 15
 
 std = 2.0
 mean = 0
@@ -30,7 +30,16 @@ def target_dynamics(t):
     v_y = 0.45 * np.cos(0.09 * t)
     return x,y,v_x,v_y
 
-x,y,vx,vy = target_dynamics(time)
+def target_dynamics_sin(t):
+    x = 5 * np.cos( 0.2 * t) 
+    v_x =  -0.1 * np.sin(0.2 * t)
+
+    y = 1 * t
+    v_y = 1
+    return x,y,v_x,v_y
+        
+
+x,y,vx,vy = target_dynamics_sin(time)
 print(x, len(vx))
 
 def gen_sensor_data(*arrays):
@@ -60,10 +69,10 @@ dt = 1 / f_kf
 
 
 x0 = np.array([    [5],
-                            [0],
-                            [0],
-                            [0],
-                            [0]])
+                    [0],
+                    [0],
+                    [0],
+                    [0]])
 
 
 
@@ -73,7 +82,7 @@ F = np.array([     [1, 0, dt, 0],
                             [0, 1, 0, dt],
                             [0, 0, 1, 0],
                             [0, 0, 0, 1]])
-dt
+
 
 # F ----State trasition(A) (Dynamic Model)
 
@@ -86,24 +95,32 @@ H_fuse = np.array([    [1, 0, 0, 0, 0],
                             [0, 0, 1, 0, 0],
                             [0, 0, 0, 1, 0],
                             [0, 0, 0, 0, 1]])
-dt
 
-Q = np.array([     [0.001, 0, 0, 0, 0],
-                        [0, 0.001, 0, 0, 0],
-                        [0, 0, 0.001, 0, 0],
-                        [0, 0, 0, 0.001, 0],
-                        [0, 0, 0, 0, 0.001]])
+
+Q = np.array([     [0.5, 0, 0, 0, 0],
+                        [0, 0.5, 0, 0, 0],
+                        [0, 0, 0.1, 0, 0],
+                        [0, 0, 0, 0.5, 0],
+                        [0, 0, 0, 0, 0.1]])
+Q *=0.1
 
 # Q ----Process Noise
 
-R = np.array([     [2, 0],
-                        [0, 2]])
+R = np.array([ [2, 0],
+               [0, 2]])
 
 R_fuse = np.array([    [0.5, 0, 0, 0, 0],
                             [0, 0.5, 0, 0, 0],
                             [0, 0, 0.1, 0, 0],
-                            [0, 0, 0, 0.1, 0],
+                            [0, 0, 0, 1, 0],
                             [0, 0, 0, 0, 0.1]])
+R_fuse *=0.1
+
+# R_fuse = np.array([[ 0.6226917 ,  0.09437438 , 0.592893  ,  0.2505855 ,  0.14878439],
+#  [ 0.09437438 , 0.5871143 ,  0.41238568,  0.29699649 , 0.10378804],
+#  [ 0.592893  ,  0.41238568  ,3.73216838, -0.14775829 , 1.07061657],
+#  [ 0.2505855,   0.29699649 ,-0.14775829 , 3.03817689 ,-0.03289477],
+#  [ 0.14878439 , 0.10378804 , 1.07061657 ,-0.03289477 , 0.67679524]])
 
 # R ----Measurement Noise
 
@@ -117,6 +134,7 @@ kfs = [KalmanFilter(F = F.copy(), H = H.copy(),
 # matrix for results
 rows, cols = x0.shape
 predicts = [np.zeros((rows+1, f_kf*sim_time)) for _ in range(n_uavs)]
+print(predicts)
 col_write = 0
 
 print(f"time shape {time.shape}")
@@ -168,9 +186,28 @@ print(f"col write={col_write}")
 print(f'finished simulation in {pytime.time() - t_start} seconds')
 print(predicts[0][:,:5])
 print(predicts[0][:,-5:])
+print(np.shape(predicts))
 
-plt.plot(x,y)
+dx = x[-1] - predicts[0][1,-1]
+dy = y[-1] - predicts[0][2,-1]
+print(f"x={x[-1]}, px={predicts[0][1,-1]}")
+print(f"y={y[-1]}, py={predicts[0][2,-1]}")
+print(f"dx={dx}, dy={dy}")
+
+print(kfs[0].P)
+
+plt.plot(x,y, 'k')
 for i in range(n_uavs):
     x_, y_ = predicts[i][1,:], predicts[i][2,:]
     plt.plot(x_[:col_write], y_[:col_write])
 plt.show()
+
+print(predicts[0][1,-1])
+
+#for t in enumerate(time):
+    #for uav_i in enumerate(kfs):
+        #if t == predicts[uav_i][0,t]:
+        #error_x[uav_i] = abs(x - predicts[uav_i][1,t])
+        #error_y[uav_i] = abs(x - predicts[uav_i][1,t])
+
+

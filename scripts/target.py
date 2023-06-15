@@ -69,19 +69,19 @@ if __name__ == "__main__":
         
         #Target Moving with aceleration not constant
         
-        target.x = 5 * math.cos( 0.09 * t) 
-        target.v_x =  -0.45 * math.sin(0.09 * t)
+        #target.x = 5 * math.cos( 0.09 * t) 
+        #target.v_x =  -0.45 * math.sin(0.09 * t)
         
-        target.y = 5 * math.sin( 0.09 * t)
-        target.v_y = 0.45 * math.cos(0.09 * t)
+        #target.y = 5 * math.sin( 0.09 * t)
+        #target.v_y = 0.45 * math.cos(0.09 * t)
 
-        #Target moving sinosoidal 
+        #Target moving sinusoidal 
         
-        #target.x = 5 * math.cos( 0.2 * t) 
-        #target.v_x =  -0.1 * math.sin(0.2 * t)
+        target.x = 5 * math.cos( 0.2 * t) 
+        target.v_x =  -0.1 * math.sin(0.2 * t)
 
-        #target.y = 1 * t
-        #target.v_y = 1
+        target.y = 1 * t
+        target.v_y = 1
         
         
         pub.publish(target.x, target.y, target.v_x, target.v_y, rospy.Time.now())
