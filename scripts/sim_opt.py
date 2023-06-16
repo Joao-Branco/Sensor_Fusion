@@ -3,9 +3,10 @@ import math
 from kalman_filter import KalmanFilter
 import time as pytime
 import matplotlib.pyplot as plt
+import sklearn.metrics
 
 f = 100
-sim_time = 120
+sim_time = 1
 f_sample = 10
 f_kf = 20
 f_share = 15
@@ -24,30 +25,45 @@ time = np.arange(0, sim_time, 1/f)
 print(time, len(time))
 
 def target_dynamics(t):
-    v = 5
-    w = 0.09
+    r = 5
+    w = 0.09 * np.ones_like(t)
+    v = w * r
     theta = w * t
-    v_x = v * np.cos(theta)
-    v_y = v * np.sin(theta)
-    x = v_x
-    y = v_y
+    v_x = - v * np.sin(theta)
+    v_y =   v * np.cos(theta)
+    x = - r * np.sin(theta)
+    y = r * np.cos(theta)
     
     return x,y,v_x,v_y, v, theta, w
 
 def target_dynamics_sin(t):
-    v = 5
-    w = 0.09
+    w = 0.09 * np.ones_like(t)
     theta = w * t
-    v_x = v * np.cos(theta)
-    v_y = 1
-    x = v_x
-    y = v_y
+    v_x = - 3 * np.sin(theta)
+    v_y =  2 * np.ones_like(t)
+    v = np.sqrt(v_x ** 2 + v_y ** 2)
+    x = - 3 * np.sin(theta)
+    y = v_y * t
     
     return x,y,v_x,v_y, v, theta, w
-        
 
-x,y,vx,vy, vv, tt, ww = target_dynamics(time)
-print(x, len(vx))
+def check_target_ret(func, t):
+    args = func(t)
+    for i, a in enumerate(args):
+        if not isinstance(a, np.ndarray):
+            raise TypeError(f"ret value {i} is not numpy array")
+    return args
+        
+x,y,vx,vy, vv, tt, ww = check_target_ret(target_dynamics_sin, time)
+x,y,vx,vy, vv, tt, ww = target_dynamics_sin(time)
+
+state = np.stack((x,y, tt, vv,  ww), axis=0)
+
+print(x, len(x))
+
+
+
+
 
 def gen_sensor_data(*arrays):
     return [array + np.random.normal(mean,std, size=array.size) for array in arrays]
@@ -166,11 +182,14 @@ else:
 # matrix for results
 rows, cols = x0.shape
 predicts = [np.zeros((rows+1, f_kf*sim_time)) for _ in range(n_uavs)]
-print(predicts)
+predict_masks = [np.zeros(f_kf*sim_time, dtype=np.uint32) for i in range(n_uavs)]
+errors = [np.zeros((rows+1, f_kf*sim_time)) for _ in range(n_uavs)]
+errors_uavs = [np.zeros(5) for _ in range(n_uavs)]
+
 col_write = 0
 
-print(f"time shape {time.shape}")
-print(f"predicts shape {predicts[0].shape}")
+# print(f"time shape {time.shape}")
+# print(f"predicts shape {predicts[0].shape}")
 
 #periods
 p_predict = 1/f_kf
@@ -186,8 +205,8 @@ t_start = pytime.time()
 for i, t in enumerate(time):
     # update?
     if t-t_update >= p_update:
-        for uav_i, kf in enumerate(kfs):
-            x_, y_ = sensors[uav_i][0][i], sensors[uav_i][1][i]
+        for sensor, kf in zip(sensors, kfs):
+            x_, y_ = sensor[0][i], sensor[1][i]
             kf.update(np.array([[x_], [y_]]))
         t_update = t
         continue
@@ -212,42 +231,58 @@ for i, t in enumerate(time):
                 
             predicts[uav_i][0,col_write] = t
             predicts[uav_i][1:,col_write] = x_i[:,0]
+
+            predict_masks[uav_i][col_write] = i
+
+
+            # errors[uav_i][0,col_write] = t
+            # errors[uav_i][1,col_write] = abs(x[i] - predicts[uav_i][1,col_write])
+            # errors[uav_i][2,col_write] = abs(y[i] - predicts[uav_i][2,col_write])
+            # errors[uav_i][3,col_write] = abs(tt[i] - predicts[uav_i][3,col_write])
+            # errors[uav_i][4,col_write] = abs(vv[i] - predicts[uav_i][4,col_write])
+            # errors[uav_i][5,col_write] = abs(ww[i] - predicts[uav_i][5,col_write])
+
         col_write += 1
         t_predict = t
         continue
+
+
+for pred, pred_mask in zip(predicts, predict_masks):
+    state_filtered = state[:,pred_mask]
+    err_abs = np.abs(state_filtered - pred[1:,:]) # ignore time row from pred
+    RMSE = math.sqrt(sklearn.metrics.mean_squared_error(state_filtered, pred[1:,:]))
+
+print(err_abs.shape)
+    
+
+
 
 print(f"predicts last time={predicts[0][0,col_write-1]}")
 print(f"gt last time={time[-1]}")
 print(f"col write={col_write}")
 print(f'finished simulation in {pytime.time() - t_start} seconds')
-print(predicts[0][:,:5])
-print(predicts[0][:,-5:])
 print(np.shape(predicts))
 
 dx = x[-1] - predicts[0][1,-1]
 dy = y[-1] - predicts[0][2,-1]
-print(f"x={x[-1]}, px={predicts[0][1,-1]}")
-print(f"y={y[-1]}, py={predicts[0][2,-1]}")
-print(f"dx={dx}, dy={dy}")
+# print(f"x={x[-1]}, px={predicts[0][1,-1]}")
+# print(f"y={y[-1]}, py={predicts[0][2,-1]}")
+# print(f"dx={dx}, dy={dy}")
 
-print(kfs[0].P)
+# print(kfs[0].P)
 
 plt.plot(x,y, 'k')
 for i in range(n_uavs):
     x_, y_ = predicts[i][1,:], predicts[i][2,:]
-    #plt.plot(x_[:col_write], y_[:col_write])
+    plt.plot(x_[:col_write], y_[:col_write])
 plt.grid()
 plt.show()
 
-print(predicts[0][1,-1])
 
-for i in enumerate(time):
-    for uav_i in enumerate(kfs):
-        if t == predicts[uav_i][0,t]:
-            error = abs(x - predicts[uav_i][1,t])
+
+
+
             
-            
-print(error[0][0,:])
 
 
 
