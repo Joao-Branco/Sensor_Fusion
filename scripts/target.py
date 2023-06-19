@@ -61,11 +61,11 @@ if __name__ == "__main__":
         #target.y = 0 * t
         
         #Target Moving with constant speed
-        #target.x = 2 * t 
-        #target.v_x = 2
+        # target.x = 2 * t 
+        # target.v_x = 2
 
-        #target.y = 2 * t 
-        #target.v_y = 2
+        # target.y = 2 * t 
+        # target.v_y = 2
         
         #Target Moving with aceleration not constant
         

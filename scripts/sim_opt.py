@@ -6,23 +6,27 @@ import matplotlib.pyplot as plt
 import sklearn.metrics
 
 f = 100
-sim_time = 1
+sim_time = 60
 f_sample = 10
 f_kf = 20
-f_share = 15
+f_share = 20
 
 std = 2.0
 mean = 0
 
+delay_mean = 2
+delay_std = 0.05
+
 n_uavs = 3
 
-SHARE_ON = True
+SHARE_ON = False
 EKF = True
+DELAY = True
 
 
 time = np.arange(0, sim_time, 1/f)
 
-print(time, len(time))
+#print(time, len(time))
 
 def target_dynamics(t):
     r = 5
@@ -54,12 +58,12 @@ def check_target_ret(func, t):
             raise TypeError(f"ret value {i} is not numpy array")
     return args
         
-x,y,vx,vy, vv, tt, ww = check_target_ret(target_dynamics_sin, time)
-x,y,vx,vy, vv, tt, ww = target_dynamics_sin(time)
+x,y,vx,vy, vv, tt, ww = check_target_ret(target_dynamics, time)
+x,y,vx,vy, vv, tt, ww = target_dynamics(time)
 
 state = np.stack((x,y, tt, vv,  ww), axis=0)
 
-print(x, len(x))
+#print(x, len(x))
 
 
 
@@ -91,7 +95,7 @@ sensors = [gen_sensor_data(x,y) for i in range(n_uavs)]
 dt = 1 / f_kf
 
 
-x0 = np.array([     [5],
+x0 = np.array([     [0],
                     [0],
                     [0],
                     [0],
@@ -201,6 +205,8 @@ t_predict = 0
 t_update = 0
 t_share = 0
 
+x_ant = None
+
 t_start = pytime.time()
 for i, t in enumerate(time):
     # update?
@@ -218,6 +224,7 @@ for i, t in enumerate(time):
                 if kf1 is kf2:
                     continue
                 kf2.update_fuse(kf1.x)
+
         t_share = t
         continue
 
@@ -228,19 +235,12 @@ for i, t in enumerate(time):
                 x_i = kf.predict_nonlinear()
             else:
                 x_i = kf.predict()
-                
-            predicts[uav_i][0,col_write] = t
+
+            predicts[uav_i][0,col_write] = t   
             predicts[uav_i][1:,col_write] = x_i[:,0]
 
             predict_masks[uav_i][col_write] = i
 
-
-            # errors[uav_i][0,col_write] = t
-            # errors[uav_i][1,col_write] = abs(x[i] - predicts[uav_i][1,col_write])
-            # errors[uav_i][2,col_write] = abs(y[i] - predicts[uav_i][2,col_write])
-            # errors[uav_i][3,col_write] = abs(tt[i] - predicts[uav_i][3,col_write])
-            # errors[uav_i][4,col_write] = abs(vv[i] - predicts[uav_i][4,col_write])
-            # errors[uav_i][5,col_write] = abs(ww[i] - predicts[uav_i][5,col_write])
 
         col_write += 1
         t_predict = t
@@ -250,10 +250,31 @@ for i, t in enumerate(time):
 for pred, pred_mask in zip(predicts, predict_masks):
     state_filtered = state[:,pred_mask]
     err_abs = np.abs(state_filtered - pred[1:,:]) # ignore time row from pred
-    RMSE = math.sqrt(sklearn.metrics.mean_squared_error(state_filtered, pred[1:,:]))
+    euclidean = np.sqrt(err_abs[0,:] ** 2 + err_abs[1,:] ** 2)
 
-print(err_abs.shape)
-    
+dist_uavs = []
+for i_uav in range(n_uavs -1):
+    for j_uav in range(n_uavs):
+        if j_uav > i_uav :
+            x_e = predicts[i_uav][1,:] - predicts[j_uav][1,:]
+            y_e = predicts[i_uav][2,:] - predicts[j_uav][2,:]
+            dist_uavs.append(np.sqrt(x_e ** 2 + y_e ** 2)) 
+
+dist_uavs = np.array(dist_uavs)
+
+
+
+err_abs_mean = np.array([   np.mean(err_abs[0,:]),
+                            np.mean(err_abs[1,:]),
+                            np.mean(err_abs[2,:]),
+                            np.mean(err_abs[3,:]),
+                            np.mean(err_abs[4,:])])
+
+rmse = np.array([   np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[0,:], pred[0,:])),
+                    np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[1,:], pred[1,:])),
+                    np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[2,:], pred[2,:])),
+                    np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[3,:], pred[3,:])),
+                    np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[4,:], pred[4,:]))])
 
 
 
@@ -277,6 +298,24 @@ for i in range(n_uavs):
     plt.plot(x_[:col_write], y_[:col_write])
 plt.grid()
 plt.show()
+
+print("Absolute error x:  ", err_abs_mean[0])
+print("Absolute error y:  ", err_abs_mean[1])
+print("Absolute error theta:  ", err_abs_mean[2])
+print("Absolute error v:  ", err_abs_mean[3])
+print("Absolute error w:  ", err_abs_mean[4])
+
+print("RMSE x:  ", rmse[0])
+print("RMSE y:  ", rmse[1])
+print("RMSE theta:  ", rmse[2])
+print("RMSE v:  ", rmse[3])
+print("RMSE w:  ", rmse[4])
+
+print("Accuracy: ", np.mean(euclidean))
+print("Precision: ", np.mean(dist_uavs))
+
+print(kfs[0].P)
+
 
 
 

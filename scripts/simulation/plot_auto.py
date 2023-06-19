@@ -29,6 +29,8 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
     
     
     topics = ['/target_position']
+
+    topics_not_time = []
     
 
 
@@ -40,10 +42,14 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
         topics.append('/uav' + str(i) + '/target_position_estimation') # Kalman filter
         if (delay == True):
             topics.append('/uav' + str(i) + '/delay')
+            topics_not_time.append('/uav' + str(i) + '/delay')
         if (delay_estimation == True):
             topics.append('/uav' + str(i) + '/delay_estimation')
-            topics.append('/uav' + str(i) + '/msg_true')
-            topics.append('/uav' + str(i) + '/msg_correction')
+            #topics.append('/uav' + str(i) + '/msg_true')
+            #topics.append('/uav' + str(i) + '/msg_correction')
+            topics_not_time.append('/uav' + str(i) + '/delay_estimation')
+            #topics_not_time.append('/uav' + str(i) + '/msg_true')
+            #topics_not_time.append('/uav' + str(i) + '/msg_correction')
 
 
 
@@ -58,8 +64,9 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
         data = b.message_by_topic(topic)
         print(data)
         df = pd.read_csv(data)
-        df['Timestamp'] = df['timestamp.secs'] + df['timestamp.nsecs'] * 1e-9
-        df.drop(['timestamp.secs','timestamp.nsecs'], axis='columns', inplace=True)
+        if topic not in topics_not_time:
+            df['Timestamp'] = df['timestamp.secs'] + df['timestamp.nsecs'] * 1e-9
+            df.drop(['timestamp.secs','timestamp.nsecs'], axis='columns', inplace=True)
         dataframes[topic] = df
         minimos.append(dataframes[topic].iloc[0,0])
 
@@ -75,8 +82,8 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
             dataframes[f'/uav{str(i)}/delay'].iloc[:,0] = dataframes[f'/uav{str(i)}/delay'].iloc[:,0] - minimo
         if (delay_estimation == True):
             dataframes[f'/uav{str(i)}/delay_estimation'].iloc[:,0] = dataframes[f'/uav{str(i)}/delay_estimation'].iloc[:,0] - minimo
-            dataframes[f'/uav{str(i)}/msg_correction'].iloc[:,0] = dataframes[f'/uav{str(i)}/msg_correction'].iloc[:,0] - minimo
-            dataframes[f'/uav{str(i)}/msg_true'].iloc[:,0] = dataframes[f'/uav{str(i)}/msg_true'].iloc[:,0] - minimo
+            #dataframes[f'/uav{str(i)}/msg_correction'].iloc[:,0] = dataframes[f'/uav{str(i)}/msg_correction'].iloc[:,0] - minimo
+            #dataframes[f'/uav{str(i)}/msg_true'].iloc[:,0] = dataframes[f'/uav{str(i)}/msg_true'].iloc[:,0] - minimo
             
 
 
@@ -306,40 +313,40 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
     
     #Graphs of delays
     
-    if (delay == True):
-        for i in range(1, uav_total+1):
-            plt.figure(figsize=(15, 5))
-            plt.plot(dataframes[f'/uav{str(i)}/delay'].Time, dataframes[f'/uav{str(i)}/delay'].data, 'x', markersize=5, label='true value')
-            if (delay_estimation == True):
-                plt.plot(dataframes[f'/uav{str(i)}/delay_estimation'].Time, dataframes[f'/uav{str(i)}/delay_estimation'].data, 'x', markersize=5, label='estimation')
-            plt.title('UAV ' + str(i), fontsize=20)
-            plt.xlabel('t (s)', fontsize=15)
-            plt.ylabel('Delay (s)', fontsize=15)
-            plt.legend(fontsize=10)
-            plt.grid()
-            im_basename_png = 'Delay_UAV' + str(i) + '.png'
-            im_basename_pgf = 'Delay_UAV' + str(i) + '.pgf'
-            im_fn_png = os.path.join(folder_png, im_basename_png) if folder_png else im_basename_png
-            plt.savefig(im_fn_png)
-            im_fn_pgf = os.path.join(folder_pgf, im_basename_pgf) if folder_pgf else im_basename_pgf
-            plt.savefig(im_fn_pgf)
+    # if (delay == True):
+    #     for i in range(1, uav_total+1):
+    #         plt.figure(figsize=(15, 5))
+    #         plt.plot(dataframes[f'/uav{str(i)}/delay'].Time, dataframes[f'/uav{str(i)}/delay'].data, 'x', markersize=5, label='true value')
+    #         if (delay_estimation == True):
+    #             plt.plot(dataframes[f'/uav{str(i)}/delay_estimation'].Time, dataframes[f'/uav{str(i)}/delay_estimation'].data, 'x', markersize=5, label='estimation')
+    #         plt.title('UAV ' + str(i), fontsize=20)
+    #         plt.xlabel('t (s)', fontsize=15)
+    #         plt.ylabel('Delay (s)', fontsize=15)
+    #         plt.legend(fontsize=10)
+    #         plt.grid()
+    #         im_basename_png = 'Delay_UAV' + str(i) + '.png'
+    #         im_basename_pgf = 'Delay_UAV' + str(i) + '.pgf'
+    #         im_fn_png = os.path.join(folder_png, im_basename_png) if folder_png else im_basename_png
+    #         plt.savefig(im_fn_png)
+    #         im_fn_pgf = os.path.join(folder_pgf, im_basename_pgf) if folder_pgf else im_basename_pgf
+    #         plt.savefig(im_fn_pgf)
 
-            fig,ax = plt.subplots()
-            def animate(j):
-                ax.clear()
-                setpoints = []
-                line, = ax.plot(target.iloc[0:j,1], target.iloc[0:j,2], 'k',linewidth='3', label="Alvo")
-                point1, = ax.plot(dataframes[f'/uav{str(i)}/msg_correction'].iloc[0,1], target.iloc[0,2], 'go', markersize=8)
-                point2, = ax.plot(target.iloc[-1,1], target.iloc[-1,2], 'ro',  markersize=8)
-                point3, = ax.plot(target.iloc[i,1], target.iloc[i,2], 'ko',  markersize=8)
-                point4, = ax.plot(dataframes[f'/uav{str(i)}/msg_correction'].iloc[j,1], dataframes[f'/uav{str(i)}/msg_correction'].iloc[j,2], 'px', markersize=8)
-                point5, = ax.plot(dataframes[f'/uav{str(i)}/msg_true'].iloc[j,1], dataframes[f'/uav{str(i)}/msg_true'].iloc[j,2], 'kx', markersize=8)
-                return line, point1, point2, point3, point4, point5,
+    #         fig,ax = plt.subplots()
+    #         def animate(j):
+    #             ax.clear()
+    #             setpoints = []
+    #             line, = ax.plot(target.iloc[0:j,1], target.iloc[0:j,2], 'k',linewidth='3', label="Alvo")
+    #             point1, = ax.plot(dataframes[f'/uav{str(i)}/msg_correction'].iloc[0,1], target.iloc[0,2], 'go', markersize=8)
+    #             point2, = ax.plot(target.iloc[-1,1], target.iloc[-1,2], 'ro',  markersize=8)
+    #             point3, = ax.plot(target.iloc[i,1], target.iloc[i,2], 'ko',  markersize=8)
+    #             point4, = ax.plot(dataframes[f'/uav{str(i)}/msg_correction'].iloc[j,1], dataframes[f'/uav{str(i)}/msg_correction'].iloc[j,2], 'px', markersize=8)
+    #             point5, = ax.plot(dataframes[f'/uav{str(i)}/msg_true'].iloc[j,1], dataframes[f'/uav{str(i)}/msg_true'].iloc[j,2], 'kx', markersize=8)
+    #             return line, point1, point2, point3, point4, point5,
         
-            im_basename_gif = 'Corrections' + str(i) + '.gif'
-            im_fn_gif = os.path.join(folder_png, im_basename_gif) if folder_png else im_basename_gif
-            ani = FuncAnimation(fig, animate, interval=40, blit=True, repeat=True, frames = len(target.index))    
-            ani.save(im_fn_gif, writer=PillowWriter(fps=20))
+    #         im_basename_gif = 'Corrections' + str(i) + '.gif'
+    #         im_fn_gif = os.path.join(folder_png, im_basename_gif) if folder_png else im_basename_gif
+    #         ani = FuncAnimation(fig, animate, interval=40, blit=True, repeat=True, frames = len(target.index))    
+    #         ani.save(im_fn_gif, writer=PillowWriter(fps=20))
             
         
     # data of errors and measurments

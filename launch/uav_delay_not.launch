@@ -21,7 +21,7 @@
     </node-->
 
     <node pkg="topic_tools" type="throttle" name="throttle_$(arg ID)" required="True" output="screen" 
-    args= "messages /uav$(arg ID)/target_position_estimation 1 /uav$(arg ID)/target_position_delay">   
+    args= "messages /uav$(arg ID)/target_position_estimation 20 /uav$(arg ID)/target_position_delay">   
     </node>
 
 </launch>
