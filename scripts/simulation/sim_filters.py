@@ -13,6 +13,8 @@ def single(SIMTIME):
 
     print("Now SINGLE")
 
+    sim_name = 'sim-single'
+
     uav_total = 1
 
     SIM_ID = int(time.time())
@@ -80,11 +82,13 @@ def single(SIMTIME):
 
     fuse = False
 
-    run_auto_plots(str(bag_fn_single), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))
+    run_auto_plots(str(bag_fn_single), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir), name = sim_name)
 
 def multi_fuse(SIMTIME):
 
     print("Now MULTI FUSE")
+
+    sim_name = 'sim-multi-fuse'
 
     uav_total = 3
     SIM_ID = int(time.time())
@@ -167,13 +171,15 @@ def multi_fuse(SIMTIME):
 
     fuse = True
 
-    run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))
+    run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir), name = sim_name)
 
 
 
 def multi(SIMTIME):
 
     print("Now MULTI")
+
+    sim_name = 'sim-multi'
 
     uav_total = 3
     SIM_ID = int(time.time())
@@ -252,11 +258,13 @@ def multi(SIMTIME):
 
     fuse = False
 
-    run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))
+    run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir), name = sim_name)
 
 def multi_fuse_delay_not(SIMTIME):
 
     print("Now MULTI Delay  not estimation")
+
+    sim_name = 'sim-multi-not-delay'
 
     uav_total = 3
     SIM_ID = int(time.time())
@@ -281,37 +289,32 @@ def multi_fuse_delay_not(SIMTIME):
         /target_position
         /uav1/delay
         /uav1/delay_estimation
-        /uav1/msg_correction
-        /uav1/msg_true
-        /uav1/samples_delay
+        /uav1/interpolation
         /uav1/target_position
         /uav1/target_position_delay
         /uav1/target_position_estimation
         /uav1/target_position_fuse
         /uav2/delay
         /uav2/delay_estimation
-        /uav2/msg_correction
-        /uav2/msg_true
-        /uav2/samples_delay
+        /uav2/interpolation
         /uav2/target_position
         /uav2/target_position_delay
         /uav2/target_position_estimation
         /uav2/target_position_fuse
         /uav3/delay
         /uav3/delay_estimation
-        /uav3/msg_correction
-        /uav3/msg_true
-        /uav3/samples_delay
+        /uav3/interpolation
         /uav3/target_position
         /uav3/target_position_delay
         /uav3/target_position_estimation
         /uav3/target_position_fuse
+
         '''
     
     record_topics = record_topics.splitlines()
     record_topics = [t.strip() for t in record_topics if t.strip() != '']
 
-    #cmd_bag_multi = f"rosbag record -O {str(bag_fn_multi)} {' '.join(record_topics)}"
+    cmd_bag_multi = f"rosbag record -O {str(bag_fn_multi)} {' '.join(record_topics)}"
 
 
     p_roscore = sp.Popen(cmd_roscore.split())
@@ -352,10 +355,12 @@ def multi_fuse_delay_not(SIMTIME):
 
     fuse = True
 
-    run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))
+    run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir), name = sim_name)
 
 def multi_fuse_delay(SIMTIME):
     print("Now MULTI Delay estimation")
+
+    sim_name = 'sim-multi-delay'
 
     uav_total = 3
     SIM_ID = int(time.time())
@@ -380,37 +385,32 @@ def multi_fuse_delay(SIMTIME):
         /target_position
         /uav1/delay
         /uav1/delay_estimation
-        /uav1/msg_correction
-        /uav1/msg_true
-        /uav1/samples_delay
+        /uav1/interpolation
         /uav1/target_position
         /uav1/target_position_delay
         /uav1/target_position_estimation
         /uav1/target_position_fuse
         /uav2/delay
         /uav2/delay_estimation
-        /uav2/msg_correction
-        /uav2/msg_true
-        /uav2/samples_delay
+        /uav2/interpolation
         /uav2/target_position
         /uav2/target_position_delay
         /uav2/target_position_estimation
         /uav2/target_position_fuse
         /uav3/delay
         /uav3/delay_estimation
-        /uav3/msg_correction
-        /uav3/msg_true
-        /uav3/samples_delay
+        /uav3/interpolation
         /uav3/target_position
         /uav3/target_position_delay
         /uav3/target_position_estimation
         /uav3/target_position_fuse
+
         '''
     
     record_topics = record_topics.splitlines()
     record_topics = [t.strip() for t in record_topics if t.strip() != '']
 
-    #cmd_bag_multi = f"rosbag record -O {str(bag_fn_multi)} {' '.join(record_topics)}"
+    cmd_bag_multi = f"rosbag record -O {str(bag_fn_multi)} {' '.join(record_topics)}"
 
 
     p_roscore = sp.Popen(cmd_roscore.split())
@@ -451,4 +451,4 @@ def multi_fuse_delay(SIMTIME):
 
     fuse = True
 
-    run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir))
+    run_auto_plots(str(bag_fn_multi), uav_total, single, delay, delay_estimation, fuse, folder_png=str(png_dir), folder_pgf=str(pgf_dir), folder_sim=str(sim_dir), name = sim_name)

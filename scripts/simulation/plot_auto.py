@@ -21,7 +21,7 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 
 
 
-def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, folder_png=None, folder_pgf=None, folder_sim=None):
+def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, folder_png=None, folder_pgf=None, folder_sim=None, name= None):
     if single == True:
         uav_total = 1
         
@@ -45,11 +45,9 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
             topics_not_time.append('/uav' + str(i) + '/delay')
         if (delay_estimation == True):
             topics.append('/uav' + str(i) + '/delay_estimation')
-            #topics.append('/uav' + str(i) + '/msg_true')
-            #topics.append('/uav' + str(i) + '/msg_correction')
+            topics.append('/uav' + str(i) + '/interpolation')
             topics_not_time.append('/uav' + str(i) + '/delay_estimation')
-            #topics_not_time.append('/uav' + str(i) + '/msg_true')
-            #topics_not_time.append('/uav' + str(i) + '/msg_correction')
+            topics_not_time.append('/uav' + str(i) + '/interpolation')
 
 
 
@@ -82,18 +80,18 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
             dataframes[f'/uav{str(i)}/delay'].iloc[:,0] = dataframes[f'/uav{str(i)}/delay'].iloc[:,0] - minimo
         if (delay_estimation == True):
             dataframes[f'/uav{str(i)}/delay_estimation'].iloc[:,0] = dataframes[f'/uav{str(i)}/delay_estimation'].iloc[:,0] - minimo
-            #dataframes[f'/uav{str(i)}/msg_correction'].iloc[:,0] = dataframes[f'/uav{str(i)}/msg_correction'].iloc[:,0] - minimo
-            #dataframes[f'/uav{str(i)}/msg_true'].iloc[:,0] = dataframes[f'/uav{str(i)}/msg_true'].iloc[:,0] - minimo
+            dataframes[f'/uav{str(i)}/interpolation'].iloc[:,0] = dataframes[f'/uav{str(i)}/interpolation'].iloc[:,0] - minimo
             
 
 
 
     target = dataframes['/target_position']
-    target.columns = ['Time', 'x_target', 'y_target', 'v_x_target', 'v_y_target', 'Timestamp_target']
+    target.columns = ['Time', 'x_target', 'y_target', 'theta_target', 'v_target', 'w_target', 'uav_id_target', 'Timestamp_target']
     #target.Time = pd.to_timedelta( target.Time, "sec")
     target_index = target.set_index('Time')
     data = {}
     data_error = {}
+    delay_corr = {}
     precision = pd.DataFrame()
     precision_counter = 0
     data_all = pd.DataFrame()
@@ -104,13 +102,6 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
     for i in range(1, uav_total+1):
 
         data[f'uav{str(i)}'] = dataframes[f'/uav{str(i)}/target_position_estimation']
-        #data[f'uav{str(i)}'].drop(data[f'uav{str(i)}'].tail(5).index, inplace = True)
-        #data[f'uav{str(i)}'].drop(data[f'uav{str(i)}'].index[:5], inplace = True)
-        #data_noise[f'uav{str(i)}'] = dataframes[f'/uav{str(i)}/target_position']
-        #data_noise[f'uav{str(i)}'].columns = ['Time', 'x_noise', 'y_noise']
-        #data_noise_index = data_noise[f'uav{str(i)}'].set_index('Time')
-        
-        #data[f'uav{str(i)}']["Time"] = pd.to_timedelta( data[f'uav{str(i)}']["Time"], "sec")
         data[f'uav{str(i)}'] = data[f'uav{str(i)}'].set_index('Time')
         real_index = data[f'uav{str(i)}'].index
         data_all = data_all.join(data[f'uav{str(i)}'][['x', 'y']].add_suffix(f'_{str(i)}'), how='outer')
@@ -120,40 +111,73 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
 
         error_x = abs(data_error[f'uav{str(i)}'].x_target - data_error[f'uav{str(i)}'].x)
         error_y = abs(data_error[f'uav{str(i)}'].y_target - data_error[f'uav{str(i)}'].y)
+        error_theta = abs(data_error[f'uav{str(i)}'].theta_target - data_error[f'uav{str(i)}'].theta)
+        error_v = abs(data_error[f'uav{str(i)}'].v_target - data_error[f'uav{str(i)}'].v)
+        error_w = abs(data_error[f'uav{str(i)}'].w_target - data_error[f'uav{str(i)}'].w)
+
         
         euclidean = np.sqrt(error_x * error_x + error_y * error_y)
         
-        v_x = data_error[f'uav{str(i)}'].v * np.cos(data_error[f'uav{str(i)}'].theta)
-        v_y = data_error[f'uav{str(i)}'].v * np.sin(data_error[f'uav{str(i)}'].theta)
-        #v_x = data_error[f'uav{str(i)}'].v_x
-        #v_y = data_error[f'uav{str(i)}'].v_y
-
-        error_v_x = abs(data_error[f'uav{str(i)}'].v_x_target - v_x)
-        error_v_y = abs(data_error[f'uav{str(i)}'].v_y_target - v_y)
 
         error_Timestamp = abs(data_error[f'uav{str(i)}'].Timestamp_target - data_error[f'uav{str(i)}'].Timestamp)
 
 
-        data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "v_x", v_x)
-        data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "v_y", v_y)
 
         data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "error_x", error_x)
         data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "error_y", error_y)
         
         data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "euclidean", euclidean)
 
-        #data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "euclidean_precision", euclidean)
-        
-        data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "error_v_x", error_v_x)
-        data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "error_v_y", error_v_y)
+        data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "error_theta", error_theta)
+        data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "error_v", error_v)
+        data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "error_w", error_w)
 
         data_error[f'uav{str(i)}'].insert(len(data_error[f'uav{str(i)}'].columns), "error_Timestamp", error_Timestamp)
         
         data_error[f'uav{str(i)}'].reset_index(inplace=True)
 
+        if (delay_estimation == True):
+            delay_corr[f'uav{str(i)}'] = dataframes[f'/uav{str(i)}/interpolation']
+            delay_corr[f'uav{str(i)}'] = delay_corr[f'uav{str(i)}'].tail(-1)
+            real_index_delay = delay_corr[f'uav{str(i)}'].index
+            delay_corr[f'uav{str(i)}'].columns = ['Time', 'obs_x', 'obs_y', 'obs_theta', 'obs_v', 'obs_w', 'obs_id', 'obs_timestamp_sec', 'obs_timestamp_nsec', 'int_x', 'int_y', 'int_theta', 'int_v', 'int_w', 'int_id', 'int_timestamp_sec', 'int_timestamp_nsec']
+            delay_corr[f'uav{str(i)}'] = delay_corr[f'uav{str(i)}'].join(target_index, how='outer')
+            delay_corr[f'uav{str(i)}'] = delay_corr[f'uav{str(i)}'].interpolate(limit_direction ='both').loc[real_index_delay]
+            error_x_obs = abs(delay_corr[f'uav{str(i)}'].x_target - delay_corr[f'uav{str(i)}'].obs_x)
+            error_y_obs = abs(delay_corr[f'uav{str(i)}'].y_target - delay_corr[f'uav{str(i)}'].obs_y)
+            error_theta_obs = abs(delay_corr[f'uav{str(i)}'].theta_target - delay_corr[f'uav{str(i)}'].obs_theta)
+            error_v_obs = abs(delay_corr[f'uav{str(i)}'].v_target - delay_corr[f'uav{str(i)}'].obs_v)
+            error_w_obs = abs(delay_corr[f'uav{str(i)}'].w_target - delay_corr[f'uav{str(i)}'].obs_w)
+
+            error_x_int = abs(delay_corr[f'uav{str(i)}'].x_target - delay_corr[f'uav{str(i)}'].int_x)
+            error_y_int = abs(delay_corr[f'uav{str(i)}'].y_target - delay_corr[f'uav{str(i)}'].int_y)
+            error_theta_int = abs(delay_corr[f'uav{str(i)}'].theta_target - delay_corr[f'uav{str(i)}'].int_theta)
+            error_v_int = abs(delay_corr[f'uav{str(i)}'].v_target - delay_corr[f'uav{str(i)}'].int_v)
+            error_w_int = abs(delay_corr[f'uav{str(i)}'].w_target - delay_corr[f'uav{str(i)}'].int_w)
+
+            euclidean_obs = np.sqrt(error_x_obs ** 2 + error_y_obs ** 2)
+
+            euclidean_int = np.sqrt(error_x_int ** 2 + error_y_int ** 2)
+
+            delay_corr[f'uav{str(i)}'].insert(len(delay_corr[f'uav{str(i)}'].columns), "error_x_obs", error_x_obs)
+            delay_corr[f'uav{str(i)}'].insert(len(delay_corr[f'uav{str(i)}'].columns), "error_y_obs", error_y_obs)
+            delay_corr[f'uav{str(i)}'].insert(len(delay_corr[f'uav{str(i)}'].columns), "error_theta_obs", error_theta_obs)
+            delay_corr[f'uav{str(i)}'].insert(len(delay_corr[f'uav{str(i)}'].columns), "error_v_obs", error_v_obs)
+            delay_corr[f'uav{str(i)}'].insert(len(delay_corr[f'uav{str(i)}'].columns), "error_w_obs", error_w_obs)
+        
+            delay_corr[f'uav{str(i)}'].insert(len(delay_corr[f'uav{str(i)}'].columns), "euclidean_obs", euclidean_obs)
+
+            delay_corr[f'uav{str(i)}'].insert(len(delay_corr[f'uav{str(i)}'].columns), "error_x_int", error_x_int)
+            delay_corr[f'uav{str(i)}'].insert(len(delay_corr[f'uav{str(i)}'].columns), "error_y_int", error_y_int)
+            delay_corr[f'uav{str(i)}'].insert(len(delay_corr[f'uav{str(i)}'].columns), "error_theta_int", error_theta_int)
+            delay_corr[f'uav{str(i)}'].insert(len(delay_corr[f'uav{str(i)}'].columns), "error_v_int", error_v_int)
+            delay_corr[f'uav{str(i)}'].insert(len(delay_corr[f'uav{str(i)}'].columns), "error_w_int", error_w_int)
+
+            delay_corr[f'uav{str(i)}'].insert(len(delay_corr[f'uav{str(i)}'].columns), "euclidean_int", euclidean_int)
+
     data_all = data_all.interpolate(limit_direction ='both')
 
-    data_all.to_csv( folder_sim + '/data_all_interpolate.csv')
+    data_all.to_csv( folder_sim + '/data_all_interpolate_' + name + '.csv')
 
 
 
@@ -173,7 +197,7 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
 
     precision.insert(precision_counter, 'mean', precision.mean(axis=1))
 
-    precision.to_csv( folder_sim + '/precision.csv')
+    precision.to_csv( folder_sim + '/precision_' + name + '.csv')
 
 
 
@@ -208,21 +232,62 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
         plt.legend(fontsize=10)
     plt.grid()
 
-    if (single == True):
-        im_basename_png = "Errors_single.png"
+    im_basename_png = 'Errors_' + name + '.png'
         
-        im_basename_pgf = "Errors_single.pgf"
+    im_basename_pgf = 'Errors_' + name + '.pgf'
 
-    else:
-        im_basename_png = "Errors_multi.png"
-        
-        im_basename_pgf = "Errors_multi.pgf"
+
 
 
     im_fn_png = os.path.join(folder_png, im_basename_png) if folder_png else im_basename_png
     plt.savefig(im_fn_png)
     im_fn_pgf = os.path.join(folder_pgf, im_basename_pgf) if folder_pgf else im_basename_pgf
     plt.savefig(im_fn_pgf)
+
+    #Graphs of errors in delay estimation 
+    if(delay_estimation == True):
+    
+        plt.figure(figsize=(15, 5))
+
+        plt.subplot(1, 2, 1)
+        plt.title("Erro absoluto", fontsize=15)
+
+        for i in range(1, uav_total+1):
+            plt.plot(delay_corr[f'uav{str(i)}'].Time, delay_corr[f'uav{str(i)}'].error_x_obs, 'x', label='UAV ' + str(i) + 'observado')
+            plt.plot(delay_corr[f'uav{str(i)}'].Time, delay_corr[f'uav{str(i)}'].error_x_int, 'x', label='UAV ' + str(i) + 'interpolado')
+
+        plt.xlabel('Tempo (s)', fontsize=15)
+        plt.ylabel('X (m)', fontsize=15)
+        if (single == False):
+            plt.legend(fontsize=10)
+        plt.grid()
+
+        plt.subplot(1, 2, 2)
+        plt.title("Erro absoluto", fontsize=15)
+
+        for i in range(1, uav_total+1):
+            plt.plot(delay_corr[f'uav{str(i)}'].Time, delay_corr[f'uav{str(i)}'].error_y_obs, 'x', label='UAV ' + str(i) + 'observado')
+            plt.plot(delay_corr[f'uav{str(i)}'].Time, delay_corr[f'uav{str(i)}'].error_y_int, 'x', label='UAV ' + str(i)+ 'interpolado')
+
+        plt.xlabel('Tempo (s)', fontsize=15)
+        plt.ylabel('Y (m)', fontsize=15)
+        if (single == False):
+            plt.legend(fontsize=10)
+        plt.grid()
+
+        im_basename_png = 'Errors_delay' + name + '.png'
+            
+        im_basename_pgf = 'Errors_delay' + name + '.pgf'
+
+
+
+
+        im_fn_png = os.path.join(folder_png, im_basename_png) if folder_png else im_basename_png
+        plt.savefig(im_fn_png)
+        im_fn_pgf = os.path.join(folder_pgf, im_basename_pgf) if folder_pgf else im_basename_pgf
+        plt.savefig(im_fn_pgf)
+
+
 
 
     #Graphs of position target and estimation of uavs
@@ -253,14 +318,9 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
     plt.grid()
 
 
-    if (single == True):
-        im_basename_png = "Position_single.png"
-        im_basename_pgf = "Position_single.pgf"
-
-
-    else:
-        im_basename_png = "Position_multi.png"
-        im_basename_pgf = "Position_multi.pgf"
+    im_basename_png = 'Position_' + name + '.png'
+        
+    im_basename_pgf = 'Position_' + name + '.pgf'
         
 
     im_fn_png = os.path.join(folder_png, im_basename_png) if folder_png else im_basename_png
@@ -352,48 +412,100 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
     # data of errors and measurments
     
     
-    error_fusion = pd.DataFrame(columns=['UAV','error_x', 'error_y', 'RMSE_x', 'RMSE_y', 'euclidean', 'error_v_x', 'error_v_y', 'RMSE_v_x', 'RMSE_v_y', 'error_Timestamp'])
+    error_fusion = pd.DataFrame(columns=['UAV','error_x', 'error_y', 'RMSE_x', 'RMSE_y', 'euclidean', 'error_theta', 'error_v', 'error_w', 'RMSE_theta', 'RMSE_v', 'RMSE_w', 'error_Timestamp'])
+    error_delay_all = pd.DataFrame(columns=['UAV','error_x_obs', 'error_y_obs', 'error_theta_obs', 'error_v_obs', 'error_w_obs', 'euclidean_obs','error_x_int', 'error_y_int', 'error_theta_int', 'error_v_int', 'error_w_int', 'euclidean_int'])
+    
     
 
-    if (single == True):
-        data_error['uav1'].to_csv( folder_sim + '/error_uav_single.csv')
-        error_fusion.loc[len(error_fusion)] = ['uav1' ,
-                                                np.mean(data_error['uav1'].error_x) ,
-                                                np.mean(data_error['uav1'].error_y),
-                                                math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].x_target, data_error['uav1'].x)),
-                                                math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].y_target, data_error['uav1'].y)),
-                                                np.mean(data_error['uav1'].euclidean), np.mean(data_error['uav1'].error_v_x), np.mean(data_error['uav1'].error_v_y),
-                                                math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].v_x_target, data_error['uav1'].v_x)),
-                                                math.sqrt(sklearn.metrics.mean_squared_error(data_error['uav1'].v_y_target, data_error['uav1'].v_y)),
-                                                np.mean(data_error['uav1'].error_Timestamp)]
-        error_fusion.to_csv( folder_sim + '/error_med_single.csv')
+    for i in range(1, uav_total+1):
+        data_error[f'uav{str(i)}'].to_csv( folder_sim + f'/uav{str(i)}.csv')
+        error_fusion.loc[len(error_fusion)] = [f'uav{str(i)}' ,
+                                                np.mean(data_error[f'uav{str(i)}'].error_x) ,
+                                                np.mean(data_error[f'uav{str(i)}'].error_y),
+                                                math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].x_target, data_error[f'uav{str(i)}'].x)),
+                                                math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].y_target, data_error[f'uav{str(i)}'].y)),
+                                                np.mean(data_error[f'uav{str(i)}'].euclidean),
+                                                np.mean(data_error[f'uav{str(i)}'].error_theta),
+                                                np.mean(data_error[f'uav{str(i)}'].error_v),
+                                                np.mean(data_error[f'uav{str(i)}'].error_w),
+                                                math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].theta_target, data_error[f'uav{str(i)}'].theta)),
+                                                math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].v_target, data_error[f'uav{str(i)}'].v)),
+                                                math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].w_target, data_error[f'uav{str(i)}'].w)),
+                                                np.mean(data_error[f'uav{str(i)}'].error_Timestamp)]
         
-    else:    
-        for i in range(1, uav_total+1):
-            data_error[f'uav{str(i)}'].to_csv( folder_sim + f'/uav{str(i)}.csv')
-            error_fusion.loc[len(error_fusion)] = [f'uav{str(i)}' ,
-                                                    np.mean(data_error[f'uav{str(i)}'].error_x) ,
-                                                    np.mean(data_error[f'uav{str(i)}'].error_y),
-                                                    math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].x_target, data_error[f'uav{str(i)}'].x)),
-                                                    math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].y_target, data_error[f'uav{str(i)}'].y)),
-                                                    np.mean(data_error[f'uav{str(i)}'].euclidean),
-                                                    np.mean(data_error[f'uav{str(i)}'].error_v_x),
-                                                    np.mean(data_error[f'uav{str(i)}'].error_v_y),
-                                                    math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].v_x_target, data_error[f'uav{str(i)}'].v_x)),
-                                                    math.sqrt(sklearn.metrics.mean_squared_error(data_error[f'uav{str(i)}'].v_y_target, data_error[f'uav{str(i)}'].v_y)),
-                                                    np.mean(data_error[f'uav{str(i)}'].error_Timestamp)]
+        if (delay_estimation == True):
+            delay_corr[f'uav{str(i)}'].to_csv( folder_sim + f'/uav{str(i)}_interpolation.csv')
+            error_delay_all.loc[len(error_delay_all)] = [f'uav{str(i)}' ,
+                                                np.mean(delay_corr[f'uav{str(i)}'].error_x_obs) ,
+                                                np.mean(delay_corr[f'uav{str(i)}'].error_y_obs),
+                                                np.mean(delay_corr[f'uav{str(i)}'].error_theta_obs),
+                                                np.mean(delay_corr[f'uav{str(i)}'].error_v_obs),
+                                                np.mean(delay_corr[f'uav{str(i)}'].error_w_obs),
+                                                np.mean(delay_corr[f'uav{str(i)}'].euclidean_obs),
+                                                np.mean(delay_corr[f'uav{str(i)}'].error_x_int) ,
+                                                np.mean(delay_corr[f'uav{str(i)}'].error_y_int),
+                                                np.mean(delay_corr[f'uav{str(i)}'].error_theta_int),
+                                                np.mean(delay_corr[f'uav{str(i)}'].error_v_int),
+                                                np.mean(delay_corr[f'uav{str(i)}'].error_w_int),
+                                                np.mean(delay_corr[f'uav{str(i)}'].euclidean_int),]
+
+            error_delay_all.to_csv( folder_sim + '/error_fusion_delay_' + name + '.csv')
+
+        
             
             
-        error_fusion.to_csv( folder_sim + '/error_fusion.csv')
+        error_fusion.to_csv( folder_sim + '/error_fusion_' + name + '.csv')
 
 
         total_precision = np.mean(precision)
         total_euclidean = np.mean(error_fusion.euclidean)
+        total_error_x = np.mean(error_fusion.error_x)
+        total_error_y = np.mean(error_fusion.error_y)
+        total_error_theta = np.mean(error_fusion.error_theta)
+        total_error_v = np.mean(error_fusion.error_v)
+        total_error_w = np.mean(error_fusion.error_w)
         total_RMSEx = np.mean(error_fusion.RMSE_x)
         total_RMSEy = np.mean(error_fusion.RMSE_y)
-        performance = pd.DataFrame([[total_precision, total_euclidean, total_RMSEx, total_RMSEy]], columns=['precision', 'accuracy', 'RMSE_x', 'RMSE_y'])
+        total_RMSEtheta = np.mean(error_fusion.RMSE_theta)
+        total_RMSEv = np.mean(error_fusion.RMSE_v)
+        total_RMSEw = np.mean(error_fusion.RMSE_w)
+        performance = pd.DataFrame([[total_precision, total_euclidean, total_error_x, total_error_y, total_error_theta, total_error_v, total_error_w, total_RMSEx, total_RMSEy, total_RMSEtheta, total_RMSEv, total_RMSEw]], columns=['precision', 'accuracy', 'error_x','error_y', 'error_theta', 'error_v', 'error_w', 'RMSE_x', 'RMSE_y', 'RMSE_theta', 'RMSE_v', 'RMSE_w'])
 
-        performance.to_csv( folder_sim + '/performance.csv')
+        performance.to_csv( folder_sim + '/performance_' + name + '.csv')
+
+        if (delay_estimation == True):
+            total_error_x_obs = np.mean(error_delay_all.error_x_obs)
+            total_error_y_obs = np.mean(error_delay_all.error_y_obs)
+            total_error_theta_obs = np.mean(error_delay_all.error_theta_obs)
+            total_error_v_obs = np.mean(error_delay_all.error_v_obs)
+            total_error_w_obs = np.mean(error_delay_all.error_w_obs)
+            total_euclidean_obs = np.mean(error_delay_all.euclidean_obs)
+
+            total_error_x_int = np.mean(error_delay_all.error_x_int)
+            total_error_y_int = np.mean(error_delay_all.error_y_int)
+            total_error_theta_int = np.mean(error_delay_all.error_theta_int)
+            total_error_v_int = np.mean(error_delay_all.error_v_int)
+            total_error_w_int = np.mean(error_delay_all.error_w_int)
+            total_euclidean_int = np.mean(error_delay_all.euclidean_int)
+
+            performance_interpolation = pd.DataFrame([['obs',
+                                                        total_error_x_obs,
+                                                        total_error_y_obs, 
+                                                        total_error_theta_obs, 
+                                                        total_error_v_obs, 
+                                                        total_error_w_obs, 
+                                                        total_euclidean_obs],
+                                                        ['int',
+                                                        total_error_x_int,
+                                                        total_error_y_int, 
+                                                        total_error_theta_int, 
+                                                        total_error_v_int, 
+                                                        total_error_w_int, 
+                                                        total_euclidean_int]], 
+                                                        columns=['y','error_x','error_y', 'error_theta', 'error_v', 'error_w', 'euclidean'])
+            
+            performance_interpolation.to_csv( folder_sim + '/performance_interpolation_' + name + '.csv')
+
 
 
 

@@ -2,20 +2,22 @@
 
 import rospy
 import numpy as np
-from sensor_fusion.msg import target_position_fuse
-from sensor_fusion.msg import target_position
+from sensor_fusion.msg import target_position_fuse, delay_corr , target_position
 from std_msgs.msg import Float64, Int64
 from kalman_filter import KalmanFilter
 
 class Fusion:
     def __init__(self, f, uav_id, uav_total):
 
-        self.timestamp_ant = 0
+        self.msg_mem = {}
         
         self.dt = 1 / f
 
         self.uav_id = uav_id
         self.uav_total = uav_total
+
+        self.threshold_delay = 1
+        self.min_delay = 0.25 
 
         self.x0 = np.array([    [5],
                                 [0],
@@ -46,6 +48,7 @@ class Fusion:
                                     [0, 0, 1, 0, 0],
                                     [0, 0, 0, 1, 0],
                                     [0, 0, 0, 0, 1]])
+        
 
         # H ----Measurement function (y) 
 
@@ -75,6 +78,9 @@ class Fusion:
                                     [0, 0, 0, 1, 0],
                                     [0, 0, 0, 0, 0.1]])
         
+        self.R_delay = np.array([   [2, 0],
+                                    [0, 2]])
+        
         # self.R_fuse = np.array([    [0.5, 0, 0, 0],
         #                             [0, 0.5, 0, 0],
         #                             [0, 0, 0.1, 0],
@@ -94,7 +100,7 @@ class Fusion:
             
 
 
-        self.kf = KalmanFilter(F = self.F, H = self.H, H_fuse = self.H_fuse , Q = self.Q , R = self.R, R_fuse = self.R_fuse, x0= self.x0, dt = self.dt)
+        self.kf = KalmanFilter(F = self.F, H = self.H, H_fuse = self.H_fuse , Q = self.Q , R = self.R, R_fuse = self.R_fuse, R_delay = self.R_delay, x0= self.x0, dt = self.dt)
         
     def predict(self):
         
@@ -105,6 +111,7 @@ class Fusion:
         state.theta = self.kf.x[2]
         state.v = self.kf.x[3]
         state.w = self.kf.x[4]
+        state.uavid = uav_id
         state.timestamp = rospy.Time.now()
 
         #rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
@@ -131,53 +138,59 @@ class Fusion:
         timestamp = msg.timestamp.to_nsec() * 1e-9
         time_now = rospy.Time.now().to_nsec() * 1e-9
         delay = time_now - timestamp
-        
-        #rospy.loginfo('Timestamp %f, T_now %f, Delay %f, timestamp_ant %f', timestamp, time_now, delay, self.timestamp_ant)
-        
-        pub_delay.publish(delay)
-        
-        N = round(delay * f)
-        
-        #rospy.loginfo('MSG  %f, %f, %f, %f', msg.x, msg.y, msg.v_x, msg.v_y)
-        
-        #pub_msg_true.publish(msg)
-                        
-        #msg.x = self.kf.x[0] + (msg.x - self.kf.x[0]) / (time_now - self.kf.time) * (timestamp - self.kf.time)
-        #msg.y = self.kf.x[1] + (msg.y - self.kf.x[1]) / (time_now - self.kf.time) * (timestamp - self.kf.time)
-        #msg.v_x = self.kf.x[2] + (msg.v_x - self.kf.x[2]) / (time_now - self.kf.time) * (timestamp - self.kf.time)
-        #msg.v_y = self.kf.x[3] + (msg.v_x - self.kf.x[3]) / (time_now - self.kf.time) * (timestamp - self.kf.time)
-        
-        
-        
-        if (self.timestamp_ant > 0):
-            msg.x = self.msg_ant.x + (msg.x - self.msg_ant.x) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
-            msg.y = self.msg_ant.y + (msg.y - self.msg_ant.y) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
-            msg.theta = self.msg_ant.theta + (msg.theta - self.msg_ant.theta) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
-            msg.v = self.msg_ant.v + (msg.v - self.msg_ant.v) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
-            msg.w = self.msg_ant.w + (msg.w - self.msg_ant.w) / (time_now - self.timestamp_ant) * (timestamp - self.timestamp_ant)
-        
-        self.timestamp_ant = timestamp
-        self.msg_ant = msg
-        
-        #pub_msg_correction.publish(msg)
-        
-        #rospy.loginfo('MSG correction %f, %f, %f, %f', msg.x, msg.y, msg.v_x, msg.v_y) 
-        
-        measurment = np.array([[msg.x], [msg.y], [msg.theta], [msg.v], [msg.w]])
 
-        #rospy.loginfo('N %f', N)
         
-        pub_samples.publish(N)
+
+        measurment_int = target_position_fuse()
+
+        pub_delay.publish(delay)
+    
         
-        self.kf.update_fuse(measurment)
-        state = target_position_fuse()
-        state.x = self.kf.x[0]
-        state.y = self.kf.x[1]
-        state.theta = self.kf.x[2]
-        state.v = self.kf.x[3]
-        state.w = self.kf.x[4]
-        state.timestamp = rospy.Time.now()
-        #rospy.loginfo('Kalman %d ---------Update estimation was made', self.uav_id)
+        if (self.msg_mem.get(msg.uavid) != None and (self.min_delay < delay < self.threshold_delay)):
+            dt = timestamp - self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9
+            measurment_int.x = msg.x + (msg.x - self.msg_mem[msg.uavid].x) /  dt * delay
+            measurment_int.y = msg.y + (msg.y - self.msg_mem[msg.uavid].y) / dt * delay
+
+            rospy.loginfo('kalman id  %i, id message %i, old message id %i, timestamp %f, self.timestamp_mem % f, declive %f, dx %f, dt %f, interpolation %f, observation % f, delay %f, ', uav_id, msg.uavid, self.msg_mem[msg.uavid].uavid, timestamp, self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9, (msg.x - self.msg_mem[msg.uavid].x) / (timestamp - self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9), (msg.x - self.msg_mem[msg.uavid].x), (timestamp - self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9),  measurment_int.x, msg.x, delay)
+
+
+            self.msg_mem[msg.uavid] = msg
+        
+            pub_interpolation.publish(msg, measurment_int)
+
+            measurment = np.array([[measurment_int.x], [measurment_int.y]])
+
+
+            self.kf.update_delay(measurment)
+            state = target_position_fuse()
+            state.x = self.kf.x[0]
+            state.y = self.kf.x[1]
+            state.theta = self.kf.x[2]
+            state.v = self.kf.x[3]
+            state.w = self.kf.x[4]
+            state.timestamp = rospy.Time.now()
+
+        if(delay < self.min_delay or self.msg_mem.get(msg.uavid) == None):
+
+            self.msg_mem[msg.uavid] = msg
+
+            measurment = np.array([[msg.x], [msg.y], [msg.theta], [msg.v], [msg.w]])
+
+            self.kf.update_fuse(measurment)
+            state = target_position_fuse()
+            state.x = self.kf.x[0]
+            state.y = self.kf.x[1]
+            state.theta = self.kf.x[2]
+            state.v = self.kf.x[3]
+            state.w = self.kf.x[4]
+            state.timestamp = rospy.Time.now()
+   
+        if (delay > self.threshold_delay):
+            pass
+
+     
+    
+
         
 
 
@@ -198,11 +211,9 @@ if __name__ == "__main__":
     
     pub_delay = rospy.Publisher('delay_estimation', Float64, queue_size=1)
     
-    pub_samples = rospy.Publisher('samples_delay', Int64, queue_size=1)
     
-    pub_msg_true = rospy.Publisher('msg_true', target_position_fuse, queue_size=1)
+    pub_interpolation = rospy.Publisher('interpolation', delay_corr, queue_size=1)
     
-    pub_msg_correction = rospy.Publisher('msg_correction', target_position_fuse, queue_size=1)
     
     
     

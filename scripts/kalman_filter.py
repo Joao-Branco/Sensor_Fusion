@@ -30,7 +30,7 @@ def Jacobian(x, dt):
 
 
 class KalmanFilter(object):
-    def __init__(self, F = None, B = None, H = None, H_fuse = None, Q = None, R = None, R_fuse = None, P = None, x0 = None, dt = None):
+    def __init__(self, F = None, B = None, H = None, H_fuse = None, Q = None, R = None, R_fuse = None, R_delay = None, P = None, x0 = None, dt = None):
 
         if(F is None or H is None):
             raise ValueError("Set proper system dynamics.")
@@ -46,6 +46,7 @@ class KalmanFilter(object):
         self.Q = np.eye(self.n) if Q is None else Q
         self.R = np.eye(self.n) if R is None else R
         self.R_fuse = np.eye(self.n) if R_fuse is None else R_fuse
+        self.R_delay = np.eye(self.n) if R_delay is None else R_delay
         self.P = np.eye(self.n) if P is None else P
         self.x = np.zeros((self.n, 1)) if x0 is None else x0
         self.J = np.eye(self.n)
@@ -79,6 +80,15 @@ class KalmanFilter(object):
         I = np.eye(self.n)
         self.P = np.dot(np.dot(I - np.dot(K, self.H_fuse), self.P), 
         	(I - np.dot(K, self.H_fuse)).T) + np.dot(np.dot(K, self.R_fuse), K.T)
+        
+    def update_delay(self, z):
+        y = z - np.dot(self.H, self.x)
+        S = self.R_delay + np.dot(self.H, np.dot(self.P, self.H.T))
+        K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
+        self.x = self.x + np.dot(K, y)
+        I = np.eye(self.n)
+        self.P = np.dot(np.dot(I - np.dot(K, self.H), self.P), 
+        	(I - np.dot(K, self.H)).T) + np.dot(np.dot(K, self.R_delay), K.T)
 
 class Fusion:
     def __init__(self, f, uav_id, uav_total):
@@ -158,6 +168,11 @@ class Fusion:
                                     [0, 0, 0, 1, 0],
                                     [0, 0, 0, 0, 0.1]])
         
+        self.R_delay = np.array([   [0.5, 0],
+                                    [0, 0.5]])
+        
+        
+        
         # self.R_fuse = np.array([    [0.5, 0, 0, 0],
         #                             [0, 0.5, 0, 0],
         #                             [0, 0, 0.1, 0],
@@ -190,6 +205,7 @@ class Fusion:
         state.theta = self.kf.x[2]
         state.v = self.kf.x[3]
         state.w = self.kf.x[4]
+        state.uavid = uav_id
         # state.v_x = self.kf.x[2]
         # state.v_y = self.kf.x[3]
         state.timestamp = rospy.Time.now()

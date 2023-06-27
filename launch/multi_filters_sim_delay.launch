@@ -2,14 +2,14 @@
 <launch>
 
     <param name="total_uav" value="3"/>
-    <param name="delay_mean" value="2"/>
-    <param name="delay_std" value="0.05"/>
+    <param name="delay_mean" value="0.8"/>
+    <param name="delay_std" value="0.01"/>
 
     <node pkg="sensor_fusion" type="target.py" name="target" required="True" output="screen">
 	</node>
     
     <group ns = "uav1">
-        <include file="$(find sensor_fusion)/launch/uav_delay.launch" >
+        <include file="$(find sensor_fusion)/launch/uav_delay_buffer.launch" >
             <arg name="ID" value="1"/>
         </include>
     </group>

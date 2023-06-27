@@ -51,6 +51,7 @@ add_message_files(
    FILES
    target_position_fuse.msg
    target_position.msg
+   delay_corr.msg
  )
 
 ## Generate services in the 'srv' folder

@@ -3,7 +3,7 @@
 import rospy
 import math
 import numpy as np
-from sensor_fusion.msg import target_position
+from sensor_fusion.msg import target_position, target_position_fuse
 
 #target_x, target_y = 0,0
 
@@ -19,7 +19,7 @@ def target_callback(msg):
     noise_uav_y = np.random.normal(mean,std)        
     
     
-    pub_uav.publish(msg.x + noise_uav_x, msg.y + noise_uav_y, msg.v_x, msg.v_y, msg.timestamp)
+    pub_uav.publish(msg.x + noise_uav_x, msg.y + noise_uav_y, msg.timestamp)
     #rospy.loginfo("Noise has been published in UAV" + str(uav_id))
 
 if __name__ == "__main__":
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     rospy.loginfo("Node Noise has started")
     uav_id = rospy.get_param("~uav_id")
 
-    rospy.Subscriber('/target_position', target_position, target_callback, queue_size=1)
+    rospy.Subscriber('/target_position', target_position_fuse, target_callback, queue_size=1)
     
     
     pub_uav = rospy.Publisher('target_position', target_position, queue_size=10)

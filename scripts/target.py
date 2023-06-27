@@ -7,28 +7,27 @@ from sensor_fusion.msg import target_position_fuse
 from sensor_fusion.msg import target_position
 
 
-def target(self, x, y, v_x, v_y):
-    self.x = x
-    self.y = y
-    self.v_x = v_x
-    self.v_y = v_y
+
 
 if __name__ == "__main__":
     rospy.init_node("target_py")
     rospy.loginfo("Node Target has started")
 
 
-    pub = rospy.Publisher("/target_position", target_position, queue_size=10)
+    pub = rospy.Publisher("/target_position", target_position_fuse, queue_size=10)
     
     
     # definition of parameters of target
-    # x,y - starting position (m)   v_x,v_y - starting velocity (m/s)
+    # x,y - starting position (m)   v - starting velocity (m/s)
 
     
-    target.x = 0.0 
-    target.y = 0.0
-    target.v_x = 0.0
-    target.v_y = 0.0
+    x = 0.0 
+    y = 0.0
+    v_x = 0.0
+    v_y = 0.0
+    v = 0
+    w = 0
+
 
     # frenquency of publication of position
     f = 10
@@ -54,37 +53,45 @@ if __name__ == "__main__":
         t = t + 1/f
         
         
-        rospy.loginfo("X: %f, Y: %f", target.x, target.y) 
         
         #Target not moving
         #target.x = 0 * t
         #target.y = 0 * t
         
         #Target Moving with constant speed
-        # target.x = 2 * t 
-        # target.v_x = 2
-
-        # target.y = 2 * t 
-        # target.v_y = 2
+        w = 0
+        theta = w * t
+        v_x =  2
+        v_y =  2 
+        v = np.sqrt(v_x ** 2 + v_y ** 2)
+        x =  v_x * t
+        y = v_y * t
         
         #Target Moving with aceleration not constant
-        
-        #target.x = 5 * math.cos( 0.09 * t) 
-        #target.v_x =  -0.45 * math.sin(0.09 * t)
-        
-        #target.y = 5 * math.sin( 0.09 * t)
-        #target.v_y = 0.45 * math.cos(0.09 * t)
+
+        # w = 0.09
+        # theta = w * t
+        # v_x = - 0.45 * np.sin(theta)
+        # v_y =  0.45 * np.cos(theta) 
+        # v = np.sqrt(v_x ** 2 + v_y ** 2)
+        # x =  5 * np.cos(theta)
+        # y = 5 * np.sin(theta)
 
         #Target moving sinusoidal 
         
-        target.x = 5 * math.cos( 0.2 * t) 
-        target.v_x =  -0.1 * math.sin(0.2 * t)
 
-        target.y = 1 * t
-        target.v_y = 1
+        # w = 0.09
+        # theta = w * t
+        # v_x = - 0.45 * np.sin(theta)
+        # v_y =  2 
+        # v = np.sqrt(v_x ** 2 + v_y ** 2)
+        # x =  5  * np.cos(theta)
+        # y = v_y * t
+    
         
+        rospy.loginfo("X: %f, Y: %f", x, y) 
         
-        pub.publish(target.x, target.y, target.v_x, target.v_y, rospy.Time.now())
+        pub.publish(x, y, theta, v, w, 0, rospy.Time.now())
 
         
         rospy.loginfo("Target has been publish")

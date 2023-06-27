@@ -16,10 +16,11 @@ mean = 0
 
 delay_mean = 2
 delay_std = 0.05
+delay = 2
 
 n_uavs = 3
 
-SHARE_ON = False
+SHARE_ON = True
 EKF = True
 DELAY = True
 
@@ -59,7 +60,7 @@ def check_target_ret(func, t):
     return args
         
 x,y,vx,vy, vv, tt, ww = check_target_ret(target_dynamics, time)
-x,y,vx,vy, vv, tt, ww = target_dynamics(time)
+x,y,vx,vy, vv, tt, ww = target_dynamics_sin(time)
 
 state = np.stack((x,y, tt, vv,  ww), axis=0)
 
@@ -188,7 +189,6 @@ rows, cols = x0.shape
 predicts = [np.zeros((rows+1, f_kf*sim_time)) for _ in range(n_uavs)]
 predict_masks = [np.zeros(f_kf*sim_time, dtype=np.uint32) for i in range(n_uavs)]
 errors = [np.zeros((rows+1, f_kf*sim_time)) for _ in range(n_uavs)]
-errors_uavs = [np.zeros(5) for _ in range(n_uavs)]
 
 col_write = 0
 
@@ -205,11 +205,14 @@ t_predict = 0
 t_update = 0
 t_share = 0
 
-x_ant = None
+#shares queue
+q = [[] for _ in range(n_uavs)]
+
+
 
 t_start = pytime.time()
 for i, t in enumerate(time):
-    # update?
+    # update
     if t-t_update >= p_update:
         for sensor, kf in zip(sensors, kfs):
             x_, y_ = sensor[0][i], sensor[1][i]
@@ -218,15 +221,17 @@ for i, t in enumerate(time):
         continue
 
     # update share
-    if t-t_share >= p_share and SHARE_ON:
-        for kf1 in kfs:
-            for kf2 in kfs:
-                if kf1 is kf2:
-                    continue
-                kf2.update_fuse(kf1.x)
-
-        t_share = t
-        continue
+    for uav_i in range(n_uavs):
+        if (t - q[uav_i][0]) >= p_share and SHARE_ON and t_predict != 0:
+            for kf1 in kfs:
+                for kf2 in kfs:
+                    if kf1 is kf2:
+                        continue
+                    #delay interpolation
+                    measurment = q[uav_i][1] 
+                    kf2.update_fuse(measurment)
+            q[uav_i].pop(0)
+            continue
 
     # predict
     if t-t_predict >= p_predict:
@@ -242,9 +247,16 @@ for i, t in enumerate(time):
             predict_masks[uav_i][col_write] = i
 
 
+            q[uav_i].append([t + delay, kf.x])
+
+
+
         col_write += 1
         t_predict = t
         continue
+
+
+
 
 
 for pred, pred_mask in zip(predicts, predict_masks):
