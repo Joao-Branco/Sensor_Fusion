@@ -499,8 +499,10 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
                                                         total_error_x_int,
                                                         total_error_y_int, 
                                                         total_error_theta_int, 
-                                                        total_error_v_int, 
-                                                        total_error_w_int, 
+                                                        'Nan',
+                                                        'Nan',
+                                                        #total_error_v_int, 
+                                                        #total_error_w_int, 
                                                         total_euclidean_int]], 
                                                         columns=['y','error_x','error_y', 'error_theta', 'error_v', 'error_w', 'euclidean'])
             

@@ -16,8 +16,8 @@ class Fusion:
         self.uav_id = uav_id
         self.uav_total = uav_total
 
-        self.threshold_delay = 1
-        self.min_delay = 0.25 
+        self.threshold_delay = 2.5
+        self.min_delay = 0.0001
 
         self.x0 = np.array([    [5],
                                 [0],
@@ -139,6 +139,11 @@ class Fusion:
         time_now = rospy.Time.now().to_nsec() * 1e-9
         delay = time_now - timestamp
 
+        if (self.msg_mem.get(msg.uavid) != None):
+            dw = abs(msg.w - self.msg_mem[msg.uavid].w)
+            dv_x = abs(msg.v * np.cos(msg.theta) - self.msg_mem[msg.uavid].v * np.cos(self.msg_mem[msg.uavid].theta))
+            dv_y = abs(msg.v * np.sin(msg.theta) - self.msg_mem[msg.uavid].v * np.sin(self.msg_mem[msg.uavid].theta))
+
         
 
         measurment_int = target_position_fuse()
@@ -146,22 +151,27 @@ class Fusion:
         pub_delay.publish(delay)
     
         
-        if (self.msg_mem.get(msg.uavid) != None and (self.min_delay < delay < self.threshold_delay)):
+        if (self.msg_mem.get(msg.uavid) != None and ( delay < self.threshold_delay)):
             dt = timestamp - self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9
-            measurment_int.x = msg.x + (msg.x - self.msg_mem[msg.uavid].x) /  dt * delay
-            measurment_int.y = msg.y + (msg.y - self.msg_mem[msg.uavid].y) / dt * delay
+            if dw < 0.1:
+                measurment_int.theta = msg.theta + (msg.theta - self.msg_mem[msg.uavid].theta) / dt * delay
+            if dv_x < 0.1:
+                measurment_int.x = msg.x + (msg.x - self.msg_mem[msg.uavid].x) /  dt * delay
+            if dv_y < 0.1:
+                measurment_int.y = msg.y + (msg.y - self.msg_mem[msg.uavid].y) /  dt * delay
 
-            rospy.loginfo('kalman id  %i, id message %i, old message id %i, timestamp %f, self.timestamp_mem % f, declive %f, dx %f, dt %f, interpolation %f, observation % f, delay %f, ', uav_id, msg.uavid, self.msg_mem[msg.uavid].uavid, timestamp, self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9, (msg.x - self.msg_mem[msg.uavid].x) / (timestamp - self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9), (msg.x - self.msg_mem[msg.uavid].x), (timestamp - self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9),  measurment_int.x, msg.x, delay)
+            #rospy.loginfo('kalman id  %i, id message %i, old message id %i, timestamp %f, self.timestamp_mem % f, declive %f, dx %f, dt %f, interpolation %f, observation % f, delay %f, ', uav_id, msg.uavid, self.msg_mem[msg.uavid].uavid, timestamp, self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9, (msg.x - self.msg_mem[msg.uavid].x) / (timestamp - self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9), (msg.x - self.msg_mem[msg.uavid].x), (timestamp - self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9),  measurment_int.x, msg.x, delay)
 
 
             self.msg_mem[msg.uavid] = msg
         
             pub_interpolation.publish(msg, measurment_int)
 
-            measurment = np.array([[measurment_int.x], [measurment_int.y]])
+            #measurment = np.array([[measurment_int.x], [measurment_int.y]])
+            measurment = np.array([[msg.x], [msg.y], [msg.theta], [msg.v], [msg.w]])
 
 
-            self.kf.update_delay(measurment)
+            self.kf.update_fuse(measurment)
             state = target_position_fuse()
             state.x = self.kf.x[0]
             state.y = self.kf.x[1]
@@ -170,7 +180,7 @@ class Fusion:
             state.w = self.kf.x[4]
             state.timestamp = rospy.Time.now()
 
-        if(delay < self.min_delay or self.msg_mem.get(msg.uavid) == None):
+        if(self.msg_mem.get(msg.uavid) == None):
 
             self.msg_mem[msg.uavid] = msg
 

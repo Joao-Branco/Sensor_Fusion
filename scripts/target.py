@@ -59,13 +59,13 @@ if __name__ == "__main__":
         #target.y = 0 * t
         
         #Target Moving with constant speed
-        w = 0
-        theta = w * t
-        v_x =  2
-        v_y =  2 
-        v = np.sqrt(v_x ** 2 + v_y ** 2)
-        x =  v_x * t
-        y = v_y * t
+        # w = 0
+        # theta = w * t
+        # v_x =  2
+        # v_y =  2 
+        # v = np.sqrt(v_x ** 2 + v_y ** 2)
+        # x =  v_x * t
+        # y = v_y * t
         
         #Target Moving with aceleration not constant
 
@@ -79,14 +79,13 @@ if __name__ == "__main__":
 
         #Target moving sinusoidal 
         
-
-        # w = 0.09
-        # theta = w * t
-        # v_x = - 0.45 * np.sin(theta)
-        # v_y =  2 
-        # v = np.sqrt(v_x ** 2 + v_y ** 2)
-        # x =  5  * np.cos(theta)
-        # y = v_y * t
+        w = 0.09
+        theta = w * t
+        v_x = - 0.45 * np.sin(theta)
+        v_y = 2
+        v = np.sqrt(v_x ** 2 + v_y ** 2)
+        x =  5  * np.cos(theta)
+        y = v_y * t
     
         
         rospy.loginfo("X: %f, Y: %f", x, y) 
