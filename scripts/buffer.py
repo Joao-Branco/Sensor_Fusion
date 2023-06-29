@@ -38,7 +38,7 @@ if __name__ == "__main__":
             timestamp = buffer[0].timestamp.to_nsec() * 1e-9
             time_now = rospy.Time.now().to_nsec() * 1e-9
             
-            if time_now - timestamp >= delay:
+            if time_now - timestamp >= delay and delay > 0:
                 pub_delay.publish(delay)
                 rospy.loginfo("\n\n\nBuffer delay %f  ------ timestamp  %f", delay , timestamp)
                 pub_fuse.publish(buffer.pop(0))

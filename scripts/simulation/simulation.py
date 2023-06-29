@@ -1,6 +1,6 @@
 from sim_filters import single, multi, multi_fuse, multi_fuse_delay, multi_fuse_delay_not
 
-time_simulation = 120
+time_simulation = 20
 
 #single(time_simulation)
 
@@ -10,5 +10,5 @@ time_simulation = 120
 
 multi_fuse_delay(time_simulation)
 
-multi_fuse_delay_not(time_simulation)
+#multi_fuse_delay_not(time_simulation)
 
