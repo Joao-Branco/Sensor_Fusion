@@ -16,7 +16,7 @@ class Fusion:
         self.uav_id = uav_id
         self.uav_total = uav_total
 
-        self.threshold_delay = 2.5
+        self.threshold_delay = 5
         self.min_delay = 0.0001
 
         self.x0 = np.array([    [5],
@@ -140,7 +140,6 @@ class Fusion:
         delay = time_now - timestamp
 
         if (self.msg_mem.get(msg.uavid) != None):
-            dw = abs(msg.w - self.msg_mem[msg.uavid].w)
             dv_x = abs(msg.v * np.cos(msg.theta) - self.msg_mem[msg.uavid].v * np.cos(self.msg_mem[msg.uavid].theta))
             dv_y = abs(msg.v * np.sin(msg.theta) - self.msg_mem[msg.uavid].v * np.sin(self.msg_mem[msg.uavid].theta))
 
@@ -153,18 +152,26 @@ class Fusion:
         
         if (self.msg_mem.get(msg.uavid) != None and ( delay < self.threshold_delay)):
             dt = timestamp - self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9
-            if dw < 0.1:
-                measurment_int.theta = msg.theta + (msg.theta - self.msg_mem[msg.uavid].theta) / dt * delay
-            if dv_x < 0.1:
-                measurment_int.x = msg.x + (msg.x - self.msg_mem[msg.uavid].x) /  dt * delay
-            if dv_y < 0.1:
-                measurment_int.y = msg.y + (msg.y - self.msg_mem[msg.uavid].y) /  dt * delay
+            if dv_x < 0.0001:
+                measurment_int.x = msg.x + msg.v * np.cos(msg.theta) * delay
+            if dv_y < 0.0001:   
+                measurment_int.y = msg.y + msg.v * np.sin(msg.theta) * delay
 
             #rospy.loginfo('kalman id  %i, id message %i, old message id %i, timestamp %f, self.timestamp_mem % f, declive %f, dx %f, dt %f, interpolation %f, observation % f, delay %f, ', uav_id, msg.uavid, self.msg_mem[msg.uavid].uavid, timestamp, self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9, (msg.x - self.msg_mem[msg.uavid].x) / (timestamp - self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9), (msg.x - self.msg_mem[msg.uavid].x), (timestamp - self.msg_mem[msg.uavid].timestamp.to_nsec() * 1e-9),  measurment_int.x, msg.x, delay)
 
 
+
+            #measurment_int.theta = msg.theta + (msg.theta - self.msg_mem[msg.uavid].theta) / dt * delay
+            #measurment_int.x = msg.x + (msg.x - self.msg_mem[msg.uavid].x) /  dt * delay
+            #measurment_int.y = msg.y + (msg.y - self.msg_mem[msg.uavid].y) /  dt * delay
+            #measurment_int.x = msg.x + msg.v * np.cos(msg.theta) * delay
+            #measurment_int.y = msg.y + msg.v * np.sin(msg.theta) * delay
+            #measurment_int.v = msg.v + (msg.v - self.msg_mem[msg.uavid].v) /  dt * delay
+            #measurment_int.w = msg.w + (msg.w - self.msg_mem[msg.uavid].w) /  dt * delay
+
             self.msg_mem[msg.uavid] = msg
-        
+
+
             pub_interpolation.publish(msg, measurment_int)
 
             #measurment = np.array([[measurment_int.x], [measurment_int.y]])

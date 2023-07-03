@@ -36,6 +36,7 @@ def single(SIMTIME):
     record_topics = '''//rosout
         /rosout_agg
         /target_position
+        /target_position_true
         /uav1/target_position
         /uav1/target_position_estimation
         /uav1/target_position_fuse
@@ -111,6 +112,7 @@ def multi_fuse(SIMTIME):
     record_topics = '''/rosout
         /rosout_agg
         /target_position
+        /target_position_true
         /uav1/target_position
         /uav1/target_position_estimation
         /uav1/target_position_fuse
@@ -202,6 +204,7 @@ def multi(SIMTIME):
     record_topics = '''/rosout
         /rosout_agg
         /target_position
+        /target_position_true
         /uav1/target_position
         /uav1/target_position_estimation
         /uav1/target_position_fuse
@@ -287,6 +290,7 @@ def multi_fuse_delay_not(SIMTIME):
     record_topics = '''/rosout
         /rosout_agg
         /target_position
+        /target_position_true
         /uav1/delay
         /uav1/delay_estimation
         /uav1/interpolation
@@ -383,6 +387,7 @@ def multi_fuse_delay(SIMTIME):
     record_topics = '''/rosout
         /rosout_agg
         /target_position
+        /target_position_true
         /uav1/delay
         /uav1/delay_estimation
         /uav1/interpolation

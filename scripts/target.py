@@ -14,7 +14,7 @@ if __name__ == "__main__":
     rospy.loginfo("Node Target has started")
 
 
-    pub = rospy.Publisher("/target_position", target_position_fuse, queue_size=10)
+    pub = rospy.Publisher("/target_position_true", target_position_fuse, queue_size=10)
     
     
     # definition of parameters of target
@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
 
     # frenquency of publication of position
-    f = 10
+    f = 30
 
     #10 - 25 Hz (Computer Vision)
 
@@ -69,26 +69,26 @@ if __name__ == "__main__":
         
         #Target Moving with aceleration not constant
 
-        # w = 0.09
-        # theta = w * t
-        # v_x = - 0.45 * np.sin(theta)
-        # v_y =  0.45 * np.cos(theta) 
-        # v = np.sqrt(v_x ** 2 + v_y ** 2)
-        # x =  5 * np.cos(theta)
-        # y = 5 * np.sin(theta)
-
-        #Target moving sinusoidal 
-        
         w = 0.09
         theta = w * t
         v_x = - 0.45 * np.sin(theta)
-        v_y = 2
+        v_y =  0.45 * np.cos(theta) 
         v = np.sqrt(v_x ** 2 + v_y ** 2)
-        x =  5  * np.cos(theta)
-        y = v_y * t
+        x =  5 * np.cos(theta)
+        y = 5 * np.sin(theta)
+
+        #Target moving sinusoidal 
+        
+        # w = 0.09
+        # theta = w * t
+        # v_x = - 0.45 * np.sin(theta)
+        # v_y = 2
+        # v = np.sqrt(v_x ** 2 + v_y ** 2)
+        # x =  5  * np.cos(theta)
+        # y = v_y * t
     
         
-        rospy.loginfo("X: %f, Y: %f", x, y) 
+        rospy.loginfo("X: %f, Y: %f, Time: %i", x, y, t) 
         
         pub.publish(x, y, theta, v, w, 0, rospy.Time.now())
 

@@ -5,24 +5,69 @@ import time as pytime
 import matplotlib.pyplot as plt
 import sklearn.metrics
 
+# simulation parameters
 f = 100
 sim_time = 60
 f_sample = 10
 f_kf = 20
 f_share = 20
 
-std = 2.0
-mean = 0
+SENSOR_STD = 2.0
+SENSOR_MEAN = 0
 
-delay_mean = 2
-delay_std = 0.05
-delay = 2
 
 n_uavs = 3
-
+DELAY_MEAN = 0.5
+DELAY_STD = 0.01  # 0=guarantees no out of order, but removes randomness in delay
 SHARE_ON = True
 EKF = True
 DELAY = True
+OUT_OF_ORDER = True
+
+DELAY_STRATEGY = None
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+class DelayKalmanFilter:
+    def __init__(self, kf, delay_strategy=None):
+        self.kf = kf
+        self.predict = self.kf.predict
+        self.predict_nonlinear = self.kf.predict_nonlinear
+        
+        self.update = self.kf.update
+
+        self.last_msgs = {}
+        
+        self.delay_strategy=delay_strategy
+        if delay_strategy is None:
+            self.update_fuse = self.update_fuse_no_delay
+        elif delay_strategy == "extrapolate":
+            self.update_fuse = self.update_fuse_extrapolate
+        elif delay_strategy == "extrapolate_plus":
+            self.update_fuse = self.update_fuse_extrapolate_plus
+        elif delay_strategy == "out_of_order":
+            self.update_fuse = self.update_fuse_ood
+
+    def update_fuse_no_delay(self, z, *args, **kwargs):
+        return self.kf.update_fuse(z)
+
+    def update_fuse_extrapolate(self, z, t_z, uav_i, t_now):
+        raise NotImplementedError()
+        # TODO extrapolate to t_now
+        last_z, last_t_z = self.last_msgs[uav_i]
+
+        z
+
+        self.last_msgs[uav_i] = (z, t_z)
+
+    def update_fuse_extrapolate_plus(self, z, t_z, uav_i, t_now):
+        raise NotImplementedError()
+    
+    def update_fuse_ood(self, z, t_z, uav_i, t_now):
+        raise NotImplementedError()
 
 
 time = np.arange(0, sim_time, 1/f)
@@ -71,7 +116,7 @@ state = np.stack((x,y, tt, vv,  ww), axis=0)
 
 
 def gen_sensor_data(*arrays):
-    return [array + np.random.normal(mean,std, size=array.size) for array in arrays]
+    return [array + np.random.normal(SENSOR_MEAN, SENSOR_STD, size=array.size) for array in arrays]
 
 sensors = [gen_sensor_data(x,y) for i in range(n_uavs)]
 
@@ -181,7 +226,9 @@ else:
                     H_fuse_KF = H_fuse_KF.copy() , Q_KF = Q_KF.copy() ,
                     R = R.copy(), R_fuse_KF = R_fuse_KF.copy(),
                     x0_KF = x0_KF.copy(), dt = dt) for i in range(n_uavs)]
-    
+
+
+kfs = [DelayKalmanFilter(kf) for kf in kfs]
 
 
 # matrix for results
@@ -207,7 +254,7 @@ t_share = 0
 
 #shares queue
 q = [[] for _ in range(n_uavs)]
-
+q_ts = [0 for _ in range(n_uavs)] # last share times for each uav
 
 
 t_start = pytime.time()
@@ -218,20 +265,18 @@ for i, t in enumerate(time):
             x_, y_ = sensor[0][i], sensor[1][i]
             kf.update(np.array([[x_], [y_]]))
         t_update = t
-        continue
 
     # update share
-    for uav_i in range(n_uavs):
-        if (t - q[uav_i][0]) >= p_share and SHARE_ON and t_predict != 0:
-            for kf1 in kfs:
-                for kf2 in kfs:
-                    if kf1 is kf2:
-                        continue
-                    #delay interpolation
-                    measurment = q[uav_i][1] 
-                    kf2.update_fuse(measurment)
-            q[uav_i].pop(0)
-            continue
+    for uav_i, kf in enumerate(kfs):
+        # if sharing, and queue not empty
+        for z_ in q[uav_i]: # for every shared message in my queue, i_z = index of source uav
+            t_z, z, i_z = z_
+            if (t - t_z) >= 0: # check if the message is not too recent
+                # update
+                kf.update_fuse(z, t_z, uav_i, t)
+                q[uav_i].remove(z_)
+                
+
 
     # predict
     if t-t_predict >= p_predict:
@@ -241,19 +286,34 @@ for i, t in enumerate(time):
             else:
                 x_i = kf.predict()
 
+
             predicts[uav_i][0,col_write] = t   
             predicts[uav_i][1:,col_write] = x_i[:,0]
 
             predict_masks[uav_i][col_write] = i
 
+            if t - t_share >= p_share and SHARE_ON:
+                delay = np.random.normal(DELAY_MEAN, DELAY_STD)
 
-            q[uav_i].append([t + delay, kf.x])
+                # is we don't want out of order messages, recompute delay
+                while not OUT_OF_ORDER and t+delay < q_ts[uav_i]:
+                    delay = np.random.normal(DELAY_MEAN, DELAY_STD)
 
+                # add this message to every other uav queue
+                for uav_j in range(n_uavs):
+                    if uav_i == uav_j:
+                        continue # dont add my predicts to my own queue
 
+                    q[uav_j].append((t + delay, x_i, uav_i))
+
+                # update last share time for this uav
+                q_ts[uav_i] = t + delay
+                
 
         col_write += 1
-        t_predict = t
+        t_predict, t_share = t, t
         continue
+
 
 
 
@@ -325,16 +385,3 @@ print("RMSE w:  ", rmse[4])
 
 print("Accuracy: ", np.mean(euclidean))
 print("Precision: ", np.mean(dist_uavs))
-
-print(kfs[0].P)
-
-
-
-
-
-
-            
-
-
-
-
