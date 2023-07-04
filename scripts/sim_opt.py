@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import sklearn.metrics
 
 # simulation parameters
-f = 100
+f = 200
 sim_time = 60
 f_sample = 10
 f_kf = 20
@@ -24,7 +24,7 @@ EKF = True
 DELAY = True
 OUT_OF_ORDER = True
 
-DELAY_STRATEGY = None
+DELAY_STRATEGY = "extrapolate"
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -40,6 +40,9 @@ class DelayKalmanFilter:
         self.update = self.kf.update
 
         self.last_msgs = {}
+
+        self.last_z_share = None
+        self.last_z_obs = None
         
         self.delay_strategy=delay_strategy
         if delay_strategy is None:
@@ -55,16 +58,50 @@ class DelayKalmanFilter:
         return self.kf.update_fuse(z)
 
     def update_fuse_extrapolate(self, z, t_z, uav_i, t_now):
-        raise NotImplementedError()
-        # TODO extrapolate to t_now
-        last_z, last_t_z = self.last_msgs[uav_i]
+        z_corrected = None
+        if(self.last_msgs.get(uav_i) != None):
+            last_z, last_t_z = self.last_msgs[uav_i] # last predict made by other UAV
+            delay_est = t_now - t_z # delay present in the predict received
+            z_corrected = z + (z - last_z) / (t_z - last_t_z) * delay_est # extrapolation of all the state vector to the actual time
+            self.last_z_share = z_corrected
+            self.last_z_obs = z
+        else:
+            z_corrected = z
 
-        z
 
-        self.last_msgs[uav_i] = (z, t_z)
+        self.last_msgs[uav_i] = (z, t_z) # saving in memory the predict  
+
+        return self.kf.update_fuse(z)
+
 
     def update_fuse_extrapolate_plus(self, z, t_z, uav_i, t_now):
-        raise NotImplementedError()
+        z_corrected = None
+        if(self.last_msgs.get(uav_i) != None):
+            last_z, last_t_z = self.last_msgs[uav_i] # last predict made by other UAV
+            delay_est = t_now - t_z # delay present in the predict received
+
+            z_corrected = z # copy the predict received
+
+            v_x = z[3] * np.cos(z[2])
+            v_y = z[3] * np.sin(z[2])
+
+            z_corrected[0] = z[0] + v_x * delay_est #extrapolation of x, but using the v_x of the state
+            z_corrected[1] = z[1] + v_y * delay_est #extrapolation of y, but using the v_y of the state
+
+            #Suggestion
+
+            #z_ext[2] = z[2] + z[4] * delay_est #extrapolation of theta, but using the w of the state
+
+            self.last_z_share = z_corrected
+            self.last_z_obs = z
+
+        else:
+            z_corrected = z
+
+
+        self.last_msgs[uav_i] = (z, t_z) # saving in memory the predict  
+
+        return self.kf.update_fuse(z)
     
     def update_fuse_ood(self, z, t_z, uav_i, t_now):
         raise NotImplementedError()
@@ -93,6 +130,17 @@ def target_dynamics_sin(t):
     v_y =  2 * np.ones_like(t)
     v = np.sqrt(v_x ** 2 + v_y ** 2)
     x = - 3 * np.sin(theta)
+    y = v_y * t
+    
+    return x,y,v_x,v_y, v, theta, w
+
+def target_dynamics_linear(t):
+    w = np.zeros_like(t)
+    theta = w * t
+    v_x = 2 * np.ones_like(t)
+    v_y =  2 * np.ones_like(t)
+    v = np.sqrt(v_x ** 2 + v_y ** 2)
+    x = v_x * t
     y = v_y * t
     
     return x,y,v_x,v_y, v, theta, w
@@ -228,7 +276,7 @@ else:
                     x0_KF = x0_KF.copy(), dt = dt) for i in range(n_uavs)]
 
 
-kfs = [DelayKalmanFilter(kf) for kf in kfs]
+kfs = [DelayKalmanFilter(kf, delay_strategy = DELAY_STRATEGY) for kf in kfs]
 
 
 # matrix for results
@@ -255,6 +303,8 @@ t_share = 0
 #shares queue
 q = [[] for _ in range(n_uavs)]
 q_ts = [0 for _ in range(n_uavs)] # last share times for each uav
+z_obs = [[]  for _ in range(n_uavs)] # z received
+z_corr = [[]  for _ in range(n_uavs)] # z with correction of delay 
 
 
 t_start = pytime.time()
@@ -274,6 +324,8 @@ for i, t in enumerate(time):
             if (t - t_z) >= 0: # check if the message is not too recent
                 # update
                 kf.update_fuse(z, t_z, uav_i, t)
+                z_obs[uav_i].append([kf.last_z_obs, t])
+                z_corr[uav_i].append([kf.last_z_share, t])
                 q[uav_i].remove(z_)
                 
 
@@ -296,7 +348,7 @@ for i, t in enumerate(time):
                 delay = np.random.normal(DELAY_MEAN, DELAY_STD)
 
                 # is we don't want out of order messages, recompute delay
-                while not OUT_OF_ORDER and t+delay < q_ts[uav_i]:
+                while not OUT_OF_ORDER and t+delay < q_ts[uav_i] and time.includes(t + delay):
                     delay = np.random.normal(DELAY_MEAN, DELAY_STD)
 
                 # add this message to every other uav queue
@@ -314,7 +366,10 @@ for i, t in enumerate(time):
         t_predict, t_share = t, t
         continue
 
-
+z_obs[:].pop(0)
+z_corr[:].pop(0)
+print(z_obs[1][1:5], len(z_obs[0]))
+print(z_corr[1][1:5], len(z_corr[0]))
 
 
 
