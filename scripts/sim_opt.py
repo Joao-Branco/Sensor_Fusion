@@ -286,6 +286,7 @@ predict_masks = [np.zeros(f_kf*sim_time, dtype=np.uint32) for i in range(n_uavs)
 errors = [np.zeros((rows+1, f_kf*sim_time)) for _ in range(n_uavs)]
 
 col_write = 0
+col_obs = 0
 
 # print(f"time shape {time.shape}")
 # print(f"predicts shape {predicts[0].shape}")
@@ -327,6 +328,7 @@ for i, t in enumerate(time):
                 t_array = np.array(t)
                 z_obs[uav_i].append([kf.last_z_obs, t])
                 z_corr[uav_i].append([kf.last_z_share, t])
+                predict_masks[uav_i][col_write] = i
                 q[uav_i].remove(z_)
                 
 
@@ -388,7 +390,10 @@ print(z_obs[0][:,0:3])
 print(z_corr[0][:,0:3])
 
 
-
+for pred, pred_mask in zip(predicts, predict_masks):
+    state_filtered = state[:,pred_mask]
+    err_abs = np.abs(state_filtered - z_obs[1:,:]) # ignore time row from pred
+    euclidean = np.sqrt(err_abs[0,:] ** 2 + err_abs[1,:] ** 2)
 
 for pred, pred_mask in zip(predicts, predict_masks):
     state_filtered = state[:,pred_mask]
