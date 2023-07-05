@@ -157,7 +157,7 @@ x,y,vx,vy, vv, tt, ww = target_dynamics_sin(time)
 
 state = np.stack((x,y, tt, vv,  ww), axis=0)
 
-#print(x, len(x))
+print(np.shape(state))
 
 
 
@@ -324,6 +324,7 @@ for i, t in enumerate(time):
             if (t - t_z) >= 0: # check if the message is not too recent
                 # update
                 kf.update_fuse(z, t_z, uav_i, t)
+                t_array = np.array(t)
                 z_obs[uav_i].append([kf.last_z_obs, t])
                 z_corr[uav_i].append([kf.last_z_share, t])
                 q[uav_i].remove(z_)
@@ -366,10 +367,25 @@ for i, t in enumerate(time):
         t_predict, t_share = t, t
         continue
 
-z_obs[:].pop(0)
-z_corr[:].pop(0)
-print(z_obs[1][1:5], len(z_obs[0]))
-print(z_corr[1][1:5], len(z_corr[0]))
+#Converting list with observations and extrapolations to an array
+
+for i in range(n_uavs):
+    z_obs[i].pop(0)
+    z_corr[i].pop(0)
+    for t, t_value in enumerate(z_obs[i]):
+        t_array = np.array([z_obs[i][t][1]])
+        z_array = z_obs[i][t][0].flatten()
+        z_obs[i][t] = np.concatenate((t_array, z_obs[i][t][0].flatten()))
+        z_corr[i][t] = np.concatenate((t_array, z_corr[i][t][0].flatten()))
+    z_obs[i] = np.array(z_obs[i])
+    z_corr[i] = np.array(z_corr[i])
+    z_obs[i] = z_obs[i].T
+    z_corr[i] = z_corr[i].T
+
+
+print(predicts[0][:,0:3])
+print(z_obs[0][:,0:3])
+print(z_corr[0][:,0:3])
 
 
 
@@ -410,6 +426,8 @@ print(f"gt last time={time[-1]}")
 print(f"col write={col_write}")
 print(f'finished simulation in {pytime.time() - t_start} seconds')
 print(np.shape(predicts))
+print(predict_masks[0], np.shape(predict_masks))
+
 
 dx = x[-1] - predicts[0][1,-1]
 dy = y[-1] - predicts[0][2,-1]
