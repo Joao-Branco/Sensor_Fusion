@@ -1,6 +1,16 @@
 import target_dynamics
 import sim_core
 import sim_opt_plot
+from pathlib import Path
+import time
+import time as pytime
+import pandas as pd
+
+#path to create a folder with the results from the simulations
+
+SIM_ID = int(time.time())
+sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}")
+sim_dir.mkdir()
 
 # simulation parameters
 n_uavs = 3
@@ -45,11 +55,26 @@ OUT_OF_ORDER = False
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-for ekf in ekf_lst:
-    for share in share_lst:
-        for delay in delay_lst:
+all_data = []
+
+t_start = pytime.time()
+for share in share_lst:
+
+    dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/share_{share}")
+    dir.mkdir()
+
+    for delay in delay_lst:
+        dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/share_{share}/delay_{delay}")
+        dir.mkdir()
+        for ekf in ekf_lst:
+            dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/share_{share}/delay_{delay}/ekf_{ekf}")
+            dir.mkdir()
             for delay_strategy in delay_strategy_list:
+                dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/share_{share}/delay_{delay}/ekf_{ekf}/strategy_{delay_strategy}")
+                dir.mkdir()
                 for dynamics in dynamics_lst:
+                    dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/share_{share}/delay_{delay}/ekf_{ekf}/strategy_{delay_strategy}/{str(dynamics.__name__)}")
+                    dir.mkdir()
                     if (delay == True):
                         DELAY_MEAN = 0.5
                         DELAY_STD = 0.01  # 0=guarantees no out of order, but removes randomness in delay
@@ -65,5 +90,13 @@ for ekf in ekf_lst:
                     print("OUT_OF_ORDER   --- ", OUT_OF_ORDER)
                     print("TARGET DYNAMIC   --- ", dynamics.__name__)
                     state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y = sim_core.sim(DELAY_STRATEGY= delay_strategy, EKF=ekf, OUT_OF_ORDER= OUT_OF_ORDER, SHARE_ON= share, DELAY_MEAN= DELAY_MEAN, DELAY_STD= DELAY_STD,  SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD = SENSOR_STD,  sim_time = sim_time, n_uavs = n_uavs, f_sim = f, f_kf = f_kf, f_sample = f_sample, f_share = f_share, target_dynamics = dynamics) 
-                    sim_opt_plot.sim_plot(state, predicts, predict_masks, n_uavs, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf)
+                    accuracy, precision = sim_opt_plot.sim_plot(state, predicts, predict_masks, n_uavs, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, str(dir))
+                    all_data.append([share, delay, ekf, delay_strategy, str(dynamics.__name__), accuracy, precision])
 
+
+column_values = ['Share', 'Delay', 'EKF', 'Delay strategy', 'Dynamics', 'accuracy', 'precision']
+dataframe = pd.DataFrame(all_data, columns = column_values)
+dataframe.to_csv(f'/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/performance.csv')
+
+
+print(f'Finished all simulation in {pytime.time() - t_start} seconds')

@@ -2,9 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sklearn.metrics
 import pandas as pd
+import os.path
 
 
-def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf):
+def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, dir):
 
     for pred, pred_mask in zip(predicts, predict_masks):
         state_filtered = state[:,pred_mask]
@@ -22,12 +23,25 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
 
     dist_uavs = np.array(dist_uavs)   
 
+    plt.figure(figsize=(6, 6))
+    
     for i in range(n_uavs):
         x_, y_ = predicts[i][1,:], predicts[i][2,:]
-        plt.plot(x_[:col_write], y_[:col_write], 'x')
-    plt.plot(x,y, 'k')
+        plt.plot(x_[:col_write], y_[:col_write], 'x', markersize=5, label='UAV ' + str(i + 1))
+    plt.plot(x,y, 'k',linewidth='3', label="Alvo")
+    plt.title("Posição", fontsize=20)
+    plt.xlabel('X (m)', fontsize=15)
+    plt.ylabel('Y (m)', fontsize=15)
+    plt.legend(fontsize=10)
     plt.grid()
-    plt.show()
+
+
+    plot_jpg = "Dinamica_alvo.png"
+    
+    plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
+    plt.savefig(plot_jpg)
+
+    plt.close()
 
 
     
@@ -90,6 +104,10 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
         print("Absolute error v:  ", err_abs_mean[3])
         print("Absolute error w:  ", err_abs_mean[4])
 
+        column_values = ['x', 'y', 'theta', 'v', 'w']
+        index_values = ['Error_abs', 'RMSE']
+        dataframe = pd.DataFrame([err_abs_mean, rmse], index = index_values, columns = column_values)
+
         if (delay == True and delay_strategy != None):
 
             err_obs_mean = np.array([   np.mean(err_obs[0,:]),
@@ -110,8 +128,12 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
             print(f"V---Absolute error obs: {err_obs_mean[3]}, Absolute error corr: {err_corr_mean[3]}")
             print(f"W---Absolute error obs: {err_obs_mean[4]}, Absolute error corr: {err_corr_mean[4]}")
 
+            index_values = ['Error_obs', 'Error_corr']
+            pdd = pd.DataFrame([err_obs_mean, err_corr_mean], index = index_values, columns = column_values)
 
-            for i, state in enumerate(['x', 'y', 'theta', 'v', 'w']):
+            dataframe = pd.concat([dataframe, pdd])
+
+            for i, state in enumerate(column_values):
 
                 if err_obs_mean[i] < err_corr_mean[i]:
                     print(f"{state}-----OBS")
@@ -119,6 +141,8 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
                     print(f"{state}-----CORR") 
                 else:
                     print(f"{state} state not interpolated")
+
+
 
 
 
@@ -139,6 +163,11 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
                             np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[1,:], pred[1,:])),
                             np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[2,:], pred[2,:])),
                             np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[3,:], pred[3,:]))])
+
+
+        column_values = ['x', 'y', 'v_x', 'v_y']
+        index_values = ['Error_abs', 'RMSE']
+        dataframe = pd.DataFrame([err_abs_mean, rmse], index = index_values, columns = column_values)
         
         if (delay == True and delay_strategy != None):
         
@@ -157,9 +186,14 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
             print(f"V_X---Absolute error obs: {err_obs_mean[2]}, Absolute error corr: {err_corr_mean[2]}")
             print(f"V_Y---Absolute error obs: {err_obs_mean[3]}, Absolute error corr: {err_corr_mean[3]}")
 
+            index_values = ['Error_obs', 'Error_corr']
+            pdd = pd.DataFrame([err_obs_mean, err_corr_mean], index = index_values, columns = column_values)
+
+            dataframe = pd.concat([dataframe, pdd])
 
 
-            for i, state in enumerate(['x', 'y', 'v_x', 'v_y']):
+
+            for i, state in enumerate(column_values):
 
                 if err_obs_mean[i] < err_corr_mean[i]:
                     print(f"{state}-----OBS")
@@ -176,5 +210,15 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
         print("RMSE v_y:  ", rmse[3])
 
 
+
+    dataframe.to_csv( dir + '/data_errors.csv')
+
+
     print("Accuracy: ", np.mean(euclidean))
     print("Precision: ", np.mean(dist_uavs))
+
+    performance = pd.DataFrame([np.mean(euclidean), np.mean(dist_uavs)], index = ['Accuracy', 'Precision'])
+
+    performance.to_csv( dir + '/performance.csv')
+
+    return np.mean(euclidean), np.mean(dist_uavs)
