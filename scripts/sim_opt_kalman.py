@@ -60,7 +60,7 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy):
                 last_z, last_t_z = self.last_msgs[uav_i] # last predict made by other UAV
                 delay_est = t_now - t_z # delay present in the predict received
 
-                z_corrected = z # copy the predict received
+                z_corrected = z.copy() # copy the predict received
 
                 v_x = z[3] * np.cos(z[2])
                 v_y = z[3] * np.sin(z[2])
@@ -107,7 +107,7 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy):
         
         # x ----Initial value for the state
 
-        x0_KF = np.array([  [state[0,0]],
+        x0 = np.array([  [state[0,0]],
                             [state[1,0]],
                             [state[2,0]],
                             [state[3,0]]])
@@ -193,7 +193,7 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy):
         kfs = [KalmanFilter(F = F.copy(), H = H_KF.copy(),
                         H_fuse = H_fuse_KF.copy() , Q = Q_KF.copy() ,
                         R = R.copy(), R_fuse = R_fuse_KF.copy(),
-                        x0 = x0_KF.copy(), dt = dt) for i in range(n_uavs)]
+                        x0 = x0.copy(), dt = dt) for i in range(n_uavs)]
     
     kfs = [DelayKalmanFilter(kf, delay_strategy) for kf in kfs]
 

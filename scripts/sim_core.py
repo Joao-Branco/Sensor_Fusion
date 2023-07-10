@@ -75,7 +75,7 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
                 t_z_delay, t_z, z, i_z = z_
                 if (t - t_z_delay) >= 0: # check if the message is not too recent
                     # update
-                    if (OUT_OF_ORDER == True):
+                    if (DELAY_STRATEGY != None):
 
                         kf.update_fuse(z, t_z, i_z, t)
                         z_obs[uav_i].append([kf.last_z_obs, t])
