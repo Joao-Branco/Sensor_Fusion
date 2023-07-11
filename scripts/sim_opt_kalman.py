@@ -30,8 +30,8 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy):
                 self.update_fuse = self.update_fuse_extrapolate
             elif delay_strategy == "extrapolate_plus":
                 self.update_fuse = self.update_fuse_extrapolate_plus
-            elif delay_strategy == "out_of_order":
-                self.update_fuse = self.update_fuse_ood
+            elif delay_strategy == "augmented_state":
+                self.update_fuse = self.update_fuse_augmented_state
 
         def update_fuse_no_delay(self, z, *args, **kwargs):
             self.last_z_obs = z
@@ -85,8 +85,23 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy):
         
         def update_fuse_ood(self, z, t_z, uav_i, t_now):
             raise NotImplementedError()
+        
+        
+            delay_est = t_now - t_z # delay present in the predict received
+
+            N = delay_est / dt
+
+            H_delay = np.block([[np.block([R_fuse, np.zeros((5,5*5))])], [np.block([[np.block([np.zeros((5,n*5)), R_fuse, np.zeros((5,(m-n)*5))])] for n in range(1, m)])], [np.block([np.zeros((5,5*5)), R_fuse])]])
 
 
+
+            raise NotImplementedError()
+
+
+
+    #Definition of matrixes for EKF and KF
+
+    dt = 1 / f_kf
 
 
     if (EKF == True):
@@ -111,16 +126,21 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy):
                             [state[1,0]],
                             [state[2,0]],
                             [state[3,0]]])
+
+    if (EKF == 'augmented_state'): 
+
+        m = 5  #number of augmented states
         
+        # x ----Initial value for the state
 
+        x0 = np.array([     [state[0,0]],
+                            [state[1,0]],
+                            [state[2,0]],
+                            [state[3,0]],
+                            [state[4,0]]])
 
-    #Definition of matrixes for EKF and KF
+        x0_delay = np.vstack((x0, np.zeros((x0.shape[0]* m,1))))
 
-    dt = 1 / f_kf
-
-
-
-    # x ----Initial value for the state
 
     F = np.array([      [1, 0, dt, 0],
                         [0, 1, 0, dt],
@@ -179,6 +199,9 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy):
                             [0, 0.5, 0, 0],
                             [0, 0, 0.1, 0],
                             [0, 0, 0, 1]])
+    
+    R_delay = np.block([[np.block([R_fuse, np.zeros((5,5*5))])], [np.block([[np.block([np.zeros((5,n*5)), R_fuse, np.zeros((5,(m-n)*5))])] for n in range(1, m)])], [np.block([np.zeros((5,5*5)), R_fuse])]])
+
 
 
 
