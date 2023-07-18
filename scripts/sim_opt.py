@@ -46,7 +46,9 @@ dynamics_lst = [target_dynamics.circular_path,
 
 delay_strategy_list = [None, 
                        "extrapolate",
-                       "extrapolate_plus"]
+                       "extrapolate_plus",
+                       "augmented_state"]
+
 
 OUT_OF_ORDER = False
 

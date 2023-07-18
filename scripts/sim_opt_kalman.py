@@ -8,7 +8,7 @@ from kalman_filter import KalmanFilter
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy):
+def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy, aug):
 
     class DelayKalmanFilter:
         def __init__(self, kf, delay_strategy=None):
@@ -83,7 +83,7 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy):
 
             return self.kf.update_fuse(z)
         
-        def update_fuse_ood(self, z, t_z, uav_i, t_now):
+        def update_fuse_augmented_state(self, z, t_z, uav_i, t_now):
             raise NotImplementedError()
         
         
@@ -91,9 +91,12 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy):
 
             N = delay_est / dt
 
-            H_delay = np.block([[np.block([R_fuse, np.zeros((5,5*5))])], [np.block([[np.block([np.zeros((5,n*5)), R_fuse, np.zeros((5,(m-n)*5))])] for n in range(1, m)])], [np.block([np.zeros((5,5*5)), R_fuse])]])
-
-
+            if N == 0:
+                H = np.block([H_fuse, np.zeros((5, aug * 5))])
+            if N== aug:
+                H = np.block([np.zeros((5, aug * 5)), H_fuse])
+            else:
+                H = np.block([np.zeros((5, N * 5)), H_fuse, np.zeros((5, (aug-N) * 5))])
 
             raise NotImplementedError()
 
@@ -167,6 +170,9 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy):
                             [0, 1, 0, 0],
                             [0, 0, 1, 0],
                             [0, 0, 0, 1]])
+    
+    H_sensor = np.zeros((2,(aug +1) *5 ))
+    np.fill_diagonal(H_sensor, 1, wrap=True)
 
     # H ----Observation Matrix
 
@@ -200,7 +206,7 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy):
                             [0, 0, 0.1, 0],
                             [0, 0, 0, 1]])
     
-    R_delay = np.block([[np.block([R_fuse, np.zeros((5,5*5))])], [np.block([[np.block([np.zeros((5,n*5)), R_fuse, np.zeros((5,(m-n)*5))])] for n in range(1, m)])], [np.block([np.zeros((5,5*5)), R_fuse])]])
+    #R_delay = np.block([[np.block([R_fuse, np.zeros((5,5*5))])], [np.block([[np.block([np.zeros((5,n*5)), R_fuse, np.zeros((5,(m-n)*5))])] for n in range(1, m)])], [np.block([np.zeros((5,5*5)), R_fuse])]])
 
 
 
