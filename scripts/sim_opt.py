@@ -83,15 +83,25 @@ for share in share_lst:
                     else:
                         DELAY_MEAN = 0
                         DELAY_STD = 0
+
                     if (delay == False and delay_strategy != None or share == False and delay == True):
                         continue
+                    if (delay_strategy == "augmented_state" and ekf == False):
+                        continue
+
+                    if (delay_strategy == "augmented_state"):
+                        aug_states = 10
+                    else:
+                        aug_states = 0
+
+
                     print("SHARE_ON   --- ", share)
                     print("EKF   --- ", ekf)
                     print("DELAY   --- ", delay)
                     print("DELAY STRATEGY   --- ", delay_strategy)
                     print("OUT_OF_ORDER   --- ", OUT_OF_ORDER)
                     print("TARGET DYNAMIC   --- ", dynamics.__name__)
-                    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y = sim_core.sim(DELAY_STRATEGY= delay_strategy, EKF=ekf, OUT_OF_ORDER= OUT_OF_ORDER, SHARE_ON= share, DELAY_MEAN= DELAY_MEAN, DELAY_STD= DELAY_STD,  SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD = SENSOR_STD,  sim_time = sim_time, n_uavs = n_uavs, f_sim = f, f_kf = f_kf, f_sample = f_sample, f_share = f_share, target_dynamics = dynamics) 
+                    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y = sim_core.sim(DELAY_STRATEGY= delay_strategy, EKF=ekf, OUT_OF_ORDER= OUT_OF_ORDER, SHARE_ON= share, DELAY_MEAN= DELAY_MEAN, DELAY_STD= DELAY_STD,  SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD = SENSOR_STD,  sim_time = sim_time, n_uavs = n_uavs, f_sim = f, f_kf = f_kf, f_sample = f_sample, f_share = f_share, target_dynamics = dynamics, AUG = aug_states) 
                     accuracy, precision = sim_opt_plot.sim_plot(state, predicts, predict_masks, n_uavs, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, str(dir))
                     all_data.append([share, delay, ekf, delay_strategy, str(dynamics.__name__), accuracy, precision])
 

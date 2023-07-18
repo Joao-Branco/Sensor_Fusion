@@ -74,12 +74,6 @@ class KalmanFilter(object):
         self.J = np.eye(self.n)
         self.aug = 0 if aug is None else aug
 
-        if aug > 0:
-            self.x = np.vstack((x0,np.zeros((aug*5,1))))
-            self.P = np.eye(self.n * self.aug)
-            Q_a = np.zeros((5*aug, 5*aug))
-            np.fill_diagonal(Q_a, np.diagonal(Q))
-            self.Q = Q_a
 
     def predict(self, u = 0):
         self.x = np.dot(self.F, self.x) + np.dot(self.B, u)

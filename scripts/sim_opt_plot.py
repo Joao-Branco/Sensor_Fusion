@@ -8,7 +8,11 @@ import os.path
 def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, dir):
 
     for pred, pred_mask in zip(predicts, predict_masks):
-        state_filtered = state[:,pred_mask]
+        if(ekf == True):
+            state_filtered = state[:5,pred_mask]
+        else:
+            state_filtered = state[:4,pred_mask]
+
         err_abs = np.abs(state_filtered - pred[1:,:]) # ignore time row from pred
         euclidean = np.sqrt(err_abs[0,:] ** 2 + err_abs[1,:] ** 2)
 
@@ -84,7 +88,7 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
 
         
 
-    if(ekf == True):
+    if(ekf == True and delay_strategy != 'augmented_state'):
 
         err_abs_mean = np.array([   np.mean(err_abs[0,:]),
                                     np.mean(err_abs[1,:]),
@@ -169,7 +173,7 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
         index_values = ['Error_abs', 'RMSE']
         dataframe = pd.DataFrame([err_abs_mean, rmse], index = index_values, columns = column_values)
         
-        if (delay == True and delay_strategy != None):
+        if (delay == True and delay_strategy != None and delay_strategy != 'augmented_state'):
         
             err_obs_mean = np.array([   np.mean(err_obs[0,:]),
                                         np.mean(err_obs[1,:]),

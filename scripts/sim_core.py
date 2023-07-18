@@ -16,7 +16,7 @@ def gen_sensor_data(*arrays, SENSOR_MEAN, SENSOR_STD):
 
         
 
-def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, DELAY_MEAN : bool, DELAY_STD : bool,  SENSOR_MEAN : bool, SENSOR_STD : bool,  sim_time: int, n_uavs: int, f_sim: float, f_kf: float, f_sample: float, f_share: float, target_dynamics: Callable):
+def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, DELAY_MEAN : bool, DELAY_STD : bool,  SENSOR_MEAN : bool, SENSOR_STD : bool,  sim_time: int, n_uavs: int, f_sim: float, f_kf: float, f_sample: float, f_share: float, target_dynamics: Callable, AUG : int):
     time = np.arange(0, sim_time, 1/f_sim)
 
     # generate target data (ground truth)
@@ -26,7 +26,7 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
 
     sensors = [gen_sensor_data(x,y, SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD= SENSOR_STD) for i in range(n_uavs) ]
 
-    state, kfs, x0 = sim_opt_kalman.Kalman_sim(n_uavs= n_uavs, EKF= EKF, f_kf= f_kf, x= x, y= y, vx= vx, vy= vy, vv= vv, tt= tt, ww= ww, delay_strategy= DELAY_STRATEGY)
+    state, kfs, x0 = sim_opt_kalman.Kalman_sim(n_uavs= n_uavs, EKF= EKF, f_kf= f_kf, x= x, y= y, vx= vx, vy= vy, vv= vv, tt= tt, ww= ww, delay_strategy= DELAY_STRATEGY, aug= AUG)
 
 
 
@@ -105,6 +105,8 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
 
                 predicts[uav_i][0,col_write] = t   
                 predicts[uav_i][1:,col_write] = x_i[:,0]
+
+
 
                 predict_masks[uav_i][col_write] = i
 

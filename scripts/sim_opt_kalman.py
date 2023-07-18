@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from kalman_filter import KalmanFilter
 
 
@@ -84,12 +85,11 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy, aug)
             return self.kf.update_fuse(z)
         
         def update_fuse_augmented_state(self, z, t_z, uav_i, t_now):
-            raise NotImplementedError()
         
         
             delay_est = t_now - t_z # delay present in the predict received
 
-            N = delay_est / dt
+            N = math.floor(delay_est / dt)
 
             if N == 0:
                 H = np.block([H_fuse, np.zeros((5, aug * 5))])
@@ -98,7 +98,10 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy, aug)
             else:
                 H = np.block([np.zeros((5, N * 5)), H_fuse, np.zeros((5, (aug-N) * 5))])
 
-            raise NotImplementedError()
+
+            self.kf.H_fuse = H
+
+            return self.kf.update_fuse(z)
 
 
 
@@ -130,19 +133,19 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy, aug)
                             [state[2,0]],
                             [state[3,0]]])
 
-    if (EKF == 'augmented_state'): 
+    if (EKF == True and delay_strategy == 'augmented_state'): 
 
-        m = 5  #number of augmented states
+        m = aug  #number of augmented states
         
         # x ----Initial value for the state
 
-        x0 = np.array([     [state[0,0]],
+        x0_init = np.array([     [state[0,0]],
                             [state[1,0]],
                             [state[2,0]],
                             [state[3,0]],
                             [state[4,0]]])
 
-        x0_delay = np.vstack((x0, np.zeros((x0.shape[0]* m,1))))
+        x0 = np.vstack((x0, np.zeros((x0_init.shape[0]* m,1))))
 
 
     F = np.array([      [1, 0, dt, 0],
@@ -187,7 +190,10 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy, aug)
                         [0, 0.5, 0, 0],
                         [0, 0, 0.1, 0],
                         [0, 0, 0, 0.1]])
-
+    
+    
+    Q_aug = np.zeros(((aug +1) *5 ,(aug +1) *5 ))
+    np.fill_diagonal(Q_aug, np.diag(Q), wrap=True)
 
     # Q ----Process Noise
 
@@ -218,11 +224,18 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy, aug)
                         H_fuse = H_fuse.copy() , Q = Q.copy() ,
                         R = R.copy(), R_fuse = R_fuse.copy(),
                         x0= x0.copy(), dt = dt) for i in range(n_uavs)]
+
     else:
         kfs = [KalmanFilter(F = F.copy(), H = H_KF.copy(),
                         H_fuse = H_fuse_KF.copy() , Q = Q_KF.copy() ,
                         R = R.copy(), R_fuse = R_fuse_KF.copy(),
                         x0 = x0.copy(), dt = dt) for i in range(n_uavs)]
+        
+    if (EKF == True and delay_strategy == "augmented_state"):
+        kfs = [KalmanFilter(F = F.copy(), H = H_sensor.copy(),
+                        H_fuse = H_fuse.copy() , Q = Q_aug.copy() ,
+                        R = R.copy(), R_fuse = R_fuse.copy(),
+                        x0= x0.copy(), dt = dt, aug = aug) for i in range(n_uavs)]
     
     kfs = [DelayKalmanFilter(kf, delay_strategy) for kf in kfs]
 
