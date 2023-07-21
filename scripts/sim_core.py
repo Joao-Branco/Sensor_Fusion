@@ -1,7 +1,9 @@
 import numpy as np
 import time as pytime
 from typing import Callable
+from pathlib import Path
 import sim_opt_kalman
+import sim_printing
 
 
 def check_target_ret(func, t):
@@ -16,7 +18,7 @@ def gen_sensor_data(*arrays, SENSOR_MEAN, SENSOR_STD):
 
         
 
-def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, DELAY_MEAN : bool, DELAY_STD : bool,  SENSOR_MEAN : bool, SENSOR_STD : bool,  sim_time: int, n_uavs: int, f_sim: float, f_kf: float, f_sample: float, f_share: float, target_dynamics: Callable, AUG : int):
+def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, DELAY_MEAN : bool, DELAY_STD : bool,  SENSOR_MEAN : bool, SENSOR_STD : bool,  sim_time: int, n_uavs: int, f_sim: float, f_kf: float, f_sample: float, f_share: float, target_dynamics: Callable, AUG : int, dir : Path):
     time = np.arange(0, sim_time, 1/f_sim)
 
     # generate target data (ground truth)
@@ -31,10 +33,15 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
 
 
     # matrix for results
-    rows, cols = x0.shape
+    if (EKF == True):
+        rows = 5
+    else:
+        rows = 4
     predicts = [np.zeros((rows+1, f_kf*sim_time)) for _ in range(n_uavs)]
     predict_masks = [np.zeros(f_kf*sim_time, dtype=np.uint32) for i in range(n_uavs)]
     errors = [np.zeros((rows+1, f_kf*sim_time)) for _ in range(n_uavs)]
+    discrete = [[] for _ in range(n_uavs)]
+
 
     col_write = 0
 
@@ -62,34 +69,57 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
     for i, t in enumerate(time):
         # update
         if t-t_update >= p_update:
-            for sensor, kf in zip(sensors, kfs):
+            for uav_i, (sensor, kf) in enumerate(zip(sensors, kfs)):
                 x_, y_ = sensor[0][i], sensor[1][i]
                 kf.update(np.array([[x_], [y_]]))
+                l_d = []
+                l_d.append(t)
+                l_d.append('update')
+                l_d.append(np.array([[x[i]],[y[i]],[vx[i]],[vy[i]], [vv[i]], [tt[i]], [ww[i]]]))
+                l_d.append(kf.kf.x)
+                l_d.append(kf.kf.P)
+                l_d.append(kf.kf.H)
+                l_d.append(np.array([[x_], [y_]]))
+                l_d.append(kf.kf.K)
+                l_d.append(kf.kf.y)
+                discrete[uav_i].append(l_d)
             t_update = t
 
         # update share
+        if(SHARE_ON == True):
+            for uav_i, kf in enumerate(kfs):
+                # if sharing, and queue not empty
+                for z_ in q[uav_i]: # for every shared message in my queue, i_z = index of source uav
+                    t_z_delay, t_z, z, i_z = z_
+                    if (t - t_z_delay) >= 0: # check if the message is not too recent
+                        # update
+                        if (DELAY_STRATEGY != None):
 
-        for uav_i, kf in enumerate(kfs):
-            # if sharing, and queue not empty
-            for z_ in q[uav_i]: # for every shared message in my queue, i_z = index of source uav
-                t_z_delay, t_z, z, i_z = z_
-                if (t - t_z_delay) >= 0: # check if the message is not too recent
-                    # update
-                    if (DELAY_STRATEGY != None):
+                            kf.update_fuse(z, t_z, i_z, t)
+                            z_obs[uav_i].append([kf.last_z_obs, t])
+                            z_corr[uav_i].append([kf.last_z_share, t])
 
-                        kf.update_fuse(z, t_z, i_z, t)
-                        z_obs[uav_i].append([kf.last_z_obs, t])
-                        z_corr[uav_i].append([kf.last_z_share, t])
+                            z_masks[uav_i].append(i)
+                            q[uav_i].remove(z_)
+                        else:
+                            kf.update_fuse(z)
+                            z_obs[uav_i].append([kf.last_z_obs, t])
+                            z_corr[uav_i].append([kf.last_z_obs, t])
 
-                        z_masks[uav_i].append(i)
-                        q[uav_i].remove(z_)
-                    else:
-                        kf.update_fuse(z)
-                        z_obs[uav_i].append([kf.last_z_obs, t])
-                        z_corr[uav_i].append([kf.last_z_obs, t])
-
-                        z_masks[uav_i].append(i)
-                        q[uav_i].remove(z_)
+                            z_masks[uav_i].append(i)
+                            q[uav_i].remove(z_)
+                        
+                        l_d = []
+                        l_d.append(t)
+                        l_d.append('update_fuse')
+                        l_d.append(np.array([[x[i]],[y[i]],[vx[i]],[vy[i]], [vv[i]], [tt[i]], [ww[i]]]))
+                        l_d.append(kf.kf.x)
+                        l_d.append(kf.kf.P)
+                        l_d.append(kf.kf.H_fuse)
+                        l_d.append(z)
+                        l_d.append(kf.kf.K_fuse)
+                        l_d.append(kf.kf.y_fuse)
+                        discrete[uav_i].append(l_d)
 
                 
 
@@ -99,16 +129,26 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
             for uav_i, kf in enumerate(kfs):
                 if (EKF == True):
                     x_i = kf.predict_nonlinear()
+                    predicts[uav_i][0,col_write] = t   
+                    predicts[uav_i][1:,col_write] = x_i[:5,0]
+
                 else:
                     x_i = kf.predict()
+                    predicts[uav_i][0,col_write] = t   
+                    predicts[uav_i][1:,col_write] = x_i[:4,0]
 
-
-                predicts[uav_i][0,col_write] = t   
-                predicts[uav_i][1:,col_write] = x_i[:,0]
 
 
 
                 predict_masks[uav_i][col_write] = i
+                l_d = []
+                l_d.append(t)
+                l_d.append('predict')
+                l_d.append(np.array([[x[i]],[y[i]],[vx[i]],[vy[i]], [vv[i]], [tt[i]], [ww[i]]]))
+                l_d.append(kf.kf.x)
+                l_d.append(kf.kf.P)
+                l_d.append(kf.kf.J)
+                discrete[uav_i].append(l_d)
 
                 if t - t_share[uav_i] >= p_share and SHARE_ON:
                     delay = np.random.normal(DELAY_MEAN, DELAY_STD)
@@ -121,8 +161,11 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
                     for uav_j in range(n_uavs):
                         if uav_i == uav_j:
                             continue # dont add my predicts to my own queue
+                        if (EKF == True):
+                            q[uav_j].append((t + delay, t, x_i[:5], uav_i))
+                        else:
+                            q[uav_j].append((t + delay, t, x_i[:4], uav_i))
 
-                        q[uav_j].append((t + delay, t, x_i, uav_i))
 
                     # update last share time for this uav
                     q_ts[uav_i] = t + delay
@@ -137,5 +180,11 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
     print(f'finished simulation in {pytime.time() - t_start} seconds')
     print(np.shape(predicts))
     print(np.shape(predict_masks))
+
+    for uav_i in range(n_uavs):
+        dir_uav = Path(str(dir) + f'/uav_{uav_i}')
+        dir_uav.mkdir()
+        sim_printing.discrete_printing(discrete_kf= discrete, uav_i= uav_i, dir = dir_uav)
+
 
     return state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y

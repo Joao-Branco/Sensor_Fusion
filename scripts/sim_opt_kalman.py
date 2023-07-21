@@ -192,8 +192,9 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy, aug)
                         [0, 0, 0, 0.1]])
     
     
-    Q_aug = np.zeros(((aug +1) *5 ,(aug +1) *5 ))
-    np.fill_diagonal(Q_aug, np.diag(Q), wrap=True)
+    # Q_aug = np.zeros(((aug +1) *5 ,(aug +1) *5 ))
+    # np.fill_diagonal(Q_aug, np.diag(Q), wrap=True)
+    Q_aug = np.block([[Q, np.zeros((5, aug * 5))], [np.zeros((aug * 5, (aug + 1) * 5))]])
 
     # Q ----Process Noise
 
@@ -210,7 +211,7 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy, aug)
     R_fuse_KF = np.array([  [0.5, 0, 0, 0],
                             [0, 0.5, 0, 0],
                             [0, 0, 0.1, 0],
-                            [0, 0, 0, 1]])
+                            [0, 0, 0, 0.1]])
     
     #R_delay = np.block([[np.block([R_fuse, np.zeros((5,5*5))])], [np.block([[np.block([np.zeros((5,n*5)), R_fuse, np.zeros((5,(m-n)*5))])] for n in range(1, m)])], [np.block([np.zeros((5,5*5)), R_fuse])]])
 

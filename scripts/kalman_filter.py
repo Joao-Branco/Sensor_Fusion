@@ -88,23 +88,23 @@ class KalmanFilter(object):
         return self.x
 
     def update(self, z):
-        y = z - np.dot(self.H, self.x)
+        self.y = z - np.dot(self.H, self.x)
         S = self.R + np.dot(self.H, np.dot(self.P, self.H.T))
-        K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
-        self.x = self.x + np.dot(K, y)
+        self.K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
+        self.x = self.x + np.dot(self.K, self.y)
         I = np.eye(self.n)
-        self.P = np.dot(np.dot(I - np.dot(K, self.H), self.P), 
-        	(I - np.dot(K, self.H)).T) + np.dot(np.dot(K, self.R), K.T)
+        self.P = np.dot(np.dot(I - np.dot(self.K, self.H), self.P), 
+        	(I - np.dot(self.K, self.H)).T) + np.dot(np.dot(self.K, self.R), self.K.T)
              
     def update_fuse(self, z):
-        y = z - np.dot(self.H_fuse, self.x)
+        self.y_fuse = z - np.dot(self.H_fuse, self.x)
         S = self.R_fuse + np.dot(self.H_fuse, np.dot(self.P, self.H_fuse.T))
-        K = np.dot(np.dot(self.P, self.H_fuse.T), np.linalg.inv(S))
-        self.x = self.x + np.dot(K, y)
+        self.K_fuse = np.dot(np.dot(self.P, self.H_fuse.T), np.linalg.inv(S))
+        self.x = self.x + np.dot(self.K_fuse, self.y_fuse)
         I = np.eye(self.n)
-        self.P = np.dot(np.dot(I - np.dot(K, self.H_fuse), self.P), 
-        	(I - np.dot(K, self.H_fuse)).T) + np.dot(np.dot(K, self.R_fuse), K.T)
-        
+        self.P = np.dot(np.dot(I - np.dot(self.K_fuse, self.H_fuse), self.P), 
+        	(I - np.dot(self.K_fuse, self.H_fuse)).T) + np.dot(np.dot(self.K_fuse, self.R_fuse), self.K_fuse.T)
+
 
 class Fusion:
     def __init__(self, f, uav_id, uav_total):
