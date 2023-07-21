@@ -7,30 +7,52 @@ from sensor_fusion.msg import target_position
 
 
 
-def f_nonlinear(x, dt):
+def f_nonlinear(x, dt, aug):
 
-    F = np.array([  [x[0,0] + x[3,0] * dt * np.cos(x[2,0])],
+    f = np.array([  [x[0,0] + x[3,0] * dt * np.cos(x[2,0])],
                     [x[1,0] + x[3,0] * dt * np.sin(x[2,0])],
                     [x[4,0] * dt + x[2,0]],
                     [x[3,0]],
                     [x[4,0]]])
+    
+    f_d = []
+    for d in range(1, aug+1):
+        f_d.append(np.array([  [x[0+d*5,0]],
+                        [x[1+d*5,0]],
+                        [x[4+d*5,0]],
+                        [x[3+d*5,0]],
+                        [x[4+d*5,0]]]))
+
+
+
+    if aug > 0:
+        f_d = np.vstack((f_d))
+        F = np.vstack((f,f_d))
+    else:
+        F = f
 
     return F
 
-def Jacobian(x, dt):
+def Jacobian(x, dt, aug):
 
     J = np.array([  [1, 0, -x[3,0] * dt *np.sin(x[2,0]),    dt *np.cos(x[2,0]),   0],
                     [0, 1, x[3,0] * dt *np.cos(x[2,0]),     dt *np.sin(x[2,0]),    0],
                     [0, 0, 1,                                       0,                              dt],
                     [0, 0, 0,                                       1,                              0],
-                    [0, 0, 0,                                       0,                              1]])    
+                    [0, 0, 0,                                       0,                              1]])  
 
-    return J
+
+    if aug > 0:
+        J_a = np.block([[np.block([J, np.zeros((5,aug*5))])], [np.block([np.identity(5*aug), np.zeros((5*aug,5))])]])  
+    else:
+        J_a = J 
+
+    return J_a
 
 
 
 class KalmanFilter(object):
-    def __init__(self, F = None, B = None, H = None, H_fuse = None, Q = None, R = None, R_fuse = None, R_delay = None, P = None, x0 = None, dt = None):
+    def __init__(self, F = None, B = None, H = None, H_fuse = None, Q = None, R = None, R_fuse = None, R_delay = None, P = None, x0 = None, dt = None, aug = None):
 
         if(F is None or H is None):
             raise ValueError("Set proper system dynamics.")
@@ -50,6 +72,8 @@ class KalmanFilter(object):
         self.P = np.eye(self.n) if P is None else P
         self.x = np.zeros((self.n, 1)) if x0 is None else x0
         self.J = np.eye(self.n)
+        self.aug = 0 if aug is None else aug
+
 
     def predict(self, u = 0):
         self.x = np.dot(self.F, self.x) + np.dot(self.B, u)
@@ -57,38 +81,34 @@ class KalmanFilter(object):
         return self.x
     
     def predict_nonlinear(self, u = 0):
-        self.J =Jacobian(self.x, self.dt)
-        self.x = f_nonlinear(self.x, self.dt)
+        self.J =Jacobian(self.x, self.dt, self.aug)
+        self.x = f_nonlinear(self.x, self.dt, self.aug)
 
         self.P = np.dot(np.dot(self.J, self.P), self.J.T) + self.Q
         return self.x
 
     def update(self, z):
-        y = z - np.dot(self.H, self.x)
+        if (self.aug > 0):
+            state_z = z
+            z = np.zeros(self.x.shape)
+            np.put(z, [0, 1], state_z)
+        self.y = z - np.dot(self.H, self.x)
         S = self.R + np.dot(self.H, np.dot(self.P, self.H.T))
-        K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
-        self.x = self.x + np.dot(K, y)
+        self.K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
+        self.x = self.x + np.dot(self.K, self.y)
         I = np.eye(self.n)
-        self.P = np.dot(np.dot(I - np.dot(K, self.H), self.P), 
-        	(I - np.dot(K, self.H)).T) + np.dot(np.dot(K, self.R), K.T)
+        self.P = np.dot(np.dot(I - np.dot(self.K, self.H), self.P), 
+        	(I - np.dot(self.K, self.H)).T) + np.dot(np.dot(self.K, self.R), self.K.T)
              
     def update_fuse(self, z):
-        y = z - np.dot(self.H_fuse, self.x)
+        self.y_fuse = z - np.dot(self.H_fuse, self.x)
         S = self.R_fuse + np.dot(self.H_fuse, np.dot(self.P, self.H_fuse.T))
-        K = np.dot(np.dot(self.P, self.H_fuse.T), np.linalg.inv(S))
-        self.x = self.x + np.dot(K, y)
+        self.K_fuse = np.dot(np.dot(self.P, self.H_fuse.T), np.linalg.inv(S))
+        self.x = self.x + np.dot(self.K_fuse, self.y_fuse)
         I = np.eye(self.n)
-        self.P = np.dot(np.dot(I - np.dot(K, self.H_fuse), self.P), 
-        	(I - np.dot(K, self.H_fuse)).T) + np.dot(np.dot(K, self.R_fuse), K.T)
-        
-    def update_delay(self, z):
-        y = z - np.dot(self.H, self.x)
-        S = self.R_delay + np.dot(self.H, np.dot(self.P, self.H.T))
-        K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
-        self.x = self.x + np.dot(K, y)
-        I = np.eye(self.n)
-        self.P = np.dot(np.dot(I - np.dot(K, self.H), self.P), 
-        	(I - np.dot(K, self.H)).T) + np.dot(np.dot(K, self.R_delay), K.T)
+        self.P = np.dot(np.dot(I - np.dot(self.K_fuse, self.H_fuse), self.P), 
+        	(I - np.dot(self.K_fuse, self.H_fuse)).T) + np.dot(np.dot(self.K_fuse, self.R_fuse), self.K_fuse.T)
+
 
 class Fusion:
     def __init__(self, f, uav_id, uav_total):
@@ -168,8 +188,6 @@ class Fusion:
                                     [0, 0, 0, 1, 0],
                                     [0, 0, 0, 0, 0.1]])
         
-        self.R_delay = np.array([   [0.5, 0],
-                                    [0, 0.5]])
         
         
         

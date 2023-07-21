@@ -5,10 +5,14 @@ import pandas as pd
 import os.path
 
 
-def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, dir):
+def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, share, dynamics, dir_plots, dir_results):
 
     for pred, pred_mask in zip(predicts, predict_masks):
-        state_filtered = state[:,pred_mask]
+        if(ekf == True):
+            state_filtered = state[:5,pred_mask]
+        else:
+            state_filtered = state[:4,pred_mask]
+
         err_abs = np.abs(state_filtered - pred[1:,:]) # ignore time row from pred
         euclidean = np.sqrt(err_abs[0,:] ** 2 + err_abs[1,:] ** 2)
 
@@ -36,16 +40,16 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
     plt.grid()
 
 
-    plot_jpg = "Dinamica_alvo.png"
+    plot_jpg = 'Dinamica_alvo_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) +  '.png'
     
-    plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
+    plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
     plt.savefig(plot_jpg)
 
     plt.close()
 
 
     
-    if (delay == True and delay_strategy != None):
+    if (delay == True and delay_strategy != None and delay_strategy != 'augmented_state'):
 
         for i in range(n_uavs):
             n = 0
@@ -108,7 +112,7 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
         index_values = ['Error_abs', 'RMSE']
         dataframe = pd.DataFrame([err_abs_mean, rmse], index = index_values, columns = column_values)
 
-        if (delay == True and delay_strategy != None):
+        if (delay == True and delay_strategy != None and delay_strategy != 'augmented_state'):
 
             err_obs_mean = np.array([   np.mean(err_obs[0,:]),
                                         np.mean(err_obs[1,:]),
@@ -169,7 +173,7 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
         index_values = ['Error_abs', 'RMSE']
         dataframe = pd.DataFrame([err_abs_mean, rmse], index = index_values, columns = column_values)
         
-        if (delay == True and delay_strategy != None):
+        if (delay == True and delay_strategy != None and delay_strategy != 'augmented_state'):
         
             err_obs_mean = np.array([   np.mean(err_obs[0,:]),
                                         np.mean(err_obs[1,:]),
@@ -211,7 +215,7 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
 
 
 
-    dataframe.to_csv( dir + '/data_errors.csv')
+    dataframe.to_csv( dir_results + '/data_errors_share_' + str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) +   '.csv')
 
 
     print("Accuracy: ", np.mean(euclidean))
@@ -219,6 +223,6 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
 
     performance = pd.DataFrame([np.mean(euclidean), np.mean(dist_uavs)], index = ['Accuracy', 'Precision'])
 
-    performance.to_csv( dir + '/performance.csv')
+    performance.to_csv( dir_results + '/performance_share_'+ str(share) + '_ekf_' + str(ekf)+ '_strategy_' + str(delay_strategy) + '.csv')
 
     return np.mean(euclidean), np.mean(dist_uavs)
