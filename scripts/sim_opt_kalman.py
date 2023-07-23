@@ -90,20 +90,27 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy, aug)
             delay_est = t_now - t_z # delay present in the predict received
 
             N = math.floor(delay_est / dt)
+            
+            H_sensor = np.zeros(((aug + 1)* 5, (aug + 1)* 5))
 
             if N == 0:
                 state_z = np.zeros((aug * 5, 1))
                 z = np.vstack((z,state_z))
+                H_d = np.block([1, 1, 1, 1, 1, np.zeros(aug * 5)])
+                np.fill_diagonal(H_sensor, H_d)
             if N== aug:
                 state_z = np.zeros((aug * 5, 1))
                 z = np.vstack((state_z, z))
+                H_d = np.block([np.zeros(aug * 5), 1, 1, 1, 1, 1])
+                np.fill_diagonal(H_sensor, H_d)
             else:
                 state_z = np.zeros((N * 5, 1))
                 z = np.vstack((state_z, z))
-                state_z = np.zeros(((aug- N) * 5, 1))
-                z = np.vstack((z, state_z))
+                H_d = np.block([np.zeros(N * 5), 1, 1, 1, 1, 1, np.zeros((aug - N) * 5)])
+                np.fill_diagonal(H_sensor, H_d)
 
-
+            self.H_fuse = H_sensor
+            
             return self.kf.update_fuse(z)
 
 
@@ -177,7 +184,14 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy, aug)
                             [0, 0, 1, 0],
                             [0, 0, 0, 1]])
     
-    H_sensor = np.eye((aug + 1)* 5)
+    H_sensor = np.zeros(((aug + 1)* 5, (aug + 1)* 5))
+    
+    H_d = np.block([1, 1, np.zeros(3), np.zeros(aug * 5)])
+    np.fill_diagonal(H_sensor, H_d)
+    
+    H_aug = np.zeros(((aug + 1)* 5, (aug + 1)* 5))
+    
+    
 
     # H ----Observation Matrix
 
@@ -245,7 +259,7 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy, aug)
         
     if (EKF == True and delay_strategy == "augmented_state"):
         kfs = [KalmanFilter(F = F.copy(), H = H_sensor.copy(),
-                        H_fuse = H_sensor.copy() , Q = Q_aug.copy() ,
+                        H_fuse = H_aug.copy() , Q = Q_aug.copy() ,
                         R = R_aug.copy(), R_fuse = R_aug_fuse.copy(),
                         x0= x0.copy(), dt = dt, aug = aug) for i in range(n_uavs)]
     
