@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 
-import rospy
+#import rospy
 import numpy as np
-from sensor_fusion.msg import target_position_fuse
-from sensor_fusion.msg import target_position
+#from sensor_fusion.msg import target_position_fuse
+#from sensor_fusion.msg import target_position
 
 
 
@@ -16,10 +16,10 @@ def f_nonlinear(x, dt, aug):
                     [x[4,0]]])
     
     f_d = []
-    for d in range(1, aug+1):
+    for d in range(aug):
         f_d.append(np.array([  [x[0+d*5,0]],
                         [x[1+d*5,0]],
-                        [x[4+d*5,0]],
+                        [x[2+d*5,0]],
                         [x[3+d*5,0]],
                         [x[4+d*5,0]]]))
 
@@ -88,10 +88,10 @@ class KalmanFilter(object):
         return self.x
 
     def update(self, z):
-        if (self.aug > 0):
-            state_z = z
-            z = np.zeros(self.x.shape)
-            np.put(z, [0, 1], state_z)
+        # if (self.aug > 0):
+        #     state_z = z
+        #     z = np.zeros(self.x.shape)
+        #     np.put(z, [0, 1], state_z)
         self.y = z - np.dot(self.H, self.x)
         S = self.R + np.dot(self.H, np.dot(self.P, self.H.T))
         self.K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))

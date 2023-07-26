@@ -9,8 +9,10 @@ import pandas as pd
 #path to create a folder with the results from the simulations
 
 SIM_ID = int(time.time())
-sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}")
+sim_dir = Path(f"/Users/joao/Documents/Tese/git/Sensor_fusion/numerical_sims/sim_{SIM_ID}")
 sim_dir.mkdir()
+
+#/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}
 
 # simulation parameters
 n_uavs = 3
@@ -18,7 +20,7 @@ f = 200
 sim_time = 60
 f_sample = 10
 f_kf = 20
-f_share = 5
+f_share = 15
 
 SENSOR_STD = 2.0
 SENSOR_MEAN = 0
@@ -62,21 +64,21 @@ all_data = []
 t_start = pytime.time()
 
 for delay in delay_lst:
-    dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}")
+    dir = Path(f"/Users/joao/Documents/Tese/git/Sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}")
     dir.mkdir()
-    dir_plots = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/plots")
+    dir_plots = Path(f"/Users/joao/Documents/Tese/git/Sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/plots")
     dir_plots.mkdir()
-    dir_results = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/results")
+    dir_results = Path(f"/Users/joao/Documents/Tese/git/Sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/results")
     dir_results.mkdir()
-    dir_data = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/data")
+    dir_data = Path(f"/Users/joao/Documents/Tese/git/Sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/data")
     dir_data.mkdir()
 
     for dynamics in dynamics_lst:
-        dir_plots = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/plots/{str(dynamics.__name__)}")
+        dir_plots = Path(f"/Users/joao/Documents/Tese/git/Sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/plots/{str(dynamics.__name__)}")
         dir_plots.mkdir()
-        dir_results = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/results/{str(dynamics.__name__)}")
+        dir_results = Path(f"/Users/joao/Documents/Tese/git/Sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/results/{str(dynamics.__name__)}")
         dir_results.mkdir()
-        dir_data = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/data/{str(dynamics.__name__)}")
+        dir_data = Path(f"/Users/joao/Documents/Tese/git/Sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/data/{str(dynamics.__name__)}")
         dir_data.mkdir()
 
         for delay_strategy in delay_strategy_list:
@@ -86,8 +88,8 @@ for delay in delay_lst:
                 for ekf in ekf_lst:
 
                     if (delay == True):
-                        DELAY_MEAN = 0.3
-                        DELAY_STD = 0.01  # 0=guarantees no out of order, but removes randomness in delay
+                        DELAY_MEAN = 1.4
+                        DELAY_STD = 0.1  # 0=guarantees no out of order, but removes randomness in delay
                     else:
                         DELAY_MEAN = 0
                         DELAY_STD = 0
@@ -98,12 +100,13 @@ for delay in delay_lst:
                         continue
 
                     if (delay_strategy == "augmented_state"):
-                        aug_states = 10
+                        aug_states = 60
                     else:
                         aug_states = 0
 
 
-                    dir_data = Path(f"/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/data/{str(dynamics.__name__)}/EKF_{ekf}_Share_{share}_strategy_{delay_strategy}")
+
+                    dir_data = Path(f"/Users/joao/Documents/Tese/git/Sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/data/{str(dynamics.__name__)}/EKF_{ekf}_Share_{share}_strategy_{delay_strategy}")
                     dir_data.mkdir()
                     print("SHARE_ON   --- ", share)
                     print("EKF   --- ", ekf)
@@ -118,10 +121,9 @@ for delay in delay_lst:
 
 column_values = ['Share', 'Delay', 'EKF', 'Delay strategy', 'Dynamics', 'accuracy', 'precision']
 dataframe = pd.DataFrame(all_data, columns = column_values)
-dataframe.to_csv(f'/home/branco/catkin_ws/src/sensor_fusion/numerical_sims/sim_{SIM_ID}/performance.csv')
+dataframe.to_csv(f'/Users/joao/Documents/Tese/git/Sensor_fusion/numerical_sims/sim_{SIM_ID}/performance.csv')
 
-# state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y = sim_core.sim(DELAY_STRATEGY= 'augmented_state', EKF=True, OUT_OF_ORDER= False, SHARE_ON= True, DELAY_MEAN= 0.5, DELAY_STD= 0.01,  SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD = SENSOR_STD,  sim_time = sim_time, n_uavs = n_uavs, f_sim = f, f_kf = f_kf, f_sample = f_sample, f_share = f_share, target_dynamics = target_dynamics.sin_path, AUG = 10) 
-# accuracy, precision = sim_opt_plot.sim_plot(state, predicts, predict_masks, n_uavs, col_write, x, y,  z_obs, z_corr, z_masks, True, 'augmented_state', True, str(dir))
+
 
 
 

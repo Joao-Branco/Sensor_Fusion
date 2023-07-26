@@ -12,13 +12,17 @@ def discrete_printing(discrete_kf : list, uav_i : int, dir : Path):
         dir_i = Path(str(dir) + f'/{w}___{mode}____{t}_')
         dir_i.mkdir()
         w = w + 1
+        
+        if (mode == 'predict'):
     
+            vars_list = ['x_previus','x_target', 'x', 'P', 'J']
     
-        vars_list = ['x_target', 'x', 'P', 'J']
-    
-        if (mode != 'predict'):
-            vars_list = ['x_target', 'x', 'P', 'H', 'z', 'K', 'y']
-            # add the rest
+        elif (mode == 'update'):
+            vars_list = ['x_previus', 'x_target', 'x', 'P', 'H', 'z', 'K', 'y']
+            
+        else:
+            vars_list = ['x_previus', 'x_target', 'x', 'P', 'H', 'z', 'K', 'y', 'N', 'delay']
+
     
     
         for i, var  in enumerate(vars_list):
@@ -28,7 +32,7 @@ def discrete_printing(discrete_kf : list, uav_i : int, dir : Path):
             file_name = os.path.join(dir_i, file_name) if dir_i else file_name
             if (var == 'H'):
                 fmt_e = '% d'
-            if(var in ['x', 'x_target']):
+            if(var in ['x', 'x_target', 'x_previus']):
                 fmt_e='%1.9f'
             else:
                 fmt_e='%1.3f'
