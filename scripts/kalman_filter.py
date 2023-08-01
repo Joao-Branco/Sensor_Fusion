@@ -7,10 +7,10 @@ import numpy as np
 
 
 
-def f_nonlinear(x, dt, aug):
+def f_nonlinear_w(x, dt, aug):
 
-    f = np.array([  [x[0,0] + x[3,0] * dt * np.cos(x[2,0])],
-                    [x[1,0] + x[3,0] * dt * np.sin(x[2,0])],
+    f = np.array([  [x[0,0] + (x[3,0] / x[4,0]) * (np.sin(x[4,0] * dt + x[2,0]) - np.sin(x[2,0]))],
+                    [x[1,0] + (x[3,0] / x[4,0]) * ( - np.cos(x[4,0] * dt + x[2,0]) + np.cos(x[2,0]))],
                     [x[4,0] * dt + x[2,0]],
                     [x[3,0]],
                     [x[4,0]]])
@@ -33,10 +33,53 @@ def f_nonlinear(x, dt, aug):
 
     return F
 
-def Jacobian(x, dt, aug):
 
-    J = np.array([  [1, 0, -x[3,0] * dt *np.sin(x[2,0]),    dt *np.cos(x[2,0]),   0],
-                    [0, 1, x[3,0] * dt *np.cos(x[2,0]),     dt *np.sin(x[2,0]),    0],
+def f_nonlinear_w0(x, dt, aug):
+
+    f = np.array([  [x[0,0] + x[3,0]  * dt * np.cos(x[2,0])],
+                    [x[1,0] + x[3,0]  * dt * np.sin(x[2,0])],
+                    [x[4,0] * dt + x[2,0]],
+                    [x[3,0]],
+                    [x[4,0]]])
+    
+    f_d = []
+    for d in range(aug):
+        f_d.append(np.array([  [x[0+d*5,0]],
+                        [x[1+d*5,0]],
+                        [x[2+d*5,0]],
+                        [x[3+d*5,0]],
+                        [x[4+d*5,0]]]))
+
+
+
+    if aug > 0:
+        f_d = np.vstack((f_d))
+        F = np.vstack((f,f_d))
+    else:
+        F = f
+
+    return F
+
+def Jacobian_w0(x, dt, aug):
+
+    J = np.array([  [1, 0, - x[3,0] * dt * np.sin(x[2,0]),     dt *np.cos(x[2,0]),   0],
+                    [0, 1,  x[3,0] * dt *np.cos(x[2,0]),     dt *np.sin(x[2,0]),     0],
+                    [0, 0, 1,                                       0,                              0],
+                    [0, 0, 0,                                       1,                              0],
+                    [0, 0, 0,                                       0,                              1]])  
+
+
+    if aug > 0:
+        J_a = np.block([[np.block([J, np.zeros((5,aug*5))])], [np.block([np.identity(5*aug), np.zeros((5*aug,5))])]])  
+    else:
+        J_a = J 
+
+    return J_a
+
+def Jacobian_w(x, dt, aug):
+
+    J = np.array([  [1, 0, (x[3,0] / x[4,0]) * (np.cos(x[4,0] * dt + x[2,0]) - np.cos(x[2,0])),    (1 / x[4,0]) * (np.sin(x[4,0] * dt + x[2,0]) - np.sin(x[2,0])),   (x[3,0] / x[4,0]) * ((1 / x[4,0]) * (- np.sin(x[4,0] * dt + x[2,0]) + np.sin(x[2,0])) + dt * np.cos(dt * x[4,0] + x[2,0]))],
+                    [0, 1,  (x[3,0] / x[4,0]) * (np.sin(x[4,0] * dt + x[2,0]) - np.sin(x[2,0])),    (1 / x[4,0]) * (- np.cos(x[4,0] * dt + x[2,0]) + np.cos(x[2,0])),   (x[3,0] / x[4,0]) * ((1 / x[4,0]) * (np.cos(x[4,0] * dt + x[2,0]) - np.cos(x[2,0])) + dt * np.sin(dt * x[4,0] + x[2,0]))],
                     [0, 0, 1,                                       0,                              dt],
                     [0, 0, 0,                                       1,                              0],
                     [0, 0, 0,                                       0,                              1]])  
@@ -81,8 +124,34 @@ class KalmanFilter(object):
         return self.x
     
     def predict_nonlinear(self, u = 0):
-        self.J =Jacobian(self.x, self.dt, self.aug)
-        self.x = f_nonlinear(self.x, self.dt, self.aug)
+
+        while(self.x[2] < - np.pi ):
+            self.x[2] = self.x[2] + 2 * np.pi
+
+
+        while(self.x[2] > np.pi ):
+            self.x[2] = self.x[2] - 2 * np.pi
+
+        if (self.x[3] < 0):
+            self.x[3] = np.abs(self.x[3])
+            
+
+        if (self.x[4] == 0):
+            self.J =Jacobian_w0(self.x, self.dt, self.aug)
+            self.x = f_nonlinear_w0(self.x, self.dt, self.aug)
+        else:
+            self.J =Jacobian_w(self.x, self.dt, self.aug)
+            self.x = f_nonlinear_w(self.x, self.dt, self.aug)
+
+
+        while(self.x[2] < - np.pi ):
+            self.x[2] = self.x[2] + 2 * np.pi
+
+        while(self.x[2] > np.pi ):
+            self.x[2] = self.x[2] - 2 * np.pi
+
+        if (self.x[3] < 0):
+            self.x[3] = np.abs(self.x[3])
 
         self.P = np.dot(np.dot(self.J, self.P), self.J.T) + self.Q
         return self.x

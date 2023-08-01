@@ -90,7 +90,8 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
         if(SHARE_ON == True):
             for uav_i, kf in enumerate(kfs):
                 # if sharing, and queue not empty
-                for z_ in q[uav_i]: # for every shared message in my queue, i_z = index of source uav
+                remove_idx = []
+                for idx, z_ in enumerate(q[uav_i]): # for every shared message in my queue, i_z = index of source uav
                     t_z_delay, t_z, z, i_z = z_
                     if (t - t_z_delay) >= 0: # check if the message is not too recent
                         # update
@@ -104,7 +105,8 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
                             z_corr[uav_i].append([kf.last_z_share, t])
 
                             z_masks[uav_i].append(i)
-                            q[uav_i].remove(z_)
+                            #q[uav_i].remove(z_)
+                            remove_idx.append(idx)
                         else:
                             l_d = []
                             l_d.append(t)
@@ -115,7 +117,9 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
                             z_corr[uav_i].append([kf.last_z_obs, t])
 
                             z_masks[uav_i].append(i)
-                            q[uav_i].remove(z_)
+                            #q[uav_i].remove(z_)
+                            remove_idx.append(idx)
+                        
                         
 
                         l_d.append(np.array([[x[i]],[y[i]],[vx[i]],[vy[i]], [vv[i]], [tt[i]], [ww[i]]]))
@@ -130,6 +134,8 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
                         l_d.append(np.array([kf.N]))
                         l_d.append(np.array([kf.delay_est]))
                         discrete[uav_i].append(l_d)
+                for idx in sorted(remove_idx, reverse=True):
+                    q[uav_i].pop(idx)
 
                 
 
@@ -188,11 +194,12 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
             col_write += 1
             t_predict= t
             continue
-
+    
+    computer_cost = pytime.time() - t_start
     print(f"predicts last time={predicts[0][0,col_write-1]}")
     print(f"gt last time={time[-1]}")
     print(f"col write={col_write}")
-    print(f'finished simulation in {pytime.time() - t_start} seconds')
+    print(f'finished simulation in {computer_cost} seconds')
     print(np.shape(predicts))
     print(np.shape(predict_masks))
 
@@ -202,4 +209,4 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
     #     sim_printing.discrete_printing(discrete_kf= discrete, uav_i= uav_i, dir = dir_uav)
 
 
-    return state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y
+    return state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time
