@@ -5,6 +5,11 @@ import pandas as pd
 import os.path
 from pathlib import Path
 
+def circular_difference(angle1, angle2):
+    signed_difference = angle2 - angle1
+    normalized_difference = (signed_difference + np.pi) % (2 * np.pi) - np.pi
+    return normalized_difference
+
 
 def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, share, dynamics, dir_plot, dir_result, sensors, time):
 
@@ -19,25 +24,48 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
         if(ekf == True):
             state_filtered = state[:5,pred_mask]
             state_lst = ['x', 'y', 'theta', 'v', 'w']
+            err_abs = np.zeros_like(state_filtered)
+
+            err_abs[:2,:] = np.abs(state_filtered[:2,:] - pred[1:3,:]) # ignore time row from pred, and only x and y
+            normalized_differences = circular_difference(pred[3,:], state_filtered[2,:])
+            err_abs[2,:] = np.abs(normalized_differences)
+            err_abs[3:,:] = np.abs(state_filtered[3:,:] - pred[4:,:]) # only v and w
         else:
             state_filtered = state[:4,pred_mask]
             state_lst = ['x', 'y', 'v_x', 'v_y']
+            err_abs = np.abs(state_filtered - pred[1:,:]) # ignore time row from pred
+            
 
-        err_abs = np.abs(state_filtered - pred[1:,:]) # ignore time row from pred
         euclidean = np.sqrt(err_abs[0,:] ** 2 + err_abs[1,:] ** 2)
+
 
     for i, st in enumerate(state_lst):
         plt.figure(figsize=(6, 6))
         plt.plot(time, state[i], markersize=5, label= st)
         for u in range(n_uavs):
             plt.plot(predicts[u][0, :], predicts[u][i + 1, :], 'x', markersize=2, label= 'UAV ' + str(u + 1))
-        plt.title("State", fontsize=20)
+        plt.title("State and Estimation", fontsize=20)
         plt.xlabel('t (s)', fontsize=15)
         plt.ylabel(st, fontsize=15)
         plt.legend(fontsize=10)
         plt.grid()
 
         plot_jpg = 'Error___' + st + '.png'
+    
+        plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
+        plt.savefig(plot_jpg)
+        plt.close()
+
+    for i, st in enumerate(state_lst):
+        plt.figure(figsize=(6, 6))
+        plt.plot(time, state[i], markersize=5, label= st)
+        plt.title("State and Estimation", fontsize=20)
+        plt.xlabel('t (s)', fontsize=15)
+        plt.ylabel(st, fontsize=15)
+        plt.legend(fontsize=10)
+        plt.grid()
+
+        plot_jpg = 'State___' + st + '.png'
     
         plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
         plt.savefig(plot_jpg)
@@ -112,16 +140,36 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
             z_corr[i] = z_corr[i].T
 
         for obs, obs_mask in zip(z_obs, z_masks):
-            state_filtered_obs = state[:,obs_mask]
-            err_obs = np.abs(state_filtered_obs - obs[1:,:]) # ignore time row from pred
+            if(ekf == True):
+                state_filtered_obs = state[:,obs_mask]
+                err_obs = np.zeros_like(state_filtered_obs)
+
+                err_obs[:2,:] = np.abs(state_filtered_obs[:2,:] - obs[1:3,:]) # ignore time row from pred, and only x and y
+                normalized_differences_obs = circular_difference(obs[3,:], state_filtered_obs[2,:])
+                err_obs[2,:] = np.abs(normalized_differences_obs)
+                err_obs[3:,:] = np.abs(state_filtered_obs[3:,:] - obs[4:,:]) # only v and w
+            else:
+                err_obs = np.abs(state_filtered_obs - obs[1:,:]) # ignore time row from pred
+
+
 
         for corr, corr_mask in zip(z_corr, z_masks):
-            state_filtered_corr = state[:,corr_mask]
-            err_corr = np.abs(state_filtered_corr - corr[1:,:]) # ignore time row from pred
+            if(ekf == True):
+                state_filtered_corr = state[:,corr_mask]
+                err_corr = np.zeros_like(state_filtered)
+
+                err_corr[:2,:] = np.abs(state_filtered_corr[:2,:] - corr[1:3,:]) # ignore time row from pred, and only x and y
+                normalized_differences_corr = circular_difference(corr[3,:], state_filtered_corr[2,:])
+                err_corr[2,:] = np.abs(normalized_differences_corr)
+                err_corr[3:,:] = np.abs(state_filtered_corr[3:,:] - corr[4:,:]) # only v and w
+            else:
+                err_corr = np.abs(state_filtered_corr - corr[1:,:]) # ignore time row from pred
+
 
         
 
     if(ekf == True):
+
 
         err_abs_mean = np.array([   np.mean(err_abs[0,:]),
                                     np.mean(err_abs[1,:]),
@@ -131,7 +179,7 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
 
         rmse = np.array([   np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[0,:], pred[0,:])),
                             np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[1,:], pred[1,:])),
-                            np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[2,:], pred[2,:])),
+                            np.sqrt(np.mean(normalized_differences**2)),
                             np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[3,:], pred[3,:])),
                             np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[4,:], pred[4,:]))])
         

@@ -2,6 +2,7 @@
 
 #import rospy
 import numpy as np
+import navpy
 #from sensor_fusion.msg import target_position_fuse
 #from sensor_fusion.msg import target_position
 
@@ -95,10 +96,8 @@ def Jacobian_w(x, dt, aug):
 
 
 class KalmanFilter(object):
-    def __init__(self, F = None, B = None, H = None, H_fuse = None, Q = None, R = None, R_fuse = None, R_delay = None, P = None, x0 = None, dt = None, aug = None):
+    def __init__(self, F = None, B = None, H = None, H_fuse = None, Q = None, R = None, R_fuse = None, R_delay = None, P = None, x0 = None, dt = None, aug = None, EKF = None):
 
-        if(F is None or H is None):
-            raise ValueError("Set proper system dynamics.")
 
         self.n = x0.shape[0]
         self.m = H.shape[1]
@@ -116,6 +115,7 @@ class KalmanFilter(object):
         self.x = np.zeros((self.n, 1)) if x0 is None else x0
         self.J = np.eye(self.n)
         self.aug = 0 if aug is None else aug
+        self.EKF = False if EKF is None else EKF
 
 
     def predict(self, u = 0):
@@ -124,16 +124,6 @@ class KalmanFilter(object):
         return self.x
     
     def predict_nonlinear(self, u = 0):
-
-        while(self.x[2] < - np.pi ):
-            self.x[2] = self.x[2] + 2 * np.pi
-
-
-        while(self.x[2] > np.pi ):
-            self.x[2] = self.x[2] - 2 * np.pi
-
-        if (self.x[3] < 0):
-            self.x[3] = np.abs(self.x[3])
             
 
         if (self.x[4] == 0):
@@ -144,23 +134,13 @@ class KalmanFilter(object):
             self.x = f_nonlinear_w(self.x, self.dt, self.aug)
 
 
-        while(self.x[2] < - np.pi ):
-            self.x[2] = self.x[2] + 2 * np.pi
-
-        while(self.x[2] > np.pi ):
-            self.x[2] = self.x[2] - 2 * np.pi
-
-        if (self.x[3] < 0):
-            self.x[3] = np.abs(self.x[3])
+        self.x[2] = navpy.wrapToPi(self.x[2])
+        self.x[3] = np.abs(self.x[3])
 
         self.P = np.dot(np.dot(self.J, self.P), self.J.T) + self.Q
         return self.x
 
     def update(self, z):
-        # if (self.aug > 0):
-        #     state_z = z
-        #     z = np.zeros(self.x.shape)
-        #     np.put(z, [0, 1], state_z)
         self.y = z - np.dot(self.H, self.x)
         S = self.R + np.dot(self.H, np.dot(self.P, self.H.T))
         self.K = np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
@@ -168,6 +148,11 @@ class KalmanFilter(object):
         I = np.eye(self.n)
         self.P = np.dot(np.dot(I - np.dot(self.K, self.H), self.P), 
         	(I - np.dot(self.K, self.H)).T) + np.dot(np.dot(self.K, self.R), self.K.T)
+        
+        if (self.EKF == True):
+            self.x[2] = navpy.wrapToPi(self.x[2])
+            self.x[3] = np.abs(self.x[3])
+
              
     def update_fuse(self, z):
         self.y_fuse = z - np.dot(self.H_fuse, self.x)
@@ -177,6 +162,10 @@ class KalmanFilter(object):
         I = np.eye(self.n)
         self.P = np.dot(np.dot(I - np.dot(self.K_fuse, self.H_fuse), self.P), 
         	(I - np.dot(self.K_fuse, self.H_fuse)).T) + np.dot(np.dot(self.K_fuse, self.R_fuse), self.K_fuse.T)
+        
+        if (self.EKF == True):
+            self.x[2] = navpy.wrapToPi(self.x[2])
+            self.x[3] = np.abs(self.x[3])
 
 
 class Fusion:

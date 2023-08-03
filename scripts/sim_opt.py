@@ -49,7 +49,10 @@ delay_std_lst = [0]
 
 dynamics_lst = [target_dynamics.linear_path,
                 target_dynamics.sin_path,
-                target_dynamics.circular_path]
+                target_dynamics.circular_path,
+                target_dynamics.linear_xy_path,
+                target_dynamics.sin_xy_path,
+                target_dynamics.circular_xy_path]
 
 delay_strategy_list = [None, 
                        "extrapolate",
