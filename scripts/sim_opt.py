@@ -47,9 +47,11 @@ delay_mean_lst = [0]
 delay_std_lst = [0]
 
 
-dynamics_lst = [target_dynamics.linear_path,
+dynamics_lst = [target_dynamics.stoped_path,
+                target_dynamics.linear_path,
                 target_dynamics.sin_path,
                 target_dynamics.circular_path,
+                target_dynamics.stoped_xy_path,
                 target_dynamics.linear_xy_path,
                 target_dynamics.sin_xy_path,
                 target_dynamics.circular_xy_path]
