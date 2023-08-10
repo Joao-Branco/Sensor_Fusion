@@ -23,12 +23,12 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
 
     # generate target data (ground truth)
 
-    x,y,vx,vy, ww = check_target_ret(target_dynamics, time)
+    x,y,vx,vy, vv, tt, ww = check_target_ret(target_dynamics, time)
 
 
     sensors = [gen_sensor_data(x,y, SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD= SENSOR_STD) for i in range(n_uavs) ]
 
-    state, kfs, x0 = sim_opt_kalman.Kalman_sim(n_uavs= n_uavs, EKF= EKF, f_kf= f_kf, x= x, y= y, vx= vx, vy= vy, ww= ww, delay_strategy= DELAY_STRATEGY, aug= AUG)
+    state, kfs, x0 = sim_opt_kalman.Kalman_sim(n_uavs= n_uavs, EKF= EKF, f_kf= f_kf, x= x, y= y, vx= vx, vy= vy, vv= vv, tt= tt, ww= ww, delay_strategy= DELAY_STRATEGY, aug= AUG)
 
 
 
@@ -76,7 +76,7 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
                 l_d.append('update')
                 l_d.append(kf.kf.x)
                 kf.update(np.array([[x_], [y_]]))
-                l_d.append(np.array([[x[i]],[y[i]],[vx[i]],[vy[i]], [ww[i]]]))
+                l_d.append(np.array([[x[i]],[y[i]],[vx[i]],[vy[i]], [vv[i]], [tt[i]], [ww[i]]]))
                 l_d.append(kf.kf.x)
                 l_d.append(kf.kf.P)
                 l_d.append(kf.kf.H)
@@ -122,7 +122,7 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
                         
                         
 
-                        l_d.append(np.array([[x[i]],[y[i]],[vx[i]],[vy[i]], [ww[i]]]))
+                        l_d.append(np.array([[x[i]],[y[i]],[vx[i]],[vy[i]], [vv[i]], [tt[i]], [ww[i]]]))
                         l_d.append(kf.kf.x)
                         l_d.append(kf.kf.P)
                         l_d.append(kf.kf.H_fuse)
@@ -165,7 +165,7 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
 
 
                 predict_masks[uav_i][col_write] = i
-                l_d.append(np.array([[x[i]],[y[i]],[vx[i]],[vy[i]], [ww[i]]]))
+                l_d.append(np.array([[x[i]],[y[i]],[vx[i]],[vy[i]], [vv[i]], [tt[i]], [ww[i]]]))
                 l_d.append(kf.kf.x)
                 l_d.append(kf.kf.P)
                 l_d.append(kf.kf.J)

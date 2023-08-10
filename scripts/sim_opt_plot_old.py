@@ -23,8 +23,13 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
     for pred, pred_mask in zip(predicts, predict_masks):
         if(ekf == True):
             state_filtered = state[:5,pred_mask]
-            state_lst = ['x', 'y', 'v_x', 'v_y', 'w']
-            err_abs = np.abs(state_filtered - pred[1:,:]) # ignore time row from pred
+            state_lst = ['x', 'y', 'theta', 'v', 'w']
+            err_abs = np.zeros_like(state_filtered)
+
+            err_abs[:2,:] = np.abs(state_filtered[:2,:] - pred[1:3,:]) # ignore time row from pred, and only x and y
+            normalized_differences = circular_difference(pred[3,:], state_filtered[2,:])
+            err_abs[2,:] = np.abs(normalized_differences)
+            err_abs[3:,:] = np.abs(state_filtered[3:,:] - pred[4:,:]) # only v and w
         else:
             state_filtered = state[:4,pred_mask]
             state_lst = ['x', 'y', 'v_x', 'v_y']
@@ -137,8 +142,12 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
         for obs, obs_mask in zip(z_obs, z_masks):
             if(ekf == True):
                 state_filtered_obs = state[:,obs_mask]
-                err_obs = np.abs(state_filtered_obs - obs[1:,:]) # ignore time row from pred
+                err_obs = np.zeros_like(state_filtered_obs)
 
+                err_obs[:2,:] = np.abs(state_filtered_obs[:2,:] - obs[1:3,:]) # ignore time row from pred, and only x and y
+                normalized_differences_obs = circular_difference(obs[3,:], state_filtered_obs[2,:])
+                err_obs[2,:] = np.abs(normalized_differences_obs)
+                err_obs[3:,:] = np.abs(state_filtered_obs[3:,:] - obs[4:,:]) # only v and w
             else:
                 err_obs = np.abs(state_filtered_obs - obs[1:,:]) # ignore time row from pred
 
@@ -147,8 +156,12 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
         for corr, corr_mask in zip(z_corr, z_masks):
             if(ekf == True):
                 state_filtered_corr = state[:,corr_mask]
-                err_obs = np.abs(state_filtered_obs - obs[1:,:]) # ignore time row from pred
+                err_corr = np.zeros_like(state_filtered)
 
+                err_corr[:2,:] = np.abs(state_filtered_corr[:2,:] - corr[1:3,:]) # ignore time row from pred, and only x and y
+                normalized_differences_corr = circular_difference(corr[3,:], state_filtered_corr[2,:])
+                err_corr[2,:] = np.abs(normalized_differences_corr)
+                err_corr[3:,:] = np.abs(state_filtered_corr[3:,:] - corr[4:,:]) # only v and w
             else:
                 err_corr = np.abs(state_filtered_corr - corr[1:,:]) # ignore time row from pred
 
@@ -166,7 +179,7 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
 
         rmse = np.array([   np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[0,:], pred[0,:])),
                             np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[1,:], pred[1,:])),
-                            np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[2,:], pred[2,:])),
+                            np.sqrt(np.mean(normalized_differences**2)),
                             np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[3,:], pred[3,:])),
                             np.sqrt(sklearn.metrics.mean_squared_error(state_filtered[4,:], pred[4,:]))])
         

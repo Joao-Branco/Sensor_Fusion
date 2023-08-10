@@ -1,6 +1,6 @@
 import numpy as np
 import math
-from kf import KalmanFilter
+from kalman_filter import KalmanFilter
 
 
 
@@ -9,7 +9,7 @@ from kf import KalmanFilter
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug):
+def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, vv, tt, ww, delay_strategy, aug):
 
     class DelayKalmanFilter:
         def __init__(self, kf, delay_strategy=None):
@@ -142,7 +142,7 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug):
 
     if (EKF == True):
 
-        state = np.stack((x,y, vx, vy,  ww), axis=0)
+        state = np.stack((x,y, tt, vv,  ww), axis=0)
         
         # x ----Initial value for the state
 
@@ -240,12 +240,13 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug):
     R = np.array([ [10, 0],
                 [0, 10]])
     
-    R_fuse = np.array([     [1, 0, 0, 0, 0],
-                            [0, 1, 0, 0, 0],
-                            [0, 0, 1, 0, 0],
-                            [0, 0, 0, 1, 0],
-                            [0, 0, 0, 0, 1]])
+    R_fuse = np.array([     [14.8043, 0, 0, 0, 0],
+                            [0, 14.8043, 0, 0, 0],
+                            [0, 0, 13.9049, 0, 0],
+                            [0, 0, 0, 8.7572, 0],
+                            [0, 0, 0, 0, 0.6642]])
     
+    R_fuse = np.eye(5) * 5
 
 
     R_fuse_KF = np.array([  [1.026, 0, 0, 0],
@@ -253,13 +254,13 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug):
                             [0, 0, 5.837, 0],
                             [0, 0, 0, 5.837]])
     
-    P_EKF = np.array([     [0.2, 0, 0, 0, 0],
-                            [0, 0.2, 0, 0, 0],
-                            [0, 0, 0.4, 0, 0],
-                            [0, 0, 0, 0.4, 0],
-                            [0, 0, 0, 0, 0.4]])
+    P_EKF = np.array([     [0.2166, 0, 0, 0, 0],
+                            [0, 0.2166, 0, 0, 0],
+                            [0, 0, 0.9076, 0, 0],
+                            [0, 0, 0, 0.6118, 0],
+                            [0, 0, 0, 0, 0.5038]])
     
-    P = np.array([          [0.474, 0, 0, 0],
+    P = np.array([  [0.474, 0, 0, 0],
                             [0, 0.474, 0, 0],
                             [0, 0, 0.503, 0],
                             [0, 0, 0, 0.503]])
