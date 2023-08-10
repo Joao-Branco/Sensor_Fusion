@@ -6,18 +6,18 @@ def circular_path(t):
     x = r * np.cos(psi * t)
     y = r * np.sin(psi * t)
     theta = np.zeros_like(t)
-    for i, (xx, yy) in enumerate(zip(x,y)):
-        if ((yy >= 0 and xx > 0) or (yy < 0 and xx > 0)):
-            theta[i] = np.arctan(yy / xx)
-        elif ((yy > 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) + np.pi
-        elif ((yy < 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) - np.pi
-        elif (xx == 0):
-            theta[i] = 0
     v_x = -psi * r * np.sin(psi * t)
     v_y = psi * r * np.cos(psi * t)
-    w = ((x * v_y) - (y * v_x)) / (x ** 2 + y ** 2)
+    for i, (v_xx, v_yy) in enumerate(zip(v_x,v_y)):
+        if ((v_yy >= 0 and v_xx > 0) or (v_yy < 0 and v_xx > 0)):
+            theta[i] = np.arctan(v_yy / v_xx)
+        elif ((v_yy > 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) + np.pi
+        elif ((v_yy < 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) - np.pi
+        elif (v_xx == 0):
+            theta[i] = 0
+    w = (psi ** 3 * r ** 2 * np.cos(psi * t) ** 2 + psi ** 3 * r ** 2 * np.sin(psi * t)  ** 2) / (psi ** 2 * r ** 2 * np.cos(psi * t) ** 2 + psi ** 2 * r ** 2 * np.sin(psi * t) ** 2)
     v = np.sqrt(v_x ** 2 + v_y ** 2)
     
     return x,y,v_x,v_y, v, theta, w
@@ -26,44 +26,45 @@ def sin_path(t):
     r = 10
     psi = 0.14
     x = r * np.cos(psi * t)
-    y = 1 * t
+    vc = 5 * np.ones_like(t)
+    y = vc * t
     theta = np.zeros_like(t)
-    for i, (xx, yy) in enumerate(zip(x,y)):
-        if ((yy >= 0 and xx > 0) or (yy < 0 and xx > 0)):
-            theta[i] = np.arctan(yy / xx)
-        elif ((yy > 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) + np.pi
-        elif ((yy < 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) - np.pi
-        elif (xx == 0):
+    v_x = - psi * r * np.sin(psi * t)
+    v_y = vc * np.ones_like(t)
+    for i, (v_xx, v_yy) in enumerate(zip(v_x,v_y)):
+        if ((v_yy >= 0 and v_xx > 0) or (v_yy < 0 and v_xx > 0)):
+            theta[i] = np.arctan(v_yy / v_xx)
+        elif ((v_yy > 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) + np.pi
+        elif ((v_yy < 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) - np.pi
+        elif (v_xx == 0):
             theta[i] = 0
-    v_x = -psi * r * np.sin(psi * t)
-    v_y = 5 * np.ones_like(t)
-    w = ((x * v_y) - (y * v_x)) / (x ** 2 + y ** 2)
+    w = (psi ** 2 * r * vc * np.cos(psi * t))/(vc ** 2 + psi ** 2 * r ** 2 * np.sin(psi * t) ** 2)
     v = np.sqrt(v_x ** 2 + v_y ** 2)
 
     
     return x,y,v_x,v_y, v, theta, w
 
 def linear_path(t):
-    v_r = -6
+    v_r = - 6 * np.ones_like(t)
     r =  v_r * t 
     psi =  np.pi / 3 
     x = r * np.cos(psi) + 300
     y = r * np.sin(psi) + 300
     theta = np.zeros_like(t)
-    for i, (xx, yy) in enumerate(zip(x,y)):
-        if ((yy >= 0 and xx > 0) or (yy < 0 and xx > 0)):
-            theta[i] = np.arctan(yy / xx)
-        elif ((yy > 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) + np.pi
-        elif ((yy < 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) - np.pi
-        elif (xx == 0):
+    v_x = v_r  * np.cos(psi)
+    v_y = v_r * np.sin(psi)
+    for i, (v_xx, v_yy) in enumerate(zip(v_x,v_y)):
+        if ((v_yy >= 0 and v_xx > 0) or (v_yy < 0 and v_xx > 0)):
+            theta[i] = np.arctan(v_yy / v_xx)
+        elif ((v_yy > 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) + np.pi
+        elif ((v_yy < 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) - np.pi
+        elif (v_xx == 0):
             theta[i] = 0
-    v_x = -psi * r * np.sin(psi * t)
-    v_y = psi * r * np.cos(psi * t)
-    w = ((x * v_y) - (y * v_x)) / (x ** 2 + y ** 2)
+    w = np.zeros_like(t)
     v = np.sqrt(v_x ** 2 + v_y ** 2)
     
     return x,y,v_x,v_y, v, theta, w
@@ -75,18 +76,18 @@ def circular_xy_path(t):
     x = r * np.cos(psi * t) + 300
     y = r * np.sin(psi * t) + 300
     theta = np.zeros_like(t)
-    for i, (xx, yy) in enumerate(zip(x,y)):
-        if ((yy >= 0 and xx > 0) or (yy < 0 and xx > 0)):
-            theta[i] = np.arctan(yy / xx)
-        elif ((yy > 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) + np.pi
-        elif ((yy < 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) - np.pi
-        elif (xx == 0):
-            theta[i] = 0
     v_x = -psi * r * np.sin(psi * t)
     v_y = psi * r * np.cos(psi * t)
-    w = ((x * v_y) - (y * v_x)) / (x ** 2 + y ** 2)
+    for i, (v_xx, v_yy) in enumerate(zip(v_x,v_y)):
+        if ((v_yy >= 0 and v_xx > 0) or (v_yy < 0 and v_xx > 0)):
+            theta[i] = np.arctan(v_yy / v_xx)
+        elif ((v_yy > 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) + np.pi
+        elif ((v_yy < 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) - np.pi
+        elif (v_xx == 0):
+            theta[i] = 0
+    w = (psi ** 3 * r ** 2 * np.cos(psi * t) ** 2 + psi ** 3 * r ** 2 * np.sin(psi * t)  ** 2) / (psi ** 2 * r ** 2 * np.cos(psi * t) ** 2 + psi ** 2 * r ** 2 * np.sin(psi * t) ** 2)
     v = np.sqrt(v_x ** 2 + v_y ** 2)
     
     return x,y,v_x,v_y, v, theta, w
@@ -95,20 +96,21 @@ def sin_xy_path(t):
     r = 10
     psi = 0.14
     y = r * np.cos(psi * t) + 5
-    x = 1 * t - 5
+    vc = 5 * np.ones_like(t)
+    x = vc * t - 5
     theta = np.zeros_like(t)
-    for i, (xx, yy) in enumerate(zip(x,y)):
-        if ((yy >= 0 and xx > 0) or (yy < 0 and xx > 0)):
-            theta[i] = np.arctan(yy / xx)
-        elif ((yy > 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) + np.pi
-        elif ((yy < 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) - np.pi
-        elif (xx == 0):
+    v_y = - psi * r * np.sin(psi * t)
+    v_x = vc * np.ones_like(t)
+    for i, (v_xx, v_yy) in enumerate(zip(v_x,v_y)):
+        if ((v_yy >= 0 and v_xx > 0) or (v_yy < 0 and v_xx > 0)):
+            theta[i] = np.arctan(v_yy / v_xx)
+        elif ((v_yy > 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) + np.pi
+        elif ((v_yy < 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) - np.pi
+        elif (v_xx == 0):
             theta[i] = 0
-    v_x = -psi * r * np.sin(psi * t)
-    v_y = 5 * np.ones_like(t)
-    w = ((x * v_y) - (y * v_x)) / (x ** 2 + y ** 2)
+    w = -( psi ** 2 * r * vc * np.cos(psi * t)) / (vc ** 2 + psi ** 2 * r ** 2 * np.sin(psi * t) ** 2)
     v = np.sqrt(v_x ** 2 + v_y ** 2)
 
     return x,y,v_x,v_y, v, theta, w
@@ -116,24 +118,24 @@ def sin_xy_path(t):
 
 
 def linear_xy_path(t):
-    v_r = 6
+    v_r = 6 * np.ones_like(t)
     r =  v_r * t 
     psi = - np.pi / 6
     x = r * np.cos(psi) -200
     y = r * np.sin(psi) -100
     theta = np.zeros_like(t)
-    for i, (xx, yy) in enumerate(zip(x,y)):
-        if ((yy >= 0 and xx > 0) or (yy < 0 and xx > 0)):
-            theta[i] = np.arctan(yy / xx)
-        elif ((yy > 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) + np.pi
-        elif ((yy < 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) - np.pi
-        elif (xx == 0):
+    v_x = v_r  * np.cos(psi)
+    v_y = v_r * np.sin(psi)
+    for i, (v_xx, v_yy) in enumerate(zip(v_x,v_y)):
+        if ((v_yy >= 0 and v_xx > 0) or (v_yy < 0 and v_xx > 0)):
+            theta[i] = np.arctan(v_yy / v_xx)
+        elif ((v_yy > 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) + np.pi
+        elif ((v_yy < 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) - np.pi
+        elif (v_xx == 0):
             theta[i] = 0
-    v_x = -psi * r * np.sin(psi * t)
-    v_y = psi * r * np.cos(psi * t)
-    w = ((x * v_y) - (y * v_x)) / (x ** 2 + y ** 2)
+    w = np.zeros_like(t)
     v = np.sqrt(v_x ** 2 + v_y ** 2)
 
     return x,y,v_x,v_y, v, theta, w
@@ -144,17 +146,17 @@ def stoped_xy_path(t):
     x = r * np.cos(psi)
     y = r * np.sin(psi)
     theta = np.zeros_like(t)
-    for i, (xx, yy) in enumerate(zip(x,y)):
-        if ((yy >= 0 and xx > 0) or (yy < 0 and xx > 0)):
-            theta[i] = np.arctan(yy / xx)
-        elif ((yy > 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) + np.pi
-        elif ((yy < 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) - np.pi
-        elif (xx == 0):
-            theta[i] = 0
     v_x = np.zeros_like(t)
     v_y =  np.zeros_like(t)
+    for i, (v_xx, v_yy) in enumerate(zip(v_x,v_y)):
+        if ((v_yy >= 0 and v_xx > 0) or (v_yy < 0 and v_xx > 0)):
+            theta[i] = np.arctan(v_yy / v_xx)
+        elif ((v_yy > 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) + np.pi
+        elif ((v_yy < 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) - np.pi
+        elif (v_xx == 0):
+            theta[i] = 0
     w = np.zeros_like(t)
     v = np.sqrt(v_x ** 2 + v_y ** 2)
 
@@ -166,21 +168,18 @@ def stoped_path(t):
     x = r * np.cos(psi)
     y = r * np.sin(psi)
     theta = np.zeros_like(t)
-    for i, (xx, yy) in enumerate(zip(x,y)):
-        if ((yy >= 0 and xx > 0) or (yy < 0 and xx > 0)):
-            theta[i] = np.arctan(yy / xx)
-        elif ((yy > 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) + np.pi
-        elif ((yy < 0 and xx < 0)):
-            theta[i] = np.arctan(yy / xx) - np.pi
-        elif (xx == 0):
-            theta[i] = 0
     v_x = np.zeros_like(t)
     v_y = np.zeros_like(t)
+    for i, (v_xx, v_yy) in enumerate(zip(v_x,v_y)):
+        if ((v_yy >= 0 and v_xx > 0) or (v_yy < 0 and v_xx > 0)):
+            theta[i] = np.arctan(v_yy / v_xx)
+        elif ((v_yy > 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) + np.pi
+        elif ((v_yy < 0 and v_xx < 0)):
+            theta[i] = np.arctan(v_yy / v_xx) - np.pi
+        elif (v_xx == 0):
+            theta[i] = 0
     w = np.zeros_like(t)
     v = np.sqrt(v_x ** 2 + v_y ** 2)
 
     return x,y,v_x,v_y, v, theta, w
-
-
-

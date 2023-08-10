@@ -1,4 +1,5 @@
 import target_dynamics
+import target_dynamics_new
 import sim_core
 import sim_opt_plot
 from pathlib import Path
@@ -18,7 +19,7 @@ sim_dir.mkdir()
 # simulation parameters
 n_uavs = 3
 f = 200
-sim_time = 90
+sim_time = 200
 f_sample = 10
 f_kf = 20
 f_share = 5
@@ -33,6 +34,7 @@ SENSOR_MEAN = 0
 # EKF = True
 # DELAY = True
 # OUT_OF_ORDER = True
+
 
 
 
@@ -55,6 +57,9 @@ dynamics_lst = [target_dynamics.stoped_path,
                 target_dynamics.linear_xy_path,
                 target_dynamics.sin_xy_path,
                 target_dynamics.circular_xy_path]
+
+# dynamics_lst = [target_dynamics_new.circular_path,
+#                 target_dynamics_new.sin_path]
 
 delay_strategy_list = [None, 
                        "extrapolate",
