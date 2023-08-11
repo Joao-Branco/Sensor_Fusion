@@ -150,7 +150,7 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug):
                             [state[1,0]],
                             [state[2,0]],
                             [state[3,0]],
-                            [state[4,0]]])
+                            [0.1]])
 
     else:
 
