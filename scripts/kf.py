@@ -2,7 +2,7 @@ import numpy as np
 import navpy
 
 def f_nonlinear_w(state, dt, aug):
-    x, y, vx, vy, w = state
+    x, y, vx, vy, w = state[:5]
     x = x.item()
     y = y.item()
     vx = vx.item()
@@ -35,7 +35,7 @@ def f_nonlinear_w(state, dt, aug):
 
 
 def f_nonlinear_w0(state, dt, aug):
-    x, y, vx, vy, w = state
+    x, y, vx, vy, w = state[:5]
     x = x.item()
     y = y.item()
     vx = vx.item()
@@ -67,7 +67,7 @@ def f_nonlinear_w0(state, dt, aug):
     return F
 
 def Jacobian_w0(state, dt, aug):
-    x, y, vx, vy, w = state
+    x, y, vx, vy, w = state[:5]
     x = x.item()
     y = y.item()
     vx = vx.item()
@@ -89,7 +89,7 @@ def Jacobian_w0(state, dt, aug):
     return J_a
 
 def Jacobian_w(state, dt, aug):
-    x, y, vx, vy, w = state
+    x, y, vx, vy, w = state[:5]
     x = x.item()
     y = y.item()
     vx = vx.item()
@@ -120,7 +120,6 @@ class KalmanFilter(object):
         self.n = x0.shape[0]
         self.m = H.shape[1]
         self.dt = dt
-
         self.F = F
         self.H = H
         self.H_fuse = H_fuse
@@ -139,6 +138,7 @@ class KalmanFilter(object):
     def predict(self, u = 0):
         self.x = np.dot(self.F, self.x) + np.dot(self.B, u)
         self.P = np.dot(np.dot(self.F, self.P), self.F.T) + self.Q
+
         return self.x
     
     def predict_nonlinear(self, u = 0):

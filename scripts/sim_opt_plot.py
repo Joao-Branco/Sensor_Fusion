@@ -135,22 +135,14 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
             z_corr[i] = z_corr[i].T
 
         for obs, obs_mask in zip(z_obs, z_masks):
-            if(ekf == True):
-                state_filtered_obs = state[:,obs_mask]
-                err_obs = np.abs(state_filtered_obs - obs[1:,:]) # ignore time row from pred
-
-            else:
-                err_obs = np.abs(state_filtered_obs - obs[1:,:]) # ignore time row from pred
+            state_filtered_obs = state[:,obs_mask]
+            err_obs = np.abs(state_filtered_obs - obs[1:,:]) # ignore time row from pred
 
 
 
         for corr, corr_mask in zip(z_corr, z_masks):
-            if(ekf == True):
-                state_filtered_corr = state[:,corr_mask]
-                err_obs = np.abs(state_filtered_obs - obs[1:,:]) # ignore time row from pred
-
-            else:
-                err_corr = np.abs(state_filtered_corr - corr[1:,:]) # ignore time row from pred
+            state_filtered_corr = state[:,corr_mask]
+            err_corr = np.abs(state_filtered_corr - corr[1:,:]) # ignore time row from pred
 
 
         

@@ -6,24 +6,19 @@ import sim_opt_kalman
 import sim_printing
 
 
-def check_target_ret(func, t):
-    args = func(t)
-    for i, a in enumerate(args):
-        if not isinstance(a, np.ndarray):
-            raise TypeError(f"ret value {i} is not numpy array")
-    return args
+
 
 def gen_sensor_data(*arrays, SENSOR_MEAN, SENSOR_STD):
     return [array + np.random.normal(SENSOR_MEAN, SENSOR_STD, size=array.size) for array in arrays]
 
         
 
-def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, DELAY_MEAN : bool, DELAY_STD : bool,  SENSOR_MEAN : bool, SENSOR_STD : bool,  sim_time: int, n_uavs: int, f_sim: float, f_kf: float, f_sample: float, f_share: float, target_dynamics: Callable, AUG : int, dir : Path):
+def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, DELAY_MEAN : bool, DELAY_STD : bool,  SENSOR_MEAN : bool, SENSOR_STD : bool,  sim_time: int, n_uavs: int, f_sim: float, f_kf: float, f_sample: float, f_share: float, target_dynamics: Callable, AUG : int, dir : Path, state : np):
     time = np.arange(0, sim_time, 1/f_sim)
 
     # generate target data (ground truth)
 
-    x,y,vx,vy, ww = check_target_ret(target_dynamics, time)
+    x,y,vx,vy, ww = state
 
 
     sensors = [gen_sensor_data(x,y, SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD= SENSOR_STD) for i in range(n_uavs) ]

@@ -6,6 +6,14 @@ import time
 import time as pytime
 import pandas as pd
 import math
+import numpy as np
+
+def check_target_ret(func, t):
+    args = func(t)
+    for i, a in enumerate(args):
+        if not isinstance(a, np.ndarray):
+            raise TypeError(f"ret value {i} is not numpy array")
+    return args
 
 #path to create a folder with the results from the simulations
 
@@ -18,7 +26,7 @@ sim_dir.mkdir()
 # simulation parameters
 n_uavs = 3
 f = 200
-sim_time = 200
+sim_time = 150
 f_sample = 10
 f_kf = 20
 f_share = 5
@@ -44,18 +52,16 @@ ekf_lst = [False, True]
 out_of_order_lst = [False, True]
 delay_mean_lst = [0, 0.1 , 0.5 , 1]
 delay_std_lst = [0, 0.01 , 0.02 , 0.05]
-delay_mean_lst = [0]
-delay_std_lst = [0]
+delay_mean_lst = [0, 0.1]
+delay_std_lst = [0, 0.01]
 
 
 dynamics_lst = [target_dynamics.stoped_path,
                 target_dynamics.linear_path,
                 target_dynamics.sin_path,
-                target_dynamics.circular_path,
-                target_dynamics.stoped_xy_path,
-                target_dynamics.linear_xy_path,
-                target_dynamics.sin_xy_path,
-                target_dynamics.circular_xy_path]
+                target_dynamics.circular_path]
+
+
 
 
 delay_strategy_list = [None, 
@@ -93,8 +99,11 @@ for delay, std_delay in zip(delay_mean_lst, delay_std_lst):
         dir_data = Path(f"/Users/joao/Documents/Tese/git/Sensor_fusion/numerical_sims/sim_{SIM_ID}/delay_{delay}/data/{str(dynamics.__name__)}")
         dir_data.mkdir()
 
-        for delay_strategy in delay_strategy_list:
+        time = np.arange(0, sim_time, 1/f)
+        dyn = check_target_ret(dynamics, time)
 
+        for delay_strategy in delay_strategy_list:
+ 
             for share in share_lst:
 
                 for ekf in ekf_lst:
@@ -108,7 +117,8 @@ for delay, std_delay in zip(delay_mean_lst, delay_std_lst):
 
                     if (delay == 0 and delay_strategy != None or share == False and delay != 0):
                         continue
-                    if (delay_strategy == "augmented_state" and ekf == False):
+
+                    if (delay != 0 and delay_strategy != None):
                         continue
 
                     if (delay_strategy == "augmented_state"):
@@ -128,7 +138,7 @@ for delay, std_delay in zip(delay_mean_lst, delay_std_lst):
                     print("TARGET DYNAMIC   --- ", dynamics.__name__)
                     print("DELAY MEAN   --- ", DELAY_MEAN)
                     print("DELAY STD   --- ", DELAY_STD)
-                    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time = sim_core.sim(DELAY_STRATEGY= delay_strategy, EKF=ekf, OUT_OF_ORDER= OUT_OF_ORDER, SHARE_ON= share, DELAY_MEAN= DELAY_MEAN, DELAY_STD= DELAY_STD,  SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD = SENSOR_STD,  sim_time = sim_time, n_uavs = n_uavs, f_sim = f, f_kf = f_kf, f_sample = f_sample, f_share = f_share, target_dynamics = dynamics, AUG = aug_states, dir = dir_data) 
+                    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time = sim_core.sim(DELAY_STRATEGY= delay_strategy, EKF=ekf, OUT_OF_ORDER= OUT_OF_ORDER, SHARE_ON= share, DELAY_MEAN= DELAY_MEAN, DELAY_STD= DELAY_STD,  SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD = SENSOR_STD,  sim_time = sim_time, n_uavs = n_uavs, f_sim = f, f_kf = f_kf, f_sample = f_sample, f_share = f_share, target_dynamics = dynamics, AUG = aug_states, dir = dir_data, state= dyn) 
                     accuracy, precision = sim_opt_plot.sim_plot(state, predicts, predict_masks, n_uavs, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, share, dynamics.__name__, str(dir_plots), str(dir_results), sensors, time)
                     all_data.append([share, delay, DELAY_STD, ekf, delay_strategy, aug_states, str(dynamics.__name__), accuracy, precision, computer_cost])
 
