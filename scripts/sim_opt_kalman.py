@@ -1,7 +1,5 @@
 import numpy as np
-import math
-from kf import KalmanFilter
-
+from kf import KalmanFilter, DelayKalmanFilter
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -11,115 +9,7 @@ from kf import KalmanFilter
 
 def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug):
 
-    class DelayKalmanFilter:
-        def __init__(self, kf, delay_strategy=None):
-            self.kf = kf
-            self.predict = self.kf.predict
-            self.predict_nonlinear = self.kf.predict_nonlinear
-            
-            self.update = self.kf.update
-
-            self.last_msgs = {}
-
-            self.last_z_share = None
-            self.last_z_obs = None
-            
-            self.delay_strategy=delay_strategy
-            if delay_strategy is None:
-                self.update_fuse = self.update_fuse_no_delay
-            elif delay_strategy == "extrapolate":
-                self.update_fuse = self.update_fuse_extrapolate
-            elif delay_strategy == "extrapolate_plus":
-                self.update_fuse = self.update_fuse_extrapolate_plus
-            elif delay_strategy == "augmented_state":
-                self.update_fuse = self.update_fuse_augmented_state
-
-        def update_fuse_no_delay(self, z, *args, **kwargs):
-            self.last_z_obs = z
-            self.N = 0
-            self.delay_est = 0
-            return self.kf.update_fuse(z)
-
-        def update_fuse_extrapolate(self, z, t_z, uav_i, t_now):
-            z_corrected = None
-            if(self.last_msgs.get(uav_i) != None):
-                last_z, last_t_z = self.last_msgs[uav_i] # last predict made by other UAV
-                self.delay_est = t_now - t_z # delay present in the predict received
-                self.N = math.floor(self.delay_est / dt)
-                z_corrected = z + (z - last_z) / (t_z - last_t_z) * self.delay_est # extrapolation of all the state vector to the actual time
-                self.last_z_share = z_corrected
-                self.last_z_obs = z
-            else:
-                z_corrected = z
-                self.N = 0
-                self.delay_est = 0
-
-
-            self.last_msgs[uav_i] = (z, t_z) # saving in memory the predict  
-
-            return self.kf.update_fuse(z)
-
-
-        def update_fuse_extrapolate_plus(self, z, t_z, uav_i, t_now):
-            z_corrected = None
-
-            if(self.last_msgs.get(uav_i) != None):
-                last_z, last_t_z = self.last_msgs[uav_i] # last predict made by other UAV
-                self.delay_est = t_now - t_z # delay present in the predict received
-                self.N = math.floor(self.delay_est / dt)
-
-                z_corrected = z.copy() # copy the predict received
-
-                v_x = z[2] 
-                v_y = z[3]
-
-                z_corrected[0] = z[0] + v_x * self.delay_est #extrapolation of x, but using the v_x of the state
-                z_corrected[1] = z[1] + v_y * self.delay_est #extrapolation of y, but using the v_y of the state
-
-                #Suggestion
-
-                
-                self.last_z_share = z_corrected
-                self.last_z_obs = z
-
-            else:
-                z_corrected = z
-                self.N = 0
-                self.delay_est = 0
-
-
-            self.last_msgs[uav_i] = (z, t_z) # saving in memory the predict  
-
-            return self.kf.update_fuse(z)
-        
-        def update_fuse_augmented_state(self, z, t_z, uav_i, t_now):
-        
-        
-            self.delay_est = t_now - t_z # delay present in the predict received
-
-            self.N = math.floor(self.delay_est / dt)
-
-            
-
-            if self.N == 0:
-                H = np.block([H_fuse, np.zeros((n_state, aug * n_state))])
-                self.kf.H_fuse = H
-                return self.kf.update_fuse(z)
-            elif self.N == aug:
-                H = np.block([np.zeros((n_state, aug * n_state)), H_fuse])
-                self.kf.H_fuse = H
-                return self.kf.update_fuse(z)
-            elif 0 < self.N < aug:
-                H = np.block([np.zeros((n_state, self.N * n_state)), H_fuse, np.zeros((n_state, (aug - self.N) * n_state))])
-                self.kf.H_fuse = H
-                return self.kf.update_fuse(z)
-            else:
-                H = np.block([np.zeros((n_state, aug * n_state)), H_fuse])
-                self.kf.H_fuse = H
-                return self.kf.update_fuse(z)
-
-
-
+    
 
 
     #Definition of matrixes for EKF and KF
@@ -215,7 +105,7 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug):
                             [state[1,0]],
                             [state[2,0]],
                             [state[3,0]],
-                            [0.1]])
+                            [state[4,0] + 0.1]])
 
     else:
 

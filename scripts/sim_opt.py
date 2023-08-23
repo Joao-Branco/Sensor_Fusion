@@ -26,7 +26,7 @@ sim_dir.mkdir()
 # simulation parameters
 n_uavs = 3
 f = 200
-sim_time = 150
+sim_time = 60
 f_sample = 10
 f_kf = 20
 f_share = 5
@@ -52,8 +52,6 @@ ekf_lst = [False, True]
 out_of_order_lst = [False, True]
 delay_mean_lst = [0, 0.1 , 0.5 , 1]
 delay_std_lst = [0, 0.01 , 0.02 , 0.05]
-delay_mean_lst = [0, 0.1]
-delay_std_lst = [0, 0.01]
 
 
 dynamics_lst = [target_dynamics.stoped_path,
@@ -64,10 +62,20 @@ dynamics_lst = [target_dynamics.stoped_path,
 
 
 
+
+
 delay_strategy_list = [None, 
                        "extrapolate",
                        "extrapolate_plus",
                        "augmented_state"]
+
+
+
+delay_strategy_list = ["augmented_state"]
+dynamics_lst = [target_dynamics.stoped_path]
+delay_mean_lst = [0.1]
+delay_std_lst = [0.01]
+ekf_lst = [True]
 
 
 OUT_OF_ORDER = False
@@ -118,8 +126,8 @@ for delay, std_delay in zip(delay_mean_lst, delay_std_lst):
                     if (delay == 0 and delay_strategy != None or share == False and delay != 0):
                         continue
 
-                    if (delay != 0 and delay_strategy != None):
-                        continue
+                    # if (delay != 0 and delay_strategy != None):
+                    #     continue
 
                     if (delay_strategy == "augmented_state"):
                         aug_states = math.floor(DELAY_MEAN / (1 / f_kf)) + math.floor(DELAY_STD / (1 / f_kf)) + 1

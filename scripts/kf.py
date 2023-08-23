@@ -1,5 +1,5 @@
 import numpy as np
-import navpy
+import math
 
 def f_nonlinear_w(state, dt, aug):
     x, y, vx, vy, w = state[:5]
@@ -17,11 +17,11 @@ def f_nonlinear_w(state, dt, aug):
     
     f_d = []
     for d in range(aug):
-        f_d.append(np.array([  [x[0+d*5,0]],
-                        [x[1+d*5,0]],
-                        [x[2+d*5,0]],
-                        [x[3+d*5,0]],
-                        [x[4+d*5,0]]]))
+        f_d.append(np.array([  [state[0+d*5,0]],
+                        [state[1+d*5,0]],
+                        [state[2+d*5,0]],
+                        [state[3+d*5,0]],
+                        [state[4+d*5,0]]]))
 
 
 
@@ -50,11 +50,11 @@ def f_nonlinear_w0(state, dt, aug):
     
     f_d = []
     for d in range(aug):
-        f_d.append(np.array([  [x[0+d*5,0]],
-                        [x[1+d*5,0]],
-                        [x[2+d*5,0]],
-                        [x[3+d*5,0]],
-                        [x[4+d*5,0]]]))
+        f_d.append(np.array([  [state[0+d*5,0]],
+                        [state[1+d*5,0]],
+                        [state[2+d*5,0]],
+                        [state[3+d*5,0]],
+                        [state[4+d*5,0]]]))
 
 
 
@@ -198,4 +198,132 @@ class KalmanFilter(object):
             print('S \n',S, S.shape)
             print('Q \n',self.Q, self.Q.shape)
             print('y_fuse \n',self.y_fuse, self.y_fuse.shape)
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+
+
+
+class DelayKalmanFilter:
+        def __init__(self, kf, delay_strategy=None):
+            self.kf = kf
+            self.predict = self.kf.predict
+            self.predict_nonlinear = self.kf.predict_nonlinear
+            
+            self.update = self.kf.update
+
+            self.last_msgs = {}
+
+            self.last_z_share = None
+            self.last_z_obs = None
+            
+            self.delay_strategy = delay_strategy
+            if delay_strategy is None:
+                self.update_fuse = self.update_fuse_no_delay
+            elif delay_strategy == "extrapolate":
+                self.update_fuse = self.update_fuse_extrapolate
+            elif delay_strategy == "extrapolate_plus":
+                self.update_fuse = self.update_fuse_extrapolate_plus
+            elif delay_strategy == "augmented_state":
+                self.update_fuse = self.update_fuse_augmented_state
+                self.H = []
+                H_fuse = self.kf.H_fuse
+                aug = self.kf.aug
+                n_state = int(self.kf.x.shape[0] / (aug + 1))
+                for i in range(self.kf.aug):
+                    if i == 0:
+                        self.H.append(np.block([H_fuse, np.zeros((n_state, aug * n_state))]))
+                    elif i == aug:
+                        self.H.append(np.block([np.zeros((n_state, aug * n_state)), H_fuse]))
+                    elif 0 < i < aug:
+                        self.H.append(np.block([np.zeros((n_state, i * n_state)), H_fuse, np.zeros((n_state, (aug - i) * n_state))]))
+
+            
+            self.dt = self.kf.dt
+
+
+
+
+
+
+        def update_fuse_no_delay(self, z, *args, **kwargs):
+            self.last_z_obs = z
+            self.N = 0
+            self.delay_est = 0
+            return self.kf.update_fuse(z)
+
+        def update_fuse_extrapolate(self, z, t_z, uav_i, t_now):
+            z_corrected = None
+            if(self.last_msgs.get(uav_i) != None):
+                last_z, last_t_z = self.last_msgs[uav_i] # last predict made by other UAV
+                self.delay_est = t_now - t_z # delay present in the predict received
+                z_corrected = z + (z - last_z) / (t_z - last_t_z) * self.delay_est # extrapolation of all the state vector to the actual time
+                self.last_z_share = z_corrected
+                self.last_z_obs = z
+            else:
+                z_corrected = z
+                self.N = 0
+                self.delay_est = 0
+
+
+            self.last_msgs[uav_i] = (z, t_z) # saving in memory the predict  
+
+            return self.kf.update_fuse(z)
+
+
+        def update_fuse_extrapolate_plus(self, z, t_z, uav_i, t_now):
+            z_corrected = None
+
+            if(self.last_msgs.get(uav_i) != None):
+                last_z, last_t_z = self.last_msgs[uav_i] # last predict made by other UAV
+                self.delay_est = t_now - t_z # delay present in the predict received
+
+                z_corrected = z.copy() # copy the predict received
+
+                v_x = z[2] 
+                v_y = z[3]
+
+                z_corrected[0] = z[0] + v_x * self.delay_est #extrapolation of x, but using the v_x of the state
+                z_corrected[1] = z[1] + v_y * self.delay_est #extrapolation of y, but using the v_y of the state
+
+                #Suggestion
+
+                
+                self.last_z_share = z_corrected
+                self.last_z_obs = z
+
+            else:
+                z_corrected = z
+                self.N = 0
+                self.delay_est = 0
+
+
+            self.last_msgs[uav_i] = (z, t_z) # saving in memory the predict  
+
+            return self.kf.update_fuse(z)
+        
+        def update_fuse_augmented_state(self, z, t_z, uav_i, t_now):
+        
+        
+            self.delay_est = t_now - t_z # delay present in the predict received
+
+            self.N = math.floor(self.delay_est / self.dt)
+
+            self.kf.H_fuse = self.H[self.N]
+            
+            if self.N > self.kf.aug:
+                pass
+
+            return self.kf.update_fuse(z)
         

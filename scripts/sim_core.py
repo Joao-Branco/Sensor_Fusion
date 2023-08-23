@@ -198,10 +198,10 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
     print(np.shape(predicts))
     print(np.shape(predict_masks))
 
-    # for uav_i in range(n_uavs):
-    #      dir_uav = Path(str(dir) + f'/uav_{uav_i}')
-    #      dir_uav.mkdir()
-    #      sim_printing.discrete_printing(discrete_kf= discrete, uav_i= uav_i, dir = dir_uav)
+    for uav_i in range(n_uavs):
+         dir_uav = Path(str(dir) + f'/uav_{uav_i}')
+         dir_uav.mkdir()
+         sim_printing.discrete_printing(discrete_kf= discrete, uav_i= uav_i, dir = dir_uav)
 
 
     return state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time
