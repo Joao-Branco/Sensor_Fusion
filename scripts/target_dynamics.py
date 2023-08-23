@@ -1,13 +1,12 @@
 import numpy as np
 import random
-from scipy.interpolate import CubicSpline
 
 def circular_path(t):
     v = np.zeros_like(t)
     while(((5.5 <= v) & (v <= 6.5)).all() != True):
-        r = random.uniform(5,100)
+        r = random.uniform(15,25)
         theta0 = np.random.randn() * 10
-        w0 = random.uniform(0.001, 1)
+        w0 = random.uniform(0.1, 0.8)
         x = r * np.cos( w0 * t + theta0)
         y = r * np.sin(w0 * t + theta0)
         v_x = - r * w0 * np.sin(w0 * t + theta0)
@@ -21,11 +20,11 @@ def circular_path(t):
 def sin_path(t):
     v = np.zeros_like(t)
     while(((5 <= v) & (v <= 7)).all() != True):
-        amp = random.uniform(5,100)
-        v_l = random.uniform(3,6)
+        amp = random.uniform(15,25)
+        v_l = random.uniform(2,4)
         theta0 = np.random.randn() * 10
         theta1 = np.random.randn() * 10
-        w0 = random.uniform(0.001, 1)
+        w0 = random.uniform(0.1, 0.8)
         x_ = amp * np.cos(w0 * t + theta0)
         y_ = v_l * t 
         x = x_ * np.cos(theta1) - y_ * np.sin(theta1)
@@ -68,6 +67,44 @@ def stoped_path(t):
     
     return x, y, v_x, v_y, w
 
+def combined_path(t):
+    period = np.array_split(t,3)
+    x1, y1, _, _, _ = circular_path(period[0])
+    v_x1 = np.gradient(x1, period[0])
+    v_y1 = np.gradient(y1, period[0])
+
+
+
+    x2, y2, _, _, _ = linear_path(period[1] - period[1][0])
+    v_x2 = np.gradient(x2, period[1])
+    v_y2 = np.gradient(y2, period[1])
+    while(abs(v_x1[-1] - v_x2[0]) >= 0.05 and abs(v_y1[-1] - v_y2[0]) >= 0.05):
+        x2, y2, _, _, _ = linear_path(period[1] - period[0][-1])
+        v_x2 = np.gradient(x2, period[1])
+        v_y2 = np.gradient(y2, period[1])
+
+
+    x3, y3, _, _, _ = sin_path(period[2] - period[2][0])
+    v_x3 = np.gradient(x3, period[2])
+    v_y3 = np.gradient(y3, period[2])
+    while(abs(v_x2[-1] - v_x3[0]) >= 0.05 and abs(v_y2[-1] - v_y3[0]) >= 0.05):
+        x3, y3, _, _, _ = sin_path(period[2] - period[2][0])
+        v_x3 = np.gradient(x3, period[2])
+        v_y3 = np.gradient(y3, period[2])
+
+
+
+
+    x = np.concatenate((x1, x2 + x1[-1]))
+    x = np.concatenate((x, x3 + x[-1]))
+    y = np.concatenate((y1, y2 + y1[-1]))
+    y = np.concatenate((y, y3 + y[-1]))
+    v_x = np.gradient(x, t)
+    v_y = np.gradient(y, t)
+    theta = np.arctan2(v_y, v_x)
+    w = np.gradient(theta, t)
+
+    return x, y, v_x, v_y, w 
 
 
 
