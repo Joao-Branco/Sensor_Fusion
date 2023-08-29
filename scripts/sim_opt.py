@@ -71,10 +71,12 @@ delay_strategy_list = [None,
 
 
 
-delay_strategy_list = ["augmented_state"]
-dynamics_lst = [target_dynamics.stoped_path]
-delay_mean_lst = [0.1]
-delay_std_lst = [0.01]
+delay_strategy_list = [None]
+dynamics_lst = [target_dynamics.sin_path,
+                target_dynamics.circular_path,
+                target_dynamics.linear_path]
+delay_mean_lst = [0]
+delay_std_lst = [0]
 ekf_lst = [True]
 
 
