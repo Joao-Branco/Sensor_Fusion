@@ -11,10 +11,10 @@ def circular_difference(angle1, angle2):
     return normalized_difference
 
 
-def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, share, dynamics, dir_plot, dir_result, sensors, time):
+def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, share, dynamics, dir_plot, dir_result, sensors, time, f_s):
 
 
-    exp = '/_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay)
+    exp = '/_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + 'freq_share_' + str(f_s)
     dir_plots = Path(dir_plot + exp)
     dir_plots.mkdir()
     dir_results = Path(dir_result + exp)
@@ -135,13 +135,13 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
             z_corr[i] = z_corr[i].T
 
         for obs, obs_mask in zip(z_obs, z_masks):
-            state_filtered_obs = state[:,obs_mask]
+            state_filtered_obs = state[:(obs.shape[0] - 1),obs_mask]
             err_obs = np.abs(state_filtered_obs - obs[1:,:]) # ignore time row from pred
 
 
 
         for corr, corr_mask in zip(z_corr, z_masks):
-            state_filtered_corr = state[:,corr_mask]
+            state_filtered_corr = state[:(corr.shape[0] - 1),corr_mask]
             err_corr = np.abs(state_filtered_corr - corr[1:,:]) # ignore time row from pred
 
 
@@ -164,35 +164,27 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
         
         print("Absolute error x:  ", err_abs_mean[0])
         print("Absolute error y:  ", err_abs_mean[1])
-        print("Absolute error theta:  ", err_abs_mean[2])
-        print("Absolute error v:  ", err_abs_mean[3])
+        print("Absolute error v_x:  ", err_abs_mean[2])
+        print("Absolute error v_y:  ", err_abs_mean[3])
         print("Absolute error w:  ", err_abs_mean[4])
 
-        column_values = ['x', 'y', 'theta', 'v', 'w']
+        column_values = ['x', 'y', 'v_x', 'v_y', 'w']
         index_values = ['Error_abs', 'RMSE']
         dataframe = pd.DataFrame([err_abs_mean, rmse], index = index_values, columns = column_values)
 
-        if (delay != 0 and delay_strategy != None and delay_strategy != 'augmented_state'):
+        if (delay != 0 and delay_strategy == "extrapolate"):
 
             err_obs_mean = np.array([   np.mean(err_obs[0,:]),
-                                        np.mean(err_obs[1,:]),
-                                        np.mean(err_obs[2,:]),
-                                        np.mean(err_obs[3,:]),
-                                        np.mean(err_obs[4,:])])
+                                        np.mean(err_obs[1,:])])
 
             err_corr_mean = np.array([   np.mean(err_corr[0,:]),
-                                        np.mean(err_corr[1,:]),
-                                        np.mean(err_corr[2,:]),
-                                        np.mean(err_corr[3,:]),
-                                        np.mean(err_corr[4,:])])
+                                        np.mean(err_corr[1,:])])
 
             print(f"X---Absolute error obs: {err_obs_mean[0]}, Absolute error corr: {err_corr_mean[0]}")
             print(f"Y---Absolute error obs: {err_obs_mean[1]}, Absolute error corr: {err_corr_mean[1]}")
-            print(f"THETA---Absolute error obs: {err_obs_mean[2]}, Absolute error corr: {err_corr_mean[2]}")
-            print(f"V---Absolute error obs: {err_obs_mean[3]}, Absolute error corr: {err_corr_mean[3]}")
-            print(f"W---Absolute error obs: {err_obs_mean[4]}, Absolute error corr: {err_corr_mean[4]}")
 
             index_values = ['Error_obs', 'Error_corr']
+            column_values = ['x', 'y']
             pdd = pd.DataFrame([err_obs_mean, err_corr_mean], index = index_values, columns = column_values)
 
             dataframe = pd.concat([dataframe, pdd])
@@ -206,14 +198,16 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
                 else:
                     print(f"{state} state not interpolated")
 
+        
+
 
 
 
 
         print("RMSE x:  ", rmse[0])
         print("RMSE y:  ", rmse[1])
-        print("RMSE theta:  ", rmse[2])
-        print("RMSE v:  ", rmse[3])
+        print("RMSE v_x:  ", rmse[2])
+        print("RMSE v_y:  ", rmse[3])
         print("RMSE w:  ", rmse[4])
 
     else:
@@ -233,29 +227,22 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
         index_values = ['Error_abs', 'RMSE']
         dataframe = pd.DataFrame([err_abs_mean, rmse], index = index_values, columns = column_values)
         
-        if (delay != 0 and delay_strategy != None and delay_strategy != 'augmented_state'):
-        
+        if (delay != 0 and delay_strategy == "extrapolate"):
+
             err_obs_mean = np.array([   np.mean(err_obs[0,:]),
-                                        np.mean(err_obs[1,:]),
-                                        np.mean(err_obs[2,:]),
-                                        np.mean(err_obs[3,:])])
+                                        np.mean(err_obs[1,:])])
 
             err_corr_mean = np.array([   np.mean(err_corr[0,:]),
-                                        np.mean(err_corr[1,:]),
-                                        np.mean(err_corr[2,:]),
-                                        np.mean(err_corr[3,:])])
+                                        np.mean(err_corr[1,:])])
 
             print(f"X---Absolute error obs: {err_obs_mean[0]}, Absolute error corr: {err_corr_mean[0]}")
             print(f"Y---Absolute error obs: {err_obs_mean[1]}, Absolute error corr: {err_corr_mean[1]}")
-            print(f"V_X---Absolute error obs: {err_obs_mean[2]}, Absolute error corr: {err_corr_mean[2]}")
-            print(f"V_Y---Absolute error obs: {err_obs_mean[3]}, Absolute error corr: {err_corr_mean[3]}")
 
             index_values = ['Error_obs', 'Error_corr']
+            column_values = ['x', 'y']
             pdd = pd.DataFrame([err_obs_mean, err_corr_mean], index = index_values, columns = column_values)
 
             dataframe = pd.concat([dataframe, pdd])
-
-
 
             for i, state in enumerate(column_values):
 
@@ -265,6 +252,8 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
                     print(f"{state}-----CORR") 
                 else:
                     print(f"{state} state not interpolated")
+
+    
 
 
 
@@ -285,4 +274,4 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
 
     performance.to_csv( str(dir_results) + '/performance_share_'+ str(share) + '_ekf_' + str(ekf)+ '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '.csv')
 
-    return np.mean(euclidean), np.mean(dist_uavs)
+    return np.mean(euclidean), np.mean(dist_uavs), euclidean

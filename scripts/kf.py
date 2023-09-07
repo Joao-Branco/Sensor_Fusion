@@ -100,7 +100,7 @@ def Jacobian_w(state, dt, aug):
     J = np.array([[1, 0, np.sin(dt * w) / w       , (np.cos(dt * w) - 1) / w , - dt *( (vy * np.sin(dt * w)) / w - (vx * np.cos(dt * w)) / w + (vx * np.sin(dt * w)) / (dt * w ** 2) + (vy * (np.cos(dt * w) - 1)) / (dt * w ** 2))],
                     [0, 1, -(np.cos(dt * w) - 1) / w, np.sin(dt * w) / w       ,  dt * ( (vy * np.cos(dt * w)) / w + (vx * np.sin(dt * w)) / w - (vy * np.sin(dt * w)) / (dt * w ** 2) + (vx * (np.cos(dt * w) - 1)) / (dt * w ** 2))],
                     [0, 0, np.cos(dt * w)           , -np.sin(dt * w)          , - dt * vy * np.cos(dt * w) - dt * vx * np.sin(dt * w)],
-                    [0, 0, np.sin(dt * w)           , -np.cos(dt * w)          , dt * vx * np.cos(dt * w) + dt * vy * np.sin(dt * w)],
+                    [0, 0, np.sin(dt * w)           , np.cos(dt * w)          , dt * vx * np.cos(dt * w) - dt * vy * np.sin(dt * w)],
                     [0, 0, 0                        ,                         0,                              1]])  
 
 
@@ -114,7 +114,7 @@ def Jacobian_w(state, dt, aug):
 
 
 class KalmanFilter(object):
-    def __init__(self, F = None, B = None, H = None, H_fuse = None, Q = None, R = None, R_fuse = None, R_delay = None, P = None, x0 = None, dt = None, aug = None, EKF = None):
+    def __init__(self, F = None, B = None, H = None, H_fuse = None, Q = None, R = None, P = None, x0 = None, dt = None, aug = None, EKF = None):
 
 
         self.n = x0.shape[0]
@@ -126,13 +126,15 @@ class KalmanFilter(object):
         self.B = 0 if B is None else B
         self.Q = np.eye(self.n) if Q is None else Q
         self.R = np.eye(self.n) if R is None else R
-        self.R_fuse = np.eye(self.n) if R_fuse is None else R_fuse
-        self.R_delay = np.eye(self.n) if R_delay is None else R_delay
         self.P = np.eye(self.n) if P is None else P
         self.x = np.zeros((self.n, 1)) if x0 is None else x0
         self.J = np.eye(self.n)
         self.aug = 0 if aug is None else aug
         self.EKF = False if EKF is None else EKF
+
+        self.S = np.linalg.inv(P)
+        self.s = np.dot(self.S, self.x)
+
 
 
     def predict(self, u = 0):
@@ -168,36 +170,26 @@ class KalmanFilter(object):
             self.P = np.dot(np.dot(I - np.dot(self.K, self.H), self.P), 
                 (I - np.dot(self.K, self.H)).T) + np.dot(np.dot(self.K, self.R), self.K.T)
         except np.linalg.LinAlgError as e:
-            print('x \n',self.x, self.x.shape)
-            print('P \n',self.P, self.P.shape)
-            print('R \n',self.R, self.R.shape)
-            print('K \n',self.K, self.K.shape)
-            print('S \n',S, S.shape)
-            print('Q \n',self.Q, self.Q.shape)
-            print('y \n',self.y, self.y.shape)
+            return True
 
         
 
              
-    def update_fuse(self, z):
-        self.y_fuse = z - np.dot(self.H_fuse, self.x)
-        S = self.R_fuse + np.dot(self.H_fuse, np.dot(self.P, self.H_fuse.T))
-        
+    def update_fuse(self, z, pi):
         try:
-            self.K_fuse = np.dot(np.dot(self.P, self.H_fuse.T), np.linalg.inv(S))
-            self.x = self.x + np.dot(self.K_fuse, self.y_fuse)
-            I = np.eye(self.n)
-            self.P = np.dot(np.dot(I - np.dot(self.K_fuse, self.H_fuse), self.P), 
-        	    (I - np.dot(self.K_fuse, self.H_fuse)).T) + np.dot(np.dot(self.K_fuse, self.R_fuse), self.K_fuse.T)
-        
+            self.S = np.linalg.inv(self.P)
+            self.s = np.dot(self.S, self.x)
+            self.I = np.dot(self.H_fuse.T, np.dot(np.linalg.inv(self.R), self.H_fuse))
+            self.i = np.dot(self.H_fuse.T, np.dot(np.linalg.inv(self.R), z))
+
+            self.s = self.s + pi * self.i 
+            self.S = self.S + pi * self.I
+
+            self.P = np.linalg.inv(self.S)
+            self.x = np.dot(np.linalg.inv(self.S), self.s)
         except np.linalg.LinAlgError as e:
-            print('x \n',self.x, self.x.shape)
-            print('P \n',self.P, self.P.shape)
-            print('R \n',self.R, self.R.shape)
-            print('K_fuse \n',self.K_fuse, self.K_fuse.shape)
-            print('S \n',S, S.shape)
-            print('Q \n',self.Q, self.Q.shape)
-            print('y_fuse \n',self.y_fuse, self.y_fuse.shape)
+            return True
+        
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -216,12 +208,15 @@ class KalmanFilter(object):
 
 
 class DelayKalmanFilter:
-        def __init__(self, kf, delay_strategy=None):
+        def __init__(self, kf, delay_strategy=None, pi = 1, centr = None):
             self.kf = kf
             self.predict = self.kf.predict
             self.predict_nonlinear = self.kf.predict_nonlinear
             
             self.update = self.kf.update
+
+            self.pi = pi
+            self.centr = centr
 
             self.last_msgs = {}
 
@@ -233,21 +228,22 @@ class DelayKalmanFilter:
                 self.update_fuse = self.update_fuse_no_delay
             elif delay_strategy == "extrapolate":
                 self.update_fuse = self.update_fuse_extrapolate
-            elif delay_strategy == "extrapolate_plus":
-                self.update_fuse = self.update_fuse_extrapolate_plus
+            # elif delay_strategy == "extrapolate_plus":
+            #     self.update_fuse = self.update_fuse_extrapolate_plus
             elif delay_strategy == "augmented_state":
                 self.update_fuse = self.update_fuse_augmented_state
                 self.H = []
                 H_fuse = self.kf.H_fuse
                 aug = self.kf.aug
-                n_state = int(self.kf.x.shape[0] / (aug + 1))
-                for i in range(self.kf.aug):
+                n_state = int(self.kf.H_fuse.shape[1])
+                z_state = int(self.kf.H_fuse.shape[0])
+                for i in range(aug + 1):
                     if i == 0:
-                        self.H.append(np.block([H_fuse, np.zeros((n_state, aug * n_state))]))
+                        self.H.append(np.block([H_fuse, np.zeros((z_state, aug * n_state))]))
                     elif i == aug:
-                        self.H.append(np.block([np.zeros((n_state, aug * n_state)), H_fuse]))
+                        self.H.append(np.block([np.zeros((z_state, aug * n_state)), H_fuse]))
                     elif 0 < i < aug:
-                        self.H.append(np.block([np.zeros((n_state, i * n_state)), H_fuse, np.zeros((n_state, (aug - i) * n_state))]))
+                        self.H.append(np.block([np.zeros((z_state, i * n_state)), H_fuse, np.zeros((z_state, (aug - i) * n_state))]))
 
             
             self.dt = self.kf.dt
@@ -261,7 +257,11 @@ class DelayKalmanFilter:
             self.last_z_obs = z
             self.N = 0
             self.delay_est = 0
-            return self.kf.update_fuse(z)
+            if (self.centr == True):
+                return self.kf.update_fuse(z, self.pi)
+            
+            else:
+                return self.kf.update_fuse(z, self.pi)
 
         def update_fuse_extrapolate(self, z, t_z, uav_i, t_now):
             z_corrected = None
@@ -279,7 +279,11 @@ class DelayKalmanFilter:
 
             self.last_msgs[uav_i] = (z, t_z) # saving in memory the predict  
 
-            return self.kf.update_fuse(z)
+            if (self.centr == True):
+                return self.kf.update_fuse(z, self.pi)
+            
+            else:
+                return self.kf.update_fuse(z, self.pi)
 
 
         def update_fuse_extrapolate_plus(self, z, t_z, uav_i, t_now):
@@ -291,8 +295,8 @@ class DelayKalmanFilter:
 
                 z_corrected = z.copy() # copy the predict received
 
-                v_x = z[2] 
-                v_y = z[3]
+                v_x = self.kf.x[2] 
+                v_y = self.kf.x[3] 
 
                 z_corrected[0] = z[0] + v_x * self.delay_est #extrapolation of x, but using the v_x of the state
                 z_corrected[1] = z[1] + v_y * self.delay_est #extrapolation of y, but using the v_y of the state
@@ -311,7 +315,11 @@ class DelayKalmanFilter:
 
             self.last_msgs[uav_i] = (z, t_z) # saving in memory the predict  
 
-            return self.kf.update_fuse(z)
+            if (self.centr == True):
+                return self.kf.update_fuse(z, self.pi)
+            
+            else:
+                return self.kf.update_fuse(z, self.pi)
         
         def update_fuse_augmented_state(self, z, t_z, uav_i, t_now):
         
@@ -325,5 +333,9 @@ class DelayKalmanFilter:
             if self.N > self.kf.aug:
                 pass
 
-            return self.kf.update_fuse(z)
+            if (self.centr == True):
+                return self.kf.update_fuse(z, self.pi)
+            
+            else:
+                return self.kf.update_fuse(z, self.pi)
         

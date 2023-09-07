@@ -46,12 +46,15 @@ SENSOR_MEAN = 0
 
 
 #### FOR LATER DON'T USE YET
+centr_lst = [True, False]
 delay_lst = [False, True]
 share_lst = [False, True]
 ekf_lst = [False, True]
 out_of_order_lst = [False, True]
 delay_mean_lst = [0, 0.1 , 0.5 , 1]
 delay_std_lst = [0, 0.01 , 0.02 , 0.05]
+pi_lst = [0]
+delay_mix = [0, 1, 2]
 
 
 dynamics_lst = [target_dynamics.stoped_path,
@@ -72,12 +75,11 @@ delay_strategy_list = [None,
 
 
 delay_strategy_list = [None]
-dynamics_lst = [target_dynamics.sin_path,
-                target_dynamics.circular_path,
-                target_dynamics.linear_path]
+dynamics_lst = [target_dynamics.linear_path]
 delay_mean_lst = [0]
 delay_std_lst = [0]
-ekf_lst = [True]
+ekf_lst = [False]
+share_lst = [True]
 
 
 OUT_OF_ORDER = False
@@ -132,7 +134,7 @@ for delay, std_delay in zip(delay_mean_lst, delay_std_lst):
                     #     continue
 
                     if (delay_strategy == "augmented_state"):
-                        aug_states = math.floor(DELAY_MEAN / (1 / f_kf)) + math.floor(DELAY_STD / (1 / f_kf)) + 1
+                        aug_states = math.floor(DELAY_MEAN / (1 / f_kf)) + math.floor(DELAY_STD / (1 / f_kf))
                     else:
                         aug_states = 0
 
@@ -148,7 +150,7 @@ for delay, std_delay in zip(delay_mean_lst, delay_std_lst):
                     print("TARGET DYNAMIC   --- ", dynamics.__name__)
                     print("DELAY MEAN   --- ", DELAY_MEAN)
                     print("DELAY STD   --- ", DELAY_STD)
-                    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time = sim_core.sim(DELAY_STRATEGY= delay_strategy, EKF=ekf, OUT_OF_ORDER= OUT_OF_ORDER, SHARE_ON= share, DELAY_MEAN= DELAY_MEAN, DELAY_STD= DELAY_STD,  SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD = SENSOR_STD,  sim_time = sim_time, n_uavs = n_uavs, f_sim = f, f_kf = f_kf, f_sample = f_sample, f_share = f_share, target_dynamics = dynamics, AUG = aug_states, dir = dir_data, state= dyn) 
+                    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time = sim_core.sim(DELAY_STRATEGY= delay_strategy, EKF=ekf, OUT_OF_ORDER= OUT_OF_ORDER, SHARE_ON= share, DELAY_MEAN= DELAY_MEAN, DELAY_STD= DELAY_STD,  SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD = SENSOR_STD,  sim_time = sim_time, n_uavs = n_uavs, f_sim = f, f_kf = f_kf, f_sample = f_sample, f_share = f_share, target_dynamics = dynamics, AUG = aug_states, dir = dir_data, state= dyn, PI = pi) 
                     accuracy, precision = sim_opt_plot.sim_plot(state, predicts, predict_masks, n_uavs, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, share, dynamics.__name__, str(dir_plots), str(dir_results), sensors, time)
                     all_data.append([share, delay, DELAY_STD, ekf, delay_strategy, aug_states, str(dynamics.__name__), accuracy, precision, computer_cost])
 

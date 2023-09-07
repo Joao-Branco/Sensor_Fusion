@@ -7,7 +7,7 @@ from kf import KalmanFilter, DelayKalmanFilter
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug):
+def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug, pi, centr):
 
     
 
@@ -28,36 +28,53 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug):
         H = np.array([      [1, 0, 0, 0, 0],
                             [0, 1, 0, 0, 0]])
         
-        H_fuse = np.array([     [1, 0, 0, 0, 0],
-                            [0, 1, 0, 0, 0],
-                            [0, 0, 1, 0, 0],
-                            [0, 0, 0, 1, 0],
-                            [0, 0, 0, 0, 1]])
+        H_fuse = H
+        
     else:
 
         H = np.array([   [1, 0, 0, 0],
                         [0, 1, 0, 0]])
+        
+        H_fuse = H
 
-        H_fuse = np.array([  [1, 0, 0, 0],
-                                [0, 1, 0, 0],
-                                [0, 0, 1, 0],
-                                [0, 0, 0, 1]])
     
     
     # H ----Observation Matrix
     if (EKF == True):
 
-        Q = np.array([      [0.5, 0, 0, 0, 0],
-                            [0, 0.5, 0, 0, 0],
-                            [0, 0, 0.2, 0, 0],
-                            [0, 0, 0, 0.2, 0],
-                            [0, 0, 0, 0, 0.1]])
+        G = np.array([  [0.5 * (dt ** 2),   0,                  dt, 0, 0],
+                        [0,                 0.5 * (dt ** 2),    0, dt, 0],
+                        [0,                 0,                  0, 0, dt]])
+    
+        G = np.transpose(G)
+
+        # qv = 0.00614227 ** 2
+        # qw = 1.1618515 ** 2
+
+        qv = 0.001 ** 2
+        qw = 0.01 ** 2
+
+        q = np.array([[qv, 0, 0],
+                        [0, qv, 0],
+                        [0, 0, qw]])
+
+
+        Q = np.dot(np.dot(G, q),np.transpose(G))
+
     else:
 
-        Q = np.array([   [0.3604, 0, 0, 0],
-                            [0, 0.3604, 0, 0],
-                            [0, 0, 0.005578, 0],
-                            [0, 0, 0, 0.005578]])
+        G = np.array([  [0.5 * (dt ** 2),   0,                  dt, 0],
+                        [0,                 0.5 * (dt ** 2),    0, dt]])
+    
+        G = np.transpose(G)
+
+        # qv = 0.02063591 ** 2
+        qv = 0.001 ** 2
+            
+        q = np.array([[qv, 0],
+                        [0, qv]])
+
+        Q = np.dot(np.dot(G, q),np.transpose(G))
     
 
     # Q ----Process Noise
@@ -66,31 +83,17 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug):
                 [0, 10]])
     
     if (EKF == True):
-
-        R_fuse = np.array([     [1, 0, 0, 0, 0],
-                                [0, 1, 0, 0, 0],
-                                [0, 0, 1, 0, 0],
-                                [0, 0, 0, 1, 0],
-                                [0, 0, 0, 0, 1]])
-    
+        P = np.array([     [1.53009997, 0, 0, 0, 0],
+                                [0, 1.53009997, 0, 0, 0],
+                                [0, 0, 1.81024162, 0, 0],
+                                [0, 0, 0, 1.81024162, 0],
+                                [0, 0, 0, 0, 0.000005]])
+        
     else:
-
-
-        R_fuse = np.array([  [1.026, 0, 0, 0],
-                                [0, 1.026, 0, 0],
-                                [0, 0, 5.837, 0],
-                                [0, 0, 0, 5.837]])
-    if (EKF == True):
-        P = np.array([     [0.2, 0, 0, 0, 0],
-                                [0, 0.2, 0, 0, 0],
-                                [0, 0, 0.4, 0, 0],
-                                [0, 0, 0, 0.4, 0],
-                                [0, 0, 0, 0, 0.4]])
-    else:
-        P = np.array([          [0.474, 0, 0, 0],
-                                [0, 0.474, 0, 0],
-                                [0, 0, 0.503, 0],
-                                [0, 0, 0, 0.503]])
+        P = np.array([          [1.53009997, 0, 0, 0],
+                                [0, 1.53009997, 0, 0],
+                                [0, 0, 1.81024162, 0],
+                                [0, 0, 0, 1.81024162]])
     
     # R ----Measurement Noise
 
@@ -105,7 +108,7 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug):
                             [state[1,0]],
                             [state[2,0]],
                             [state[3,0]],
-                            [state[4,0] + 0.1]])
+                            [state[4,0]]])
 
     else:
 
@@ -132,20 +135,22 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug):
         if (EKF == False):
             F = np.block([[F, np.zeros((n_state,m*n_state))], [np.eye(m*n_state), np.zeros((n_state * m,n_state))]])
         P = np.block([[P, np.zeros((n_state,aug * n_state))], [np.zeros((aug * n_state, n_state)), np.eye(aug * n_state)]])
-        H = np.zeros((2,(aug +1) * n_state ))
+        H = np.zeros((2,(aug +1) * n_state))
         np.fill_diagonal(H, 1, wrap=True)
+        H_fuse = np.zeros((2, n_state ))
+        np.fill_diagonal(H_fuse, 1, wrap=True)
 
         Q = np.block([[Q, np.zeros((n_state, m * n_state))], [np.zeros((m * n_state, (m + 1) * n_state))]])
 
 
     kfs = [KalmanFilter(F = F.copy(), H = H.copy(),
                         H_fuse = H_fuse.copy() , Q = Q.copy() ,
-                        R = R.copy(), R_fuse = R_fuse.copy(),
+                        R = R.copy(),
                         x0= x0.copy(), dt = dt, P = P.copy(), aug= aug) for i in range(n_uavs)]
 
         
     
-    kfs = [DelayKalmanFilter(kf, delay_strategy) for kf in kfs]
+    kfs = [DelayKalmanFilter(kf, delay_strategy, pi= pi, centr = centr) for kf in kfs]
 
     return state, kfs, x0
 

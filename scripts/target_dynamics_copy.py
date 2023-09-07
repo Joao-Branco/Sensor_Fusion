@@ -3,10 +3,10 @@ import random
 
 def circular_path(t):
     v = np.zeros_like(t)
-    while(((2.5 <= v) & (v <= 6.5)).all() != True):
-        r = random.uniform(40,70)
+    while(((3.5 <= v) & (v <= 50)).all() != True):
+        r = 20
         theta0 = np.random.randn() * 10
-        w0 = random.uniform(0.005, 0.3)
+        w0 = random.uniform(0.05, 0.8)
         x = r * np.cos( w0 * t + theta0)
         y = r * np.sin(w0 * t + theta0)
         v_x = - r * w0 * np.sin(w0 * t + theta0)
@@ -19,12 +19,12 @@ def circular_path(t):
 
 def sin_path(t):
     v = np.zeros_like(t)
-    while(((2.5 <= v) & (v <= 6.5)).all() != True):
-        amp = random.uniform(40,70)
-        v_l = random.uniform(0.05,6)
+    while(((5.5 <= v) & (v <= 6.5)).all() != True):
+        amp = 30
+        v_l = random.uniform(0.005,10)
         theta0 = np.random.randn() * 10
         theta1 = np.random.randn() * 10
-        w0 = random.uniform(0.1, 0.3)
+        w0 = random.uniform(0.008, 0.2)
         x_ = amp * np.cos(w0 * t + theta0)
         y_ = v_l * t 
         x = x_ * np.cos(theta1) - y_ * np.sin(theta1)
