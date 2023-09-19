@@ -1,16 +1,39 @@
 import numpy as np
 import time as pytime
-from typing import Callable
 from pathlib import Path
 import sim_opt_kalman
 import sim_printing
 import os
 
+def calculate_distance_between_vertices(n, r):
+    # Calculate the central angle between each pair of vertices
+    central_angle = 2 * np.pi / n
+
+    # Initialize an empty distance matrix
+    distance_matrix = np.zeros((n, n), dtype=float)
+
+    # Calculate the distances between vertices
+    for i in range(n):
+        for j in range(i+1, n):
+            # Calculate the difference in angles between the two vertices
+            angle_difference = abs(i - j) * central_angle
+
+            # Calculate the distance between the vertices using trigonometry
+            distance = 2 * r * np.sin(angle_difference / 2)
+
+            # Fill in both directions since the matrix is symmetric
+            distance_matrix[i][j] = distance
+            distance_matrix[j][i] = distance
+
+    return distance_matrix
 
 
 
-def gen_sensor_data(*arrays, SENSOR_MEAN, SENSOR_STD):
-    return [array + np.random.normal(SENSOR_MEAN, SENSOR_STD, size=array.size) for array in arrays]
+def gen_sensor_data(x, y, SENSOR_MEAN, SENSOR_STD, PHASE, time):
+    x_noise = x + 6.48 * np.sin(0.01 * 2 * np.pi * time + 1.93 + PHASE) - 2.24 
+    y_noise = y + 6.27 * np.sin(0.01 * 2 * np.pi * time + 0.29 + PHASE) + 0.3
+
+    return [x_noise + np.random.normal(SENSOR_MEAN, SENSOR_STD + 0.26, size=time.size) , y_noise + np.random.normal(SENSOR_MEAN, SENSOR_STD - 0.38, size=time.size)]
 
 def kalman_steps(uav, l_d, dir, printt, counter):
     if (printt == True):
@@ -21,19 +44,20 @@ def kalman_steps(uav, l_d, dir, printt, counter):
 
         
 
-def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, DELAY_MEAN : bool, DELAY_STD : bool,  SENSOR_MEAN : bool, SENSOR_STD : bool,  sim_time: int, n_uavs: int, f_sim: float, f_kf: float, f_sample: float, f_share: float, target_dynamics: Callable, AUG : int, dir : Path, state : np, PI : float, CENTR : bool):
+def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, OUT_OF_ORDER : bool = False, SHARE_ON : bool = False, DELAY_MEAN : float = 0, DELAY_STD : float = 0,  SENSOR_MEAN : float = 2, SENSOR_STD : float = 0,  sim_time: int = 60, n_uavs: int = 3, f_sim: float = 200, f_kf: float = 20, f_sample: float = 10, f_share: float = 5, AUG : int = 0, PI : float = 0, CENTR : bool = True, delay_d : bool = False, printt : bool = False):
     time = np.arange(0, sim_time, 1/f_sim)
-    printt = False
 
     # generate target data (ground truth)
 
     x,y,vx,vy, ww = state
 
+    ring = [i for i in range(n_uavs)]
 
-    sensors = [gen_sensor_data(x,y, SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD= SENSOR_STD) for i in range(n_uavs) ]
+
+    sensors = [gen_sensor_data(x,y, SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD= SENSOR_STD, PHASE= 2 * np.pi * i / n_uavs, time= time) for i in range(n_uavs) ]
 
     state, kfs, x0 = sim_opt_kalman.Kalman_sim(n_uavs= n_uavs, EKF= EKF, f_kf= f_kf, x= x, y= y, vx= vx, vy= vy, ww= ww, delay_strategy= DELAY_STRATEGY, aug= AUG, pi= PI, centr= CENTR)
-    dir = os.path.join(dir, f"EKF_{EKF}share_{SHARE_ON}_freq_share_{f_share}_strategy_{DELAY_STRATEGY}_delay_{DELAY_MEAN}")
+    dir = os.path.join(dir, f"EKF_{EKF}share_{SHARE_ON}_freq_share_{f_share}_strategy_{DELAY_STRATEGY}_delay_{DELAY_MEAN}_pi_{PI}")
     os.mkdir(dir)
     for uav_i in range(n_uavs):
         dir_uav = os.path.join(dir, f'uav_{uav_i}')
@@ -46,21 +70,24 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
         rows = 5
     else:
         rows = 4
+
+
     predicts = [np.zeros((rows+1, f_kf*sim_time - 1)) for _ in range(n_uavs)]
     predict_masks = [np.zeros(f_kf*sim_time - 1, dtype=np.uint32) for i in range(n_uavs)]
-    errors = [np.zeros((rows+1, f_kf*sim_time - 1)) for _ in range(n_uavs)]
-    discrete = [[] for _ in range(n_uavs)]
+    sensor_masks = [np.zeros(f_sample*sim_time - 1, dtype=np.uint32) for i in range(n_uavs)]
+
 
 
     col_write = 0
-
-    # print(f"time shape {time.shape}")
-    # print(f"predicts shape {predicts[0].shape}")
+    col_sensor = 0
 
     #periods
     p_predict = 1/f_kf
     p_update = 1/f_sample
-    p_share = 1/f_share
+    if (SHARE_ON == True):
+        p_share = 1/f_share
+    else:
+        p_share = 1000000 # value to big do dont get into code of update fuse
 
     # last times
     t_predict = 0
@@ -69,10 +96,15 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
 
     #shares queue
     q = [[] for _ in range(n_uavs)]
-    q_ts = [0 for _ in range(n_uavs)] # last share times for each uav
+    q_ts = [[0 for _ in range(n_uavs)] for _ in range(n_uavs)] # last share times for i uav in j
+    q_ts_check = [[[] for _ in range(n_uavs)] for _ in range(n_uavs)] # check
     z_obs = [[]  for _ in range(n_uavs)] # z received
     z_corr = [[]  for _ in range(n_uavs)] # z with correction of delay 
     z_masks = [[]  for _ in range(n_uavs)]
+    if (delay_d == True):
+        distance_matrix = calculate_distance_between_vertices(n_uavs, 200)
+    else:
+        distance_matrix = np.ones((n_uavs, n_uavs))
 
     t_start = pytime.time()
     counter = 0
@@ -82,25 +114,25 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
         if round(t-t_update, 5) >= p_update:
             for uav_i, (sensor, kf) in enumerate(zip(sensors, kfs)):
                 x_, y_ = sensor[0][i], sensor[1][i]
-                
-                
+                sensor_masks[uav_i][col_sensor] = i
+
+
                 if round(t - t_share[uav_i], 5) >= p_share and SHARE_ON:
-                    delay = np.random.normal(DELAY_MEAN, DELAY_STD)
-
-                    # is we don't want out of order messages, recompute delay
-                    while not OUT_OF_ORDER and t+delay < q_ts[uav_i]:
-                        delay = np.random.normal(DELAY_MEAN, DELAY_STD)
-
-                    # add this message to every other uav queue
+                # add this message to every other uav queue
                     for uav_j in range(n_uavs):
-                        if uav_i == uav_j:
-                            continue # dont add my predicts to my own queue
+
+                        delay = np.random.normal(DELAY_MEAN * distance_matrix[uav_i, uav_j], DELAY_STD)
+
+                        # is we don't want out of order messages, recompute delay
+                        while not OUT_OF_ORDER and t+delay < q_ts[uav_i][uav_j]:
+                            delay = np.random.normal(DELAY_MEAN * distance_matrix[uav_i, uav_j], DELAY_STD)
 
                         q[uav_j].append((t + delay, t, np.array([[x_], [y_]]) , uav_i))
 
 
-                    # update last share time for this uav
-                    q_ts[uav_i] = t + delay
+                        # update last share time for this uav
+                        q_ts[uav_i][uav_j] = t + delay
+                        q_ts_check[uav_i][uav_j].append(delay)
                     t_share[uav_i] = t
 
                 l_d = []
@@ -117,6 +149,8 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
                 l_d.append(kf.kf.y)
                 counter = counter + 1
                 l_d = kalman_steps(uav_i, l_d, dir, printt, counter)
+
+            col_sensor += 1
             t_update = t
 
         # update share
@@ -219,6 +253,12 @@ def sim(DELAY_STRATEGY : str, EKF : bool, OUT_OF_ORDER : bool, SHARE_ON : bool, 
     print(np.shape(predicts))
     print(np.shape(predict_masks))
 
+    stats_delay = [[[] for _ in range(n_uavs)] for _ in range(n_uavs)]
 
+    for uav_i in range(n_uavs):
+        for uav_j in range(n_uavs):
+            stats_delay[uav_i][uav_j].append(np.mean(q_ts_check[uav_i][uav_j]))
+            stats_delay[uav_i][uav_j].append(np.std(q_ts_check[uav_i][uav_j]))
+    
 
-    return state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time
+    return state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks

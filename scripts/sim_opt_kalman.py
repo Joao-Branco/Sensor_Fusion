@@ -48,11 +48,9 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug, pi, cen
     
         G = np.transpose(G)
 
-        # qv = 0.00614227 ** 2
-        # qw = 1.1618515 ** 2
+        qv = 0.737433 ** 2
+        qw = 1e-10 ** 2
 
-        qv = 0.001 ** 2
-        qw = 0.01 ** 2
 
         q = np.array([[qv, 0, 0],
                         [0, qv, 0],
@@ -62,14 +60,13 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug, pi, cen
         Q = np.dot(np.dot(G, q),np.transpose(G))
 
     else:
-
+ 
         G = np.array([  [0.5 * (dt ** 2),   0,                  dt, 0],
                         [0,                 0.5 * (dt ** 2),    0, dt]])
     
         G = np.transpose(G)
 
-        # qv = 0.02063591 ** 2
-        qv = 0.001 ** 2
+        qv = 0.03322 ** 2
             
         q = np.array([[qv, 0],
                         [0, qv]])
@@ -83,17 +80,17 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug, pi, cen
                 [0, 10]])
     
     if (EKF == True):
-        P = np.array([     [1.53009997, 0, 0, 0, 0],
-                                [0, 1.53009997, 0, 0, 0],
-                                [0, 0, 1.81024162, 0, 0],
-                                [0, 0, 0, 1.81024162, 0],
-                                [0, 0, 0, 0, 0.000005]])
+        P = np.array([     [6.362137e-2, 0, 0, 0, 0],
+                                [0, 6.362137e-2, 0, 0, 0],
+                                [0, 0, 2.3496e-1, 0, 0],
+                                [0, 0, 0, 2.3496e-1, 0],
+                                [0, 0, 0, 0, 6.08288e-2]])
         
     else:
-        P = np.array([          [1.53009997, 0, 0, 0],
-                                [0, 1.53009997, 0, 0],
-                                [0, 0, 1.81024162, 0],
-                                [0, 0, 0, 1.81024162]])
+        P = np.array([          [1.027, 0, 0, 0],
+                                [0, 1.027, 0, 0],
+                                [0, 0, 2.85133, 0],
+                                [0, 0, 0, 2.85133]])
     
     # R ----Measurement Noise
 

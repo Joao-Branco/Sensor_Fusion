@@ -11,10 +11,10 @@ def circular_difference(angle1, angle2):
     return normalized_difference
 
 
-def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, share, dynamics, dir_plot, dir_result, sensors, time, f_s):
+def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, share, dir_plot, dir_result, sensors, time, f_s, pi = 1):
 
 
-    exp = '/_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + 'freq_share_' + str(f_s)
+    exp = '/_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + 'freq_share_' + str(f_s) + 'pi_' + str(pi)
     dir_plots = Path(dir_plot + exp)
     dir_plots.mkdir()
     dir_results = Path(dir_result + exp)
@@ -32,6 +32,15 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
             
 
         euclidean = np.sqrt(err_abs[0,:] ** 2 + err_abs[1,:] ** 2)
+
+    x_noise = [_ for _ in range(n_uavs)]
+    y_noise = [_ for _ in range(n_uavs)]
+    t_noise = [_ for _ in range(n_uavs)]
+
+    for i, (sen, sen_mask) in enumerate(zip(sensors, sensor_masks)):
+        x_noise[i] = sen[0][sen_mask]
+        y_noise[i] = sen[1][sen_mask]
+        t_noise[i] = time[sen_mask]
 
 
     for i, st in enumerate(state_lst):
@@ -83,8 +92,8 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
     plt.figure(figsize=(6, 6))
     
     for i in range(n_uavs):
-        x_noise, y_noise = sensors[i][0], sensors[i][1]
-        plt.plot(x_noise, y_noise, 'o', markersize=0.2, label='UAV obs' + str(i + 1))
+        sensor_x, sensor_y = x_noise[i], y_noise[i]
+        plt.plot(sensor_x, sensor_y, 'o', markersize=0.2, label='UAV obs' + str(i + 1))
     for i in range(n_uavs):
         x_, y_ = predicts[i][1,:], predicts[i][2,:]
         plt.plot(x_[:col_write], y_[:col_write], 'x', markersize=5, label='UAV ' + str(i + 1))
@@ -102,6 +111,46 @@ def sim_plot(state, predicts, predict_masks, n_uavs : int, col_write, x, y,  z_o
     plt.savefig(plot_jpg)
 
     plt.close()
+
+
+    plt.figure(figsize=(6, 6))
+    
+    for i in range(n_uavs):
+        plt.plot(t_noise[i], x_noise[i], 'o', markersize=0.5, label='UAV_obs' + str(i + 1))
+    plt.title("Posição", fontsize=20)
+    plt.xlabel('t (s)', fontsize=15)
+    plt.ylabel('X (m)', fontsize=15)
+    plt.legend(fontsize=10)
+    plt.grid()
+
+
+    plot_jpg = 'Observations_x_alvo_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) +  '.png'
+    
+    plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
+    plt.savefig(plot_jpg)
+
+    plt.close()
+
+    plt.figure(figsize=(6, 6))
+    
+    for i in range(n_uavs):
+        y_noise[i]
+        plt.plot(t_noise[i], y_noise[i], 'o', markersize=0.5, label='UAV_obs' + str(i + 1))
+    plt.title("Posição", fontsize=20)
+    plt.xlabel('t (s)', fontsize=15)
+    plt.ylabel('Y (m)', fontsize=15)
+    plt.legend(fontsize=10)
+    plt.grid()
+
+
+    plot_jpg = 'Observations_y_alvo_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) +  '.png'
+    
+    plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
+    plt.savefig(plot_jpg)
+
+    plt.close()
+
+
 
 
     

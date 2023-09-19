@@ -177,17 +177,17 @@ class KalmanFilter(object):
              
     def update_fuse(self, z, pi):
         try:
-            self.S = np.linalg.inv(self.P)
-            self.s = np.dot(self.S, self.x)
-            self.I = np.dot(self.H_fuse.T, np.dot(np.linalg.inv(self.R), self.H_fuse))
-            self.i = np.dot(self.H_fuse.T, np.dot(np.linalg.inv(self.R), z))
+            self.S = np.linalg.inv(self.P) # INVERSE ERROR COVARIANCE MATRIX
+            self.s = np.dot(self.S, self.x) # 
+            self.I = np.dot(self.H_fuse.T, np.dot(np.linalg.inv(self.R), self.H_fuse)) # INFORMATION MATRIX
+            self.i = np.dot(self.H_fuse.T, np.dot(np.linalg.inv(self.R), z)) # INFORMATION VECTOR
 
             self.s = self.s + pi * self.i 
             self.S = self.S + pi * self.I
 
             self.P = np.linalg.inv(self.S)
             self.x = np.dot(np.linalg.inv(self.S), self.s)
-        except np.linalg.LinAlgError as e:
+        except np.linalg.LinAlgError as e: 
             return True
         
 
@@ -280,7 +280,7 @@ class DelayKalmanFilter:
             self.last_msgs[uav_i] = (z, t_z) # saving in memory the predict  
 
             if (self.centr == True):
-                return self.kf.update_fuse(z, self.pi)
+                return self.kf.update(z)
             
             else:
                 return self.kf.update_fuse(z, self.pi)
@@ -316,7 +316,7 @@ class DelayKalmanFilter:
             self.last_msgs[uav_i] = (z, t_z) # saving in memory the predict  
 
             if (self.centr == True):
-                return self.kf.update_fuse(z, self.pi)
+                return self.kf.update(z)
             
             else:
                 return self.kf.update_fuse(z, self.pi)
@@ -328,14 +328,13 @@ class DelayKalmanFilter:
 
             self.N = math.floor(self.delay_est / self.dt)
 
-            self.kf.H_fuse = self.H[self.N]
+
+            if (self.centr == True):
+                return self.kf.update(z)
             
             if self.N > self.kf.aug:
                 pass
-
-            if (self.centr == True):
-                return self.kf.update_fuse(z, self.pi)
-            
             else:
+                self.kf.H_fuse = self.H[self.N]
                 return self.kf.update_fuse(z, self.pi)
         

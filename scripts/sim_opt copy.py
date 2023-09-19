@@ -1,4 +1,4 @@
-import target_dynamics_copy as target_dynamics
+import target_dynamics
 import sim_core
 import sim_opt_plot
 import sim_opt_compare
