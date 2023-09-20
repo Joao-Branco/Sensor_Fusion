@@ -5,7 +5,7 @@ import sim_opt_kalman
 import sim_printing
 import os
 
-def calculate_distance_between_vertices(n, r):
+def calculate_distance_between_vertices(n, r, ring, ring_on = True):
     # Calculate the central angle between each pair of vertices
     central_angle = 2 * np.pi / n
 
@@ -22,8 +22,19 @@ def calculate_distance_between_vertices(n, r):
             distance = 2 * r * np.sin(angle_difference / 2)
 
             # Fill in both directions since the matrix is symmetric
-            distance_matrix[i][j] = distance
-            distance_matrix[j][i] = distance
+            if(ring_on == True):
+                if(j == ring[i+1] or j == ring[i-1]):
+                    distance_matrix[i][j] = distance
+                    distance_matrix[j][i] = distance
+                else:
+                    distance_matrix[i][j] = 10000
+                    distance_matrix[j][i] = 10000
+
+            else:
+                distance_matrix[i][j] = distance
+                distance_matrix[j][i] = distance
+
+
 
     return distance_matrix
 
@@ -44,7 +55,7 @@ def kalman_steps(uav, l_d, dir, printt, counter):
 
         
 
-def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, OUT_OF_ORDER : bool = False, SHARE_ON : bool = False, DELAY_MEAN : float = 0, DELAY_STD : float = 0,  SENSOR_MEAN : float = 2, SENSOR_STD : float = 0,  sim_time: int = 60, n_uavs: int = 3, f_sim: float = 200, f_kf: float = 20, f_sample: float = 10, f_share: float = 5, AUG : int = 0, PI : float = 0, CENTR : bool = True, delay_d : bool = False, printt : bool = False):
+def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, OUT_OF_ORDER : bool = False, SHARE_ON : bool = False, DELAY_MEAN : float = 0, DELAY_STD : float = 0,  SENSOR_MEAN : float = 2, SENSOR_STD : float = 0,  sim_time: int = 60, n_uavs: int = 3, f_sim: float = 200, f_kf: float = 20, f_sample: float = 10, f_share: float = 5, AUG : int = 0, PI : float = 0, CENTR : bool = True, delay_d : bool = False, printt : bool = False, Ring_on : bool = False):
     time = np.arange(0, sim_time, 1/f_sim)
 
     # generate target data (ground truth)
@@ -102,7 +113,7 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
     z_corr = [[]  for _ in range(n_uavs)] # z with correction of delay 
     z_masks = [[]  for _ in range(n_uavs)]
     if (delay_d == True):
-        distance_matrix = calculate_distance_between_vertices(n_uavs, 200)
+        distance_matrix = calculate_distance_between_vertices(n_uavs, 200, ring= ring, ring_on= Ring_on)
     else:
         distance_matrix = np.ones((n_uavs, n_uavs))
 

@@ -29,7 +29,7 @@ combined_condition = lambda iteration: all(cond(iteration) for cond in condition
 def simulations(printt = [False], sim_time = [60],  n_uavs = [1], f_sim = [200], f_kf = [20], f_sample = [10], f_share = [0] , sensor = [(0, 2)],
                 ekf = [True], dynamic = [target_dynamics.circular_path], share = [False], out_of_order = [False], 
                 delay_strategy = [None], delay_d = [False], delay = [(0, 0)],
-                AUG = [0], PI = [1], Centre = [True]
+                AUG = [0], PI = [1], Centre = [True], Ring_on = [False]
                 ):
  
         if ('augmented_state' in delay_strategy):
@@ -45,7 +45,7 @@ def simulations(printt = [False], sim_time = [60],  n_uavs = [1], f_sim = [200],
         lists = [printt, sim_time, n_uavs, f_sim, f_kf, f_sample, f_share, sensor,
                 ekf, dynamic, share, out_of_order,
                 delay_strategy, delay_d, delay,
-                AUG, PI, Centre]
+                AUG, PI, Centre, Ring_on]
         
         new_lists = []
         for lst in lists:

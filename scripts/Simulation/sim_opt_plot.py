@@ -14,7 +14,7 @@ def circular_difference(angle1, angle2):
 def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, share, dir_plot, dir_result, sensors, time, f_s, pi = 1):
 
 
-    exp = '/_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + 'freq_share_' + str(f_s) + 'pi_' + str(pi)
+    exp = '/_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + 'freq_share_' + str(f_s) + 'pi_' + str(pi)+ 'n_uavs_' + str(n_uavs)
     dir_plots = Path(dir_plot + exp)
     dir_plots.mkdir()
     dir_results = Path(dir_result + exp)
