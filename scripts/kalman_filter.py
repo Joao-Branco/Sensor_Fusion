@@ -1,10 +1,9 @@
 #! /usr/bin/env python
 
-#import rospy
+import rospy
 import numpy as np
-import navpy
-#from sensor_fusion.msg import target_position_fuse
-#from sensor_fusion.msg import target_position
+from sensor_fusion.msg import target_position_fuse
+from sensor_fusion.msg import target_position
 
 
 

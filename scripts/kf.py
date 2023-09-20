@@ -232,11 +232,26 @@ class DelayKalmanFilter:
             #     self.update_fuse = self.update_fuse_extrapolate_plus
             elif delay_strategy == "augmented_state":
                 self.update_fuse = self.update_fuse_augmented_state
+                
                 self.H = []
-                H_fuse = self.kf.H_fuse
                 aug = self.kf.aug
                 n_state = int(self.kf.H_fuse.shape[1])
                 z_state = int(self.kf.H_fuse.shape[0])
+                
+                self.kf.x0 = np.vstack((self.kf.x0, np.zeros((n_state* aug,1))))
+                
+                self.kf.P = np.block([[self.kf.P, np.zeros((n_state,aug * n_state))], [np.zeros((aug * n_state, n_state)), np.eye(aug * n_state)]])
+                
+                self.kf.H = np.zeros((2,(aug +1) * n_state))
+                np.fill_diagonal(self.kf.H, 1, wrap=True)
+                
+                self.kf.H_fuse = np.zeros((2, n_state ))
+                np.fill_diagonal(self.kf.H_fuse, 1, wrap=True)
+                
+                self.kf.Q = np.block([[self.kf.Q, np.zeros((n_state, aug * n_state))], [np.zeros((aug * n_state, (aug + 1) * n_state))]])
+                
+                
+                H_fuse = self.kf.H_fuse
                 for i in range(aug + 1):
                     if i == 0:
                         self.H.append(np.block([H_fuse, np.zeros((z_state, aug * n_state))]))
@@ -244,6 +259,7 @@ class DelayKalmanFilter:
                         self.H.append(np.block([np.zeros((z_state, aug * n_state)), H_fuse]))
                     elif 0 < i < aug:
                         self.H.append(np.block([np.zeros((z_state, i * n_state)), H_fuse, np.zeros((z_state, (aug - i) * n_state))]))
+                
 
             
             self.dt = self.kf.dt
