@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 import rospy
-import math
 import numpy as np
 from sensor_fusion.msg import target_position_fuse
 from sensor_fusion.msg import target_position
@@ -90,7 +89,7 @@ if __name__ == "__main__":
         
         rospy.loginfo("X: %f, Y: %f, Time: %i", x, y, t) 
         
-        pub.publish(x, y, theta, v, w, 0, rospy.Time.now())
+        pub.publish(x, y, v_x, v_y, w, 0, rospy.Time.now())
 
         
         rospy.loginfo("Target has been publish")
