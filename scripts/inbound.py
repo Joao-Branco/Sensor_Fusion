@@ -12,7 +12,7 @@ from sensor_fusion.msg import target_position
 class Fusion:
     def __init__(self, f, uav_id, uav_total):
         
-        dt = i / f
+        dt = 1 / f
 
         H = np.array([      [1, 0, 0, 0, 0],
                             [0, 1, 0, 0, 0]])
@@ -53,10 +53,10 @@ class Fusion:
         
         # P ----Covariance matrix
         
-        x0 = np.array([     [state[0,0]],
-                            [state[1,0]],
-                            [state[2,0]],
-                            [state[3,0]],
+        x0 = np.array([     [0],
+                            [0],
+                            [0],
+                            [0],
                             [0]])
         
         # x ----Initial value for the state 
@@ -73,20 +73,20 @@ class Fusion:
             
 
 
-        self.kf = kf( H = H, H_fuse = H_fuse , Q = Q , R = R, x0= x0, dt = dt, aug= 3)
+        self.kf = kf( H = H, H_fuse = H_fuse , Q = Q , R = R, x0= x0, dt = dt, aug= 3, P= P)
         
-        self.kf = dkf(kf= self.kf, delay_strategy= 'Augmented_state', centr= False)
+        self.kf = dkf(kf= self.kf, delay_strategy= 'augmented_state', centr= False)
 
         
     def predict(self):
         
         self.kf.predict_nonlinear()
         state = target_position_fuse()
-        state.x = self.kf.x[0]
-        state.y = self.kf.x[1]
-        state.theta = self.kf.x[2]
-        state.v = self.kf.x[3]
-        state.w = self.kf.x[4]
+        state.x = self.kf.kf.x[0]
+        state.y = self.kf.kf.x[1]
+        state.v_x = self.kf.kf.x[2]
+        state.v_y = self.kf.kf.x[3]
+        state.w = self.kf.kf.x[4]
         state.uavid = uav_id
         state.timestamp = rospy.Time.now()
 

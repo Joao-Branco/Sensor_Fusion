@@ -1,7 +1,6 @@
 import math
 from bagpy import bagreader
 import pandas as pd
-import seaborn as sea
 import matplotlib
 matplotlib.use("pgf")
 matplotlib.rcParams.update({
@@ -28,7 +27,7 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
         
     
     
-    topics = ['/target_position', '/target_position_true']
+    topics = ['/target_position_true']
 
 
     topics_not_time = []
@@ -37,8 +36,8 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
 
     for i in range(1, uav_total + 1):
 
-        topics.append('/uav' + str(i) + '/target_position') # Noise
-        topics.append('/uav' + str(i) + '/target_position_estimation') # Kalman filter
+        topics.append('/uav' + str(i) + '/target_position_geolocation') # Noise
+        topics.append('/uav' + str(i) + '/target_position') # Kalman filter
         if (fuse == True):
             topics.append('/uav' + str(i) + '/target_position_fuse') # After throotle or after buffer
 
@@ -98,7 +97,7 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
     euclidean = [[] for _ in range(uav_total)]
 
     #defining the states of the topics
-    states = ['x', 'y', 'theta', 'v', 'w', 'Timestamp']
+    states = ['x', 'y', 'v_x', 'v_y', 'w', 'Timestamp']
     states_int = ['x', 'y']
 
     #Making a list with a list to all the uavs
@@ -109,7 +108,7 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
 
     for i in range(1, uav_total+1):
 
-        data[f'uav{str(i)}'] = dataframes[f'/uav{str(i)}/target_position_estimation']
+        data[f'uav{str(i)}'] = dataframes[f'/uav{str(i)}/target_position']
         data[f'uav{str(i)}'] = data[f'uav{str(i)}'].set_index('Time')
         real_index = data[f'uav{str(i)}'].index
 
@@ -190,7 +189,6 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
 
 
 
-
     #Graphs of errors in estimation of uavs in x and y
     
     plt.figure(figsize=(15, 5))
@@ -199,7 +197,7 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
     plt.title("Erro absoluto", fontsize=15)
 
     for i in range(1, uav_total+1):
-        plt.plot(data_error[f'uav{str(i)}'].Time, data_error[f'uav{str(i)}'].error_x, 'x', label='UAV ' + str(i))
+        plt.plot(data_error[f'uav{str(i)}'].Time.to_numpy(), data_error[f'uav{str(i)}'].error_x.to_numpy(), 'x', label='UAV ' + str(i))
 
     plt.xlabel('Tempo (s)', fontsize=15)
     plt.ylabel('X (m)', fontsize=15)
@@ -211,7 +209,7 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
     plt.title("Erro absoluto", fontsize=15)
 
     for i in range(1, uav_total+1):
-        plt.plot(data_error[f'uav{str(i)}'].Time, data_error[f'uav{str(i)}'].error_y, 'x', label='UAV ' + str(i))
+        plt.plot(data_error[f'uav{str(i)}'].Time.to_numpy(), data_error[f'uav{str(i)}'].error_y.to_numpy(), 'x', label='UAV ' + str(i))
 
     plt.xlabel('Tempo (s)', fontsize=15)
     plt.ylabel('Y (m)', fontsize=15)
@@ -282,17 +280,17 @@ def run_auto_plots(bag_fn, uav_total, single, delay, delay_estimation, fuse, fol
     plt.figure(figsize=(6, 6))
     
     if (single == True):
-        plt.plot(data_error['uav1'].x, data_error['uav1'].y, 'x', markersize=4, label='UAV 1')
-        plt.plot(dataframes['/uav1/target_position'].x, dataframes['/uav1/target_position'].y, 'm.', markersize=2, label="Alvo com ruido")
+        plt.plot(data_error['uav1'].x.to_numpy(), data_error['uav1'].y.to_numpy(), 'x', markersize=4, label='UAV 1')
+        plt.plot(dataframes['/uav1/target_position_geolocation'].x.to_numpy(), dataframes['/uav1/target_position_geolocation'].y.to_numpy(), 'm.', markersize=2, label="Alvo com ruido")
 
             
         
     else:
         for i in range(1, uav_total+1):
-            plt.plot(data_error[f'uav{str(i)}'].x, data_error[f'uav{str(i)}'].y, 'x', markersize=5, label='UAV ' + str(i))
+            plt.plot(data_error[f'uav{str(i)}'].x.to_numpy(), data_error[f'uav{str(i)}'].y.to_numpy(), 'x', markersize=5, label='UAV ' + str(i))
 
 
-    plt.plot(target.x_target, target.y_target, 'k',linewidth='3', label="Alvo")
+    plt.plot(target.x_target.to_numpy(), target.y_target.to_numpy(), 'k',linewidth='3', label="Alvo")
     plt.plot(target.iloc[0,1], target.iloc[0,2], 'go', markersize=8)
     plt.plot(target.iloc[-1,1], target.iloc[-1,2], 'ro',  markersize=8)
     

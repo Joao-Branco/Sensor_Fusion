@@ -18,28 +18,26 @@ def single(SIMTIME):
     uav_total = 1
 
     SIM_ID = int(time.time())
-    sim_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-single{SIM_ID}")
+    sim_dir = Path(f"/home/jbranco/catkin_ws/src/Sensor_Fusion/sims/sim-single{SIM_ID}")
     sim_dir.mkdir()
 
-    png_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-single{SIM_ID}/png")
+    png_dir = Path(f"/home/jbranco/catkin_ws/src/Sensor_Fusion/sims/sim-single{SIM_ID}/png")
     png_dir.mkdir()
 
-    pgf_dir = Path(f"/home/branco/catkin_ws/src/sensor_fusion/sims/sim-single{SIM_ID}/pgf")
+    pgf_dir = Path(f"/home/jbranco/catkin_ws/src/Sensor_Fusion/sims/sim-single{SIM_ID}/pgf")
     pgf_dir.mkdir()
 
     bag_fn_single = sim_dir.joinpath(f"single{SIM_ID}.bag")
 
     cmd_roscore = "roscore"
-    cmd_launch = "roslaunch sensor_fusion single_filters_sim.launch"
+    cmd_launch = "roslaunch sensor_fusion single_filters_inbound.launch"
     #cmd_bag = f"rosbag record -a -O {str(bag_fn_single)}"
 
     record_topics = '''//rosout
         /rosout_agg
-        /target_position
         /target_position_true
         /uav1/target_position
-        /uav1/target_position_estimation
-        /uav1/target_position_fuse
+        /uav1/target_position_geolocation
         '''
 
     record_topics = record_topics.splitlines()

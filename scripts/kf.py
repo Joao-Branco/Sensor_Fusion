@@ -238,7 +238,7 @@ class DelayKalmanFilter:
                 n_state = int(self.kf.H_fuse.shape[1])
                 z_state = int(self.kf.H_fuse.shape[0])
                 
-                self.kf.x0 = np.vstack((self.kf.x0, np.zeros((n_state* aug,1))))
+                self.kf.x = np.vstack((self.kf.x, np.zeros((n_state* aug,1))))
                 
                 self.kf.P = np.block([[self.kf.P, np.zeros((n_state,aug * n_state))], [np.zeros((aug * n_state, n_state)), np.eye(aug * n_state)]])
                 
@@ -250,6 +250,7 @@ class DelayKalmanFilter:
                 
                 self.kf.Q = np.block([[self.kf.Q, np.zeros((n_state, aug * n_state))], [np.zeros((aug * n_state, (aug + 1) * n_state))]])
                 
+                self.kf.n = self.kf.x.shape[0] 
                 
                 H_fuse = self.kf.H_fuse
                 for i in range(aug + 1):
@@ -353,4 +354,5 @@ class DelayKalmanFilter:
             else:
                 self.kf.H_fuse = self.H[self.N]
                 return self.kf.update_fuse(z, self.pi)
+            
         
