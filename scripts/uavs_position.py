@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     while not rospy.is_shutdown(): 
         t = t + 1 / f
-        position_uavs = calculate_uav_positions(uav_total, 200, 6, t)     
+        position_uavs = calculate_uav_positions(uav_total, 50, 6, t)     
         for i in range(uav_total):
             pub[i].publish(position_uavs[i][0], position_uavs[i][1], rospy.Time.now())
         

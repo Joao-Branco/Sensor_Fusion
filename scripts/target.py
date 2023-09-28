@@ -68,10 +68,10 @@ if __name__ == "__main__":
         
         #Target Moving with aceleration not constant
 
-        w = 0.09
+        w = 0.15
         theta = w * t
-        v_x = - 0.45 * np.sin(theta)
-        v_y =  0.45 * np.cos(theta) 
+        v_x = - 0.75 * np.sin(theta)
+        v_y =  0.75 * np.cos(theta) 
         v = np.sqrt(v_x ** 2 + v_y ** 2)
         x =  5 * np.cos(theta)
         y = 5 * np.sin(theta)
