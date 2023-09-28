@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-    <arg name="ID" default="1"/>
+    <arg name="ID" default="0"/>
 
     <node pkg="sensor_fusion" type="noise.py" name="targetwithNoise_$(arg ID)" required="True" output="screen">
         <param name = "uav_id" value = "$(arg ID)"/>

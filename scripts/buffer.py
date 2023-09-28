@@ -38,7 +38,7 @@ class UAVDistanceMatrix:
         self.delay_constant = delay_constant
 
     def update_distance(self, uav_index, x, y):
-        uav_index = uav_index - 1
+        uav_index = uav_index
         rospy.loginfo("uav_index------%f", uav_index)
         if uav_index < 0 or uav_index >= self.num_uavs:
             raise ValueError("Invalid UAV index")
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     sub_position = []
 
     d = UAVDistanceMatrix(num_uavs= uav_total, delay_constant= mean)
-    for i in range(1, uav_total + 1):
+    for i in range(uav_total):
         pub_fuse.append(rospy.Publisher('/uav' + str(i) + '/target_position_geolocation', target_position_fuse, queue_size=10))
         sub_throttle.append(Throttle(i))
         sub_position.append(Positions(uav_id= i, UAVDistance= d))
