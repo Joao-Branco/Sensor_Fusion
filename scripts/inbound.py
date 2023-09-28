@@ -65,8 +65,8 @@ class Fusion:
         rospy.Subscriber('/uav' + str(uav_id) + '/target_position_geolocation', target_position, self.target_callback)
         
             
-        for i in range(uav_total + 1):
-            if (i != uav_id and i != 0):
+        for i in range(uav_total):
+            if (i != uav_id):
                 rospy.Subscriber('/uav' + str(i) + '/target_position_geolocation', target_position_fuse, self.target_callback_fuse)
                 
 

@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     pub = []
 
-    for i in range(1, uav_total + 1):
+    for i in range(uav_total):
         pub.append(rospy.Publisher('/uav' + str(i) + '/position', target_position, queue_size=10))
     
     f = 30

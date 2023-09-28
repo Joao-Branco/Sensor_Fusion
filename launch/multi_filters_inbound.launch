@@ -12,15 +12,15 @@
     <node pkg="sensor_fusion" type="buffer.py" name="delays" required="True" output="screen">
 	</node>
     
-    <group ns = "uav1">
+    <group ns = "uav0">
         <include file="$(find sensor_fusion)/launch/uav_inbound.launch" >
-            <arg name="ID" value="1"/>
+            <arg name="ID" value="0"/>
         </include>
     </group>
 
-    <group ns = "uav2">
+    <group ns = "uav1">
         <include file="$(find sensor_fusion)/launch/uav_inbound.launch">
-            <arg name="ID" value="2"/>
+            <arg name="ID" value="1"/>
         </include>
     </group>
 
