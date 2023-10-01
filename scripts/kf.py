@@ -338,7 +338,7 @@ class DelayKalmanFilter:
             else:
                 return self.kf.update_fuse(z, self.pi)
         
-        def update_fuse_augmented_state(self, z, t_z, uav_i, t_now):
+        def update_fuse_augmented_state(self, z, t_z, t_now):
         
         
             self.delay_est = t_now - t_z # delay present in the predict received

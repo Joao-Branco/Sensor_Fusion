@@ -1,11 +1,10 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import rospy
 import numpy as np
 from kf import KalmanFilter as kf
 from kf import DelayKalmanFilter as dkf
-from sensor_fusion.msg import target_position_fuse
-from sensor_fusion.msg import target_position
+from MARS_msgs.msg import TargetTelemetry
 
 
 
@@ -62,12 +61,12 @@ class Fusion:
         # x ----Initial value for the state 
 
 
-        rospy.Subscriber('/uav' + str(uav_id) + '/target_position_geolocation', target_position, self.target_callback)
+        rospy.Subscriber('/uav' + str(uav_id) + '/target_position_geolocation', TargetTelemetry, self.target_callback)
         
             
         for i in range(uav_total):
             if (i != uav_id):
-                rospy.Subscriber('/uav' + str(i) + '/target_position_geolocation', target_position_fuse, self.target_callback_fuse)
+                rospy.Subscriber('/uav' + str(i) + '/target_position_geolocation', TargetTelemetry, self.target_callback_fuse)
                 
 
             
@@ -81,13 +80,15 @@ class Fusion:
     def predict(self):
         
         self.kf.predict_nonlinear()
-        state = target_position_fuse()
-        state.x = self.kf.kf.x[0]
-        state.y = self.kf.kf.x[1]
-        state.v_x = self.kf.kf.x[2]
-        state.v_y = self.kf.kf.x[3]
-        state.w = self.kf.kf.x[4]
-        state.uavid = uav_id
+        state = TargetTelemetry()
+        state.x_pos = self.kf.kf.x[0]
+        state.y_pos = self.kf.kf.x[1]
+        state.vx = self.kf.kf.x[2]
+        state.vy = self.kf.kf.x[3]
+        state.omega = self.kf.kf.x[4]
+        state.accel = 0
+        state.vel = 0
+        state.psi = 0
         state.timestamp = rospy.Time.now()
 
         #rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
@@ -96,14 +97,16 @@ class Fusion:
 
         
     def target_callback(self, msg):
-        measurment = np.array([[msg.x], [msg.y]])
+        measurment = np.array([[msg.x_pos], [msg.y_pos]])
         self.kf.update(measurment)
 
 
 
     def target_callback_fuse(self, msg):
-        measurment = np.array([[msg.x], [msg.y], [msg.theta], [msg.v], [msg.w]])
-        self.kf.update_fuse(measurment)
+        measurment = np.array([[msg.x_pos], [msg.y_pos], [msg.vx], [msg.vy], [msg.omega]])
+        t_now = rospy.Time.now().to_nsec() * 1e-9
+        t_z = msg.timestamp.to_nsec() * 1e-9
+        self.kf.update_fuse(z= measurment, t_now= t_now, t_z= t_z)
         
 
 
@@ -121,7 +124,7 @@ if __name__ == "__main__":
     
 
     
-    pub_estimation = rospy.Publisher('target_position', target_position_fuse, queue_size=1)
+    pub_estimation = rospy.Publisher('target_position', TargetTelemetry, queue_size=1)
     
     
     f = 20

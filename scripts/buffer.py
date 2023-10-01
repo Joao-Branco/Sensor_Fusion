@@ -1,9 +1,9 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import rospy
 import numpy as np
-from sensor_fusion.msg import target_position_fuse
 from sensor_fusion.msg import target_position
+from MARS_msgs.msg import TargetTelemetry
 from std_msgs.msg import Float64
 
 
@@ -11,7 +11,7 @@ class Throttle:
     def __init__(self, uav_id):
         self.id = uav_id
         self.buffer = []
-        self.sub_throttle = rospy.Subscriber('/uav' + str(uav_id) + '/target_position_throttle', target_position_fuse, self.target_callback_throttle)
+        self.sub_throttle = rospy.Subscriber('/uav' + str(uav_id) + '/target_position_throttle', TargetTelemetry, self.target_callback_throttle)
 
     def target_callback_throttle(self, msg):
         self.buffer.append(msg)
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     d = UAVDistanceMatrix(num_uavs= uav_total, delay_constant= mean)
     for i in range(uav_total):
-        pub_fuse.append(rospy.Publisher('/uav' + str(i) + '/target_position_geolocation', target_position_fuse, queue_size=10))
+        pub_fuse.append(rospy.Publisher('/uav' + str(i) + '/target_position_geolocation', TargetTelemetry, queue_size=10))
         sub_throttle.append(Throttle(i))
         sub_position.append(Positions(uav_id= i, UAVDistance= d))
 

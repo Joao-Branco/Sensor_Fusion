@@ -1,8 +1,7 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import rospy
 import numpy as np
-from sensor_fusion.msg import target_position_fuse
 from sensor_fusion.msg import target_position
 
 

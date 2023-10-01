@@ -1,9 +1,8 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import rospy
-import math
 import numpy as np
-from sensor_fusion.msg import target_position, target_position_fuse
+from MARS_msgs.msg import TargetTelemetry
 
 #target_x, target_y = 0,0
 
@@ -16,10 +15,14 @@ def target_callback(msg):
     mean = 0
     
     noise_uav_x = np.random.normal(mean,std)
-    noise_uav_y = np.random.normal(mean,std)        
+    noise_uav_y = np.random.normal(mean,std)   
+
+    msg.x_pos = msg.x_pos + noise_uav_x
+    msg.y_pos = msg.y_pos + noise_uav_y
+
     
     
-    pub_uav.publish(msg.x + noise_uav_x, msg.y + noise_uav_y, msg.timestamp)
+    pub_uav.publish(msg)
     #rospy.loginfo("Noise has been published in UAV" + str(uav_id))
 
 if __name__ == "__main__":
@@ -27,10 +30,10 @@ if __name__ == "__main__":
     rospy.loginfo("Node Noise has started")
     uav_id = rospy.get_param("~uav_id")
 
-    rospy.Subscriber('/target_position_true', target_position_fuse, target_callback, queue_size=1)
+    rospy.Subscriber('/target_position_true', TargetTelemetry, target_callback, queue_size=1)
     
     
-    pub_uav = rospy.Publisher('/uav' + str(uav_id) + '/target_position_geolocation', target_position, queue_size=10)
+    pub_uav = rospy.Publisher('/uav' + str(uav_id) + '/target_position_geolocation', TargetTelemetry, queue_size=10)
     
     f = 10
 
