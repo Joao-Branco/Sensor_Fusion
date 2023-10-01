@@ -56,8 +56,8 @@ if __name__ == "__main__":
         
         
         # Target movement calculations
-        target_omega = 0#.02*math.cos(0.03*dt) # Changeble
-        target_accel = 0#.2*math.sin(0.07*dt) # Changeble
+        target_omega = 0.02*np.cos(0.03*dt) # Changeble
+        target_accel = 0.2*np.sin(0.07*dt) # Changeble
 
         target_psi = target_psi + target_omega * dt
         target_velocity = target_velocity + (target_accel * dt) 

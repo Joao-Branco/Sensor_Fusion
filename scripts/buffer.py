@@ -79,6 +79,7 @@ if __name__ == "__main__":
     
 
     pub_fuse = []
+    pub_delay = []
     sub_throttle = []
     sub_position = []
 
@@ -87,6 +88,7 @@ if __name__ == "__main__":
         pub_fuse.append(rospy.Publisher('/uav' + str(i) + '/target_position_geolocation', TargetTelemetry, queue_size=10))
         sub_throttle.append(Throttle(i))
         sub_position.append(Positions(uav_id= i, UAVDistance= d))
+        pub_delay.append(rospy.Publisher('/uav' + str(i) + '/delay', Float64, queue_size=10))
 
 
     delay = [_ for _ in range(uav_total)]
@@ -104,7 +106,7 @@ if __name__ == "__main__":
                     time_now = rospy.Time.now().to_nsec() * 1e-9
             
                     if time_now - timestamp >= delay and delay > 0:
-                        #pub_delay.publish(delay)
+                        pub_delay[j].publish(delay)
                         rospy.loginfo("\n\n\nBuffer delay %f  ------ timestamp  %f", delay , timestamp)
                         pub_fuse[j].publish(sub_throttle[i].buffer[0])
                 sub_throttle[i].buffer.pop(0)
