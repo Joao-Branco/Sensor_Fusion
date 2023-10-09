@@ -1,4 +1,5 @@
 import target_dynamics, sim_core, sim_opt_plot, sim_opt_compare, iter_simulations
+import target_dynamics_2 as target_dynamics
 from pathlib import Path
 import time
 import time as pytime
@@ -72,24 +73,29 @@ dir = os.path.join(sim_dir, 'single')
 os.mkdir(dir)
 dir_plots_main, dir_results_main, dir_data_main, dir_compare_main = directories_create(dir)
 
-single_inter = iter_simulations.simulations(dynamic= dynamics_lst, ekf= ekf_lst, n_uavs= [1])
+single_inter = iter_simulations.simulations(dynamic= dynamics_lst, ekf= ekf_lst, n_uavs= [1], sim_time= [200])
 
 data = []
 performance = []
 dict_plots = {}
 dict_results = {}
 dict_data = {}
+dyn_rep = {}
 
 for dina in dynamics_lst:
     dict_plots[dina.__name__] = directories_create_dyn(dir_plots_main, dina)
     dict_results[dina.__name__] = directories_create_dyn(dir_results_main, dina)
     dict_data[dina.__name__] = directories_create_dyn(dir_data_main, dina)
+    time = np.arange(0, single_inter[0][1], 1/single_inter[0][3])
+    dyn = check_target_ret(dina, time)
+    dyn_rep[dina.__name__] = dyn
 
 
 for iter in single_inter:
     print(tuple(iter))
     time = np.arange(0, iter[1], 1/iter[3])
-    dyn = check_target_ret(iter[9], time)
+    #dyn = check_target_ret(iter[9], time)
+    dyn = dyn_rep.get(iter[9].__name__)
     last_dyn = iter[9]
 
     dir_plots = dict_plots[iter[9].__name__]
@@ -104,9 +110,11 @@ for iter in single_inter:
                                                             ekf= iter[8], share= iter[10], delay_strategy= iter[12], delay= iter[14][0], sensor_masks= sensor_masks, pi= iter[16])
     
     performance.append([iter[8], str(iter[9].__name__), accuracy, precision, computer_cost])
-    data.append([euclidean, predicts, f"EKF_{iter[8]}"])
-    
-    sim_opt_compare.compare_plots(dir_compare_main, iter[9].__name__, data)
+    data.append([euclidean, predicts, f"EKF_{iter[8]}", iter[9].__name__])
+
+
+for dina in dynamics_lst:   
+    sim_opt_compare.compare_plots(dir_compare_main, dina.__name__, data)
 
 column_values = [ 'EKF', 'Dynamics', 'accuracy', 'precision', 'Computer_Cost']
 dataframe = pd.DataFrame(performance, columns = column_values) 
