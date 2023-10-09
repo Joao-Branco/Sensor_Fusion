@@ -1,9 +1,8 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import rospy
 import numpy as np
-from sensor_fusion.msg import target_position_fuse
-from sensor_fusion.msg import target_position
+from MARS_msgs.msg import TargetTelemetry
 
 
 
@@ -13,19 +12,17 @@ if __name__ == "__main__":
     rospy.loginfo("Node Target has started")
 
 
-    pub = rospy.Publisher("/target_position_true", target_position_fuse, queue_size=10)
-    
-    
-    # definition of parameters of target
-    # x,y - starting position (m)   v - starting velocity (m/s)
+    pub = rospy.Publisher("/target_position_true", TargetTelemetry, queue_size=10)
 
+    msg = TargetTelemetry()
     
-    x = 0.0 
-    y = 0.0
-    v_x = 0.0
-    v_y = 0.0
-    v = 0
-    w = 0
+    
+    # Target variables initialization (All changeble)
+    target_accel = 0.0
+    position_x = 0.0
+    position_y = 0.0
+    target_psi = 0 #math.pi/4
+    target_velocity = 0
 
 
     # frenquency of publication of position
@@ -37,59 +34,55 @@ if __name__ == "__main__":
 
     rate = rospy.Rate(f)
     
-    t_0 = rospy.Time.now()
-    
-    #t=0
+    # Time related variables initialization
+    start_time = rospy.get_time()
+    curr_time = rospy.get_time()
+    timer = 0.0
+    dt = 0.0
 
     while not rospy.is_shutdown():
         
         
         
-        t = rospy.Time.now()
-        
-        t = (t-t_0).to_sec()
-        
-        t = t + 1/f
-        
-        
-        
-        #Target not moving
-        #target.x = 0 * t
-        #target.y = 0 * t
-        
-        #Target Moving with constant speed
-        # w = 0
-        # theta = w * t
-        # v_x =  2
-        # v_y =  2 
-        # v = np.sqrt(v_x ** 2 + v_y ** 2)
-        # x =  v_x * t
-        # y = v_y * t
-        
-        #Target Moving with aceleration not constant
+        # Time variation since last call on loop
+        dt = rospy.get_time() - curr_time
 
-        w = 0.15
-        theta = w * t
-        v_x = - 0.75 * np.sin(theta)
-        v_y =  0.75 * np.cos(theta) 
-        v = np.sqrt(v_x ** 2 + v_y ** 2)
-        x =  5 * np.cos(theta)
-        y = 5 * np.sin(theta)
+        # Total time counter
+        timer = rospy.get_time() - start_time
 
-        #Target moving sinusoidal 
+        curr_time = rospy.get_time()
+
         
-        # w = 0.09
-        # theta = w * t
-        # v_x = - 0.45 * np.sin(theta)
-        # v_y = 2
-        # v = np.sqrt(v_x ** 2 + v_y ** 2)
-        # x =  5  * np.cos(theta)
-        # y = v_y * t
+        
+        
+        # Target movement calculations
+        target_omega = 0.02*np.cos(0.03*dt) # Changeble
+        target_accel = 0.2*np.sin(0.07*dt) # Changeble
+
+        target_psi = target_psi + target_omega * dt
+        target_velocity = target_velocity + (target_accel * dt) 
+        target_vx = target_velocity * np.cos(target_psi)
+        target_vy = target_velocity * np.sin(target_psi)
+        position_x = position_x + target_vx * dt
+        position_y = position_y + target_vy * dt
+
+        # Defines message to be sent with target movement variables
+        msg.x_pos = position_x
+        msg.y_pos = position_y
+        msg.vx = target_vx
+        msg.vy = target_vy
+        msg.omega = target_omega
+        msg.accel = target_accel
+        msg.vel = target_velocity
+        msg.psi = target_psi
+        msg.timestamp = rospy.Time.now()
+
+
     
         
-        rospy.loginfo("X: %f, Y: %f, Time: %i", x, y, t) 
+        rospy.loginfo("X: %f, Y: %f, Time: %i", position_x, position_y, curr_time) 
         
-        pub.publish(x, y, v_x, v_y, w, 0, rospy.Time.now())
+        pub.publish(msg)
 
         
         rospy.loginfo("Target has been publish")
