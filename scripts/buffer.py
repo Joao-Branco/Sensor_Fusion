@@ -107,7 +107,7 @@ if __name__ == "__main__":
             
                     if time_now - timestamp >= delay and delay > 0:
                         pub_delay[j].publish(delay)
-                        rospy.loginfo("\n\n\nBuffer delay %f  ------ timestamp  %f", delay , timestamp)
+                        #rospy.loginfo("\n\n\nBuffer delay %f  ------ timestamp  %f", delay , timestamp)
                         pub_fuse[j].publish(sub_throttle[i].buffer[0])
                 sub_throttle[i].buffer.pop(0)
         

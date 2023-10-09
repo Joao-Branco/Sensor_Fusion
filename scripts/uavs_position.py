@@ -1,8 +1,9 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 
 import rospy
 import numpy as np
-from geometry_msgs.msg import PoseStamped
+from sensor_fusion.msg import target_position_fuse
+from sensor_fusion.msg import target_position
 
 
 def calculate_uav_positions(num_uavs, radius, speed, time):
@@ -30,7 +31,7 @@ if __name__ == "__main__":
     pub = []
 
     for i in range(uav_total):
-        pub.append(rospy.Publisher(uav_id + "/mavros/local_position/pose", PoseStamped,, queue_size=10))
+        pub.append(rospy.Publisher('/uav' + str(i) + '/position', target_position, queue_size=10))
     
     f = 30
     rate = rospy.Rate(f)
