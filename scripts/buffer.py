@@ -2,6 +2,7 @@
 
 import rospy
 import numpy as np
+from geometry_msgs.msg import PoseStamped
 from sensor_fusion.msg import target_position
 from MARS_msgs.msg import TargetTelemetry
 from std_msgs.msg import Float64
@@ -21,10 +22,11 @@ class Positions:
     def __init__(self, uav_id, UAVDistance):
         self.id = uav_id
         self.UAVDistance = UAVDistance
-        self.sub_position = rospy.Subscriber('/uav' + str(uav_id) + '/position', target_position, self.position_callback)
+        self.sub_position = rospy.Subscriber(str(uav_id) + "/mavros/local_position/pose", PoseStamped, self.position_callback)
 
     def position_callback(self, msg):
-        self.UAVDistance.update_distance(uav_index= self.id, x= msg.x, y= msg.y)
+        print(msg)
+        self.UAVDistance.update_distance(uav_index= self.id, x= msg.Pose.Point.x, y= msg.Pose.Point.x)
         self.UAVDistance.update_delay_matrix()
 
         print(self.UAVDistance.get_distance_matrix())
@@ -72,10 +74,8 @@ if __name__ == "__main__":
     rospy.init_node("Buffer_py")
     rospy.loginfo("Buffer has started")
     uav_total = rospy.get_param("/total_uav")
-    # mean = rospy.get_param("/delay_mean")
-    # std = rospy.get_param("/delay_std")
-    mean = 0.0001
-    std = 0.00000001
+    mean = rospy.get_param("/delay_mean")
+    std = rospy.get_param("/delay_std")
     
 
     pub_fuse = []
