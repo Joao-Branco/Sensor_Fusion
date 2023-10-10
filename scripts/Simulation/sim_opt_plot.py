@@ -23,11 +23,11 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
     for pred, pred_mask in zip(predicts, predict_masks):
         if(ekf == True):
             state_filtered = state[:5,pred_mask]
-            state_lst = ['x', 'y', 'v_x', 'v_y', 'w']
+            state_lst = ['X', 'Y', 'Vx', 'Vy', 'W']
             err_abs = np.abs(state_filtered - pred[1:,:]) # ignore time row from pred
         else:
             state_filtered = state[:4,pred_mask]
-            state_lst = ['x', 'y', 'v_x', 'v_y']
+            state_lst = ['X', 'Y', 'Vx', 'Vy']
             err_abs = np.abs(state_filtered - pred[1:,:]) # ignore time row from pred
             
 
@@ -44,11 +44,10 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
 
 
     for i, st in enumerate(state_lst):
-        plt.figure(figsize=(6, 6))
-        plt.plot(time, state[i], markersize=5, label= st)
+        plt.figure(figsize=(9, 5))
+        plt.plot(time, state[i], 'k', markersize=5, label= st)
         for u in range(n_uavs):
             plt.plot(predicts[u][0, :], predicts[u][i + 1, :], 'x', markersize=2, label= 'UAV ' + str(u + 1))
-        plt.title("State and Estimation", fontsize=20)
         plt.xlabel('t (s)', fontsize=15)
         plt.ylabel(st, fontsize=15)
         plt.legend(fontsize=10)
@@ -61,11 +60,10 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
         plt.close()
 
     for i, st in enumerate(state_lst):
-        plt.figure(figsize=(6, 6))
+        plt.figure(figsize=(8, 4))
         plt.plot(time, state[i], markersize=5, label= st)
-        plt.title("State and Estimation", fontsize=20)
-        plt.xlabel('t (s)', fontsize=15)
-        plt.ylabel(st, fontsize=15)
+        plt.xlabel('t (s)', fontsize=10)
+        plt.ylabel(st, fontsize=10)
         plt.legend(fontsize=10)
         plt.grid()
 
@@ -90,17 +88,27 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
     dist_uavs = np.array(dist_uavs)   
 
     plt.figure(figsize=(6, 6))
+
+    plt.rcParams['axes.prop_cycle'] = plt.cycler('color', plt.cm.tab20.colors)
     
     for i in range(n_uavs):
         sensor_x, sensor_y = x_noise[i], y_noise[i]
-        plt.plot(sensor_x, sensor_y, 'o', markersize=0.2, label='UAV obs' + str(i + 1))
-    for i in range(n_uavs):
         x_, y_ = predicts[i][1,:], predicts[i][2,:]
-        plt.plot(x_[:col_write], y_[:col_write], 'x', markersize=5, label='UAV ' + str(i + 1))
+        if (n_uavs == 1):
+            plt.plot(x_[:col_write], y_[:col_write], '+', markersize=3, label='Estimativa')
+            plt.plot(sensor_x, sensor_y, 'o', markersize=0.8, label='Observações')
+        else:
+            plt.plot(x_[:col_write], y_[:col_write], '+', markersize=3, label='UAV ' + str(i + 1))
+            plt.plot(sensor_x, sensor_y, 'o', markersize=0.8, label='Observações' + str(i + 1))
     plt.plot(x,y, 'k',linewidth='3', label="Alvo")
-    plt.title("Posição", fontsize=20)
-    plt.xlabel('X (m)', fontsize=15)
-    plt.ylabel('Y (m)', fontsize=15)
+    if (x[0] != x[-1]):
+        plt.plot(x[0],y[0], 'og', markersize=8)
+        plt.plot(x[-1],y[-1], 'or', markersize=8)
+    else:
+        plt.plot(x[0],y[0], 'ok', markersize=5)
+
+    plt.xlabel('X (m)', fontsize=10)
+    plt.ylabel('Y (m)', fontsize=10)
     plt.legend(fontsize=10)
     plt.grid()
 

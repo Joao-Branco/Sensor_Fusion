@@ -73,7 +73,7 @@ dir = os.path.join(sim_dir, 'single')
 os.mkdir(dir)
 dir_plots_main, dir_results_main, dir_data_main, dir_compare_main = directories_create(dir)
 
-single_inter = iter_simulations.simulations(dynamic= dynamics_lst, ekf= ekf_lst, n_uavs= [1], sim_time= [200])
+single_inter = iter_simulations.simulations(dynamic= dynamics_lst, ekf= ekf_lst, n_uavs= [1], sim_time= [60])
 
 data = []
 performance = []
@@ -110,7 +110,11 @@ for iter in single_inter:
                                                             ekf= iter[8], share= iter[10], delay_strategy= iter[12], delay= iter[14][0], sensor_masks= sensor_masks, pi= iter[16])
     
     performance.append([iter[8], str(iter[9].__name__), accuracy, precision, computer_cost])
-    data.append([euclidean, predicts, f"EKF_{iter[8]}", iter[9].__name__])
+    if iter[8] == True:
+        label = "Estimador Rotacional"
+    else:
+        label = "Estimador Linear"
+    data.append([euclidean, predicts, label, iter[9].__name__, state, time])
 
 
 for dina in dynamics_lst:   

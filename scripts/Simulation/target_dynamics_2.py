@@ -3,10 +3,10 @@ import random
 
 def circular_path(t):
     v = np.zeros_like(t)
-    while(((2.5 <= v) & (v <= 6.5)).all() != True):
-        r = random.uniform(40,70)
+    while(((5.5 <= v) & (v <= 6.5)).all() != True):
+        r = 60
         theta0 = np.random.randn() * 10
-        w0 = random.uniform(0.005, 0.3)
+        w0 = 0.095
         x = r * np.cos( w0 * t + theta0)
         y = r * np.sin(w0 * t + theta0)
         v_x = - r * w0 * np.sin(w0 * t + theta0)
@@ -20,17 +20,22 @@ def circular_path(t):
         #w = (v_x * v_x * w0 - v_y * v_y * (-w0)) / (v_x ** 2 + v_y ** 2)
         v = np.sqrt( v_x ** 2 + v_y ** 2)
 
+        print("w0")
+        print(w0)
+        print("raio")
+        print(r)
+
     
     return x, y, v_x, v_y, w
 
 def sin_path(t):
     v = np.zeros_like(t)
-    while(((2.5 <= v) & (v <= 6.5)).all() != True):
-        amp = random.uniform(40,70)
-        v_l = random.uniform(0.05,6)
+    while(((5.5 <= v) & (v <= 6.5)).all() != True):
+        amp = 11.72
+        v_l = 5.6
         theta0 = np.random.randn() * 10
-        theta1 = np.random.randn() * 10
-        w0 = random.uniform(0.1, 0.3)
+        theta1 = -np.pi / 2
+        w0 = 0.13
         x_ = amp * np.cos(w0 * t + theta0)
         y_ = v_l * t 
         x = x_ * np.cos(theta1) - y_ * np.sin(theta1)
@@ -47,6 +52,12 @@ def sin_path(t):
         w = np.append(w, w[-1])
         #w = (- v_y * amp * w0 * w0 * np.sin(w0 * t + theta0)) / (v_x ** 2 + v_y ** 2)
         v = np.sqrt( v_x ** 2 + v_y ** 2)
+        print("amp")
+        print(amp)
+        print("v_l")
+        print(v_l)
+        print("w0")
+        print(w0)
 
     
     return x, y, v_x, v_y, w
@@ -55,11 +66,11 @@ def sin_path(t):
 
 def linear_path(t):
     v = np.zeros_like(t)
-    while(((2.5 <= v) & (v <= 6.5)).all() != True):
+    while(((5.5 <= v) & (v <= 6.5)).all() != True):
         w = 0 * np.ones_like(t)
         theta0 = np.random.randn() * 10
         h = w * t + theta0
-        v = random.uniform(2,7) * np.ones_like(t)
+        v = 6 * np.ones_like(t)
         v_x = v * np.cos(h)
         v_y = v * np.sin(h) 
         x = v_x * t
