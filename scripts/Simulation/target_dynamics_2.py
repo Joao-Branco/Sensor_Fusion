@@ -66,11 +66,11 @@ def sin_path(t):
 
 def linear_path(t):
     v = np.zeros_like(t)
-    while(((5.5 <= v) & (v <= 6.5)).all() != True):
+    while(((2.5 <= v) & (v <= 6.5)).all() != True):
         w = 0 * np.ones_like(t)
         theta0 = np.random.randn() * 10
         h = w * t + theta0
-        v = 6 * np.ones_like(t)
+        v = 3 * np.ones_like(t)
         v_x = v * np.cos(h)
         v_y = v * np.sin(h) 
         x = v_x * t
