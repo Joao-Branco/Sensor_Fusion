@@ -102,7 +102,7 @@ for iter in single_inter:
     dir_results = dict_results[iter[9].__name__]
     dir_data = dict_data[iter[9].__name__]
     
-    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks = sim_core.sim(state= dyn, dir= dir_data, printt= iter[0], sim_time= iter[1], n_uavs= iter[2], f_sim= iter[3], f_kf= iter[4], f_sample= iter[5], f_share= iter[6], SENSOR_MEAN= iter[7][0], SENSOR_STD= iter[7][1], EKF= iter[8], SHARE_ON= iter[10], OUT_OF_ORDER= iter[11], DELAY_STRATEGY= iter[12], delay_d= iter[13], DELAY_MEAN= iter[14][0], DELAY_STD= iter[14][1], AUG= iter[15], PI= iter[16], CENTR= iter[17], Ring_on= iter[18]) 
+    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks, x_obs = sim_core.sim(state= dyn, dir= dir_data, printt= iter[0], sim_time= iter[1], n_uavs= iter[2], f_sim= iter[3], f_kf= iter[4], f_sample= iter[5], f_share= iter[6], SENSOR_MEAN= iter[7][0], SENSOR_STD= iter[7][1], EKF= iter[8], SHARE_ON= iter[10], OUT_OF_ORDER= iter[11], DELAY_STRATEGY= iter[12], delay_d= iter[13], DELAY_MEAN= iter[14][0], DELAY_STD= iter[14][1], AUG= iter[15], PI= iter[16], CENTR= iter[17], Ring_on= iter[18]) 
     accuracy, precision, euclidean = sim_opt_plot.sim_plot(state= state, predicts= predicts, predict_masks= predict_masks,
                                                             col_write= col_write, x= x, y= y, z_obs= z_obs, z_corr= z_corr,z_masks= z_masks,
                                                             dir_plot= str(dir_plots), dir_result= str(dir_results), sensors= sensors, time= time,
@@ -114,7 +114,7 @@ for iter in single_inter:
         label = "Estimador Rotacional"
     else:
         label = "Estimador Linear"
-    data.append([euclidean, predicts, label, iter[9].__name__, state, time])
+    data.append([euclidean, predicts, label, iter[9].__name__, state, time, x_obs])
 
 
 for dina in dynamics_lst:   

@@ -99,7 +99,7 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
         sensor_x, sensor_y = x_noise[i], y_noise[i]
         x_, y_ = predicts[i][1,:], predicts[i][2,:]
         if (n_uavs == 1):
-            plt.plot(x_[:col_write], y_[:col_write], '+', markersize=3, label='Estimativa')
+            plt.plot(x_[:col_write], y_[:col_write], '+', markersize=3, label='Estimativas')
             plt.plot(sensor_x, sensor_y, 'o', markersize=1, label='Observações')
         else:
             plt.plot(x_[:col_write], y_[:col_write], '+', markersize=3, label='UAV ' + str(i + 1))
@@ -329,9 +329,12 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
 
 
     print("Accuracy: ", np.mean(euclidean))
+    print("STD: ", np.std(euclidean))
+    print("MAX: ", np.max(euclidean))
+    print("MIN: ", np.min(euclidean))
     print("Precision: ", np.mean(dist_uavs))
 
-    performance = pd.DataFrame([np.mean(euclidean), np.mean(dist_uavs)], index = ['Accuracy', 'Precision'])
+    performance = pd.DataFrame([np.mean(euclidean), np.mean(dist_uavs), np.std(euclidean), np.max(euclidean), np.min(euclidean)], index = ['Accuracy', 'Precision', 'Std', 'Max', 'Min'])
 
     performance.to_csv( str(dir_results) + '/performance_share_'+ str(share) + '_ekf_' + str(ekf)+ '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '.csv')
 

@@ -33,7 +33,7 @@ def sin_path(t):
     while(((5.5 <= v) & (v <= 6.5)).all() != True):
         amp = 11.72
         v_l = 5.6
-        theta0 = np.random.randn() * 10
+        theta0 = np.pi 
         theta1 = -np.pi / 2
         w0 = 0.13
         x_ = amp * np.cos(w0 * t + theta0)

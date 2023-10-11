@@ -112,6 +112,10 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
     z_obs = [[]  for _ in range(n_uavs)] # z received
     z_corr = [[]  for _ in range(n_uavs)] # z with correction of delay 
     z_masks = [[]  for _ in range(n_uavs)]
+    x_obs = [[]  for _ in range(n_uavs)] # 
+
+
+
     if (delay_d == True):
         distance_matrix = calculate_distance_between_vertices(n_uavs, 200, ring= ring, ring_on= Ring_on)
     else:
@@ -150,6 +154,7 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
                 l_d.append(t)
                 l_d.append('update')
                 l_d.append(kf.kf.x)
+                x_obs[uav_i].append(np.array([t, x_, y_]))
                 stop = kf.update(np.array([[x_], [y_]]))
                 l_d.append(np.array([[x[i]],[y[i]],[vx[i]],[vy[i]], [ww[i]]]))
                 l_d.append(kf.kf.x)
@@ -178,10 +183,10 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
                             l_d.append(t)
                             l_d.append('update_fuse')
                             l_d.append(kf.kf.x)
+                            x_obs[uav_i].append(np.array([t, z]))
                             stop = kf.update_fuse(z, t_z, i_z, t)
                             z_obs[uav_i].append([kf.last_z_obs, t])
                             z_corr[uav_i].append([kf.last_z_share, t])
-
                             z_masks[uav_i].append(i)
                             #q[uav_i].remove(z_)
                             remove_idx.append(idx)
@@ -190,6 +195,7 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
                             l_d.append(t)
                             l_d.append('update_fuse')
                             l_d.append(kf.kf.x)
+                            x_obs[uav_i].append(np.array([t, z]))
                             kf.update_fuse(z)
                             z_obs[uav_i].append([kf.last_z_obs, t])
                             z_corr[uav_i].append([kf.last_z_obs, t])
@@ -272,4 +278,4 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
             stats_delay[uav_i][uav_j].append(np.std(q_ts_check[uav_i][uav_j]))
     
 
-    return state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks
+    return state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks, x_obs
