@@ -122,7 +122,7 @@ for dina in dynamics_lst:
 
 column_values = [ 'EKF', 'Dynamics', 'accuracy', 'precision', 'Computer_Cost']
 dataframe = pd.DataFrame(performance, columns = column_values) 
-dataframe.to_csv(str(dir) + '/performance.csv')
+dataframe.to_excel(str(dir) + '/performance.xlsx')
 
 ##CENTRALIZED#######
 dir_main = os.path.join(sim_dir, 'centralized')

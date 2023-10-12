@@ -336,6 +336,6 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
 
     performance = pd.DataFrame([np.mean(euclidean), np.mean(dist_uavs), np.std(euclidean), np.max(euclidean), np.min(euclidean)], index = ['Accuracy', 'Precision', 'Std', 'Max', 'Min'])
 
-    performance.to_csv( str(dir_results) + '/performance_share_'+ str(share) + '_ekf_' + str(ekf)+ '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '.csv')
+    performance.to_excel( str(dir_results) + '/performance_share_'+ str(share) + '_ekf_' + str(ekf)+ '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '.xlsx')
 
     return np.mean(euclidean), np.mean(dist_uavs), euclidean

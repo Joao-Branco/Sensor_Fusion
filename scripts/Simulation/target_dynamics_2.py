@@ -68,7 +68,7 @@ def linear_path(t):
     v = np.zeros_like(t)
     while(((2.5 <= v) & (v <= 6.5)).all() != True):
         w = 0 * np.ones_like(t)
-        theta0 = np.random.randn() * 10
+        theta0 = np.pi / 4
         h = w * t + theta0
         v = 3 * np.ones_like(t)
         v_x = v * np.cos(h)

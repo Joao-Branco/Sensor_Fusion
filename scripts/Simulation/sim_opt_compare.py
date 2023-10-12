@@ -22,9 +22,15 @@ def compare_plots(dir, dynamics_name, data, delay = None):
     for x, y in indices_by_name.items():
         fig, axs = plt.subplots(3, figsize=(12, 8))
         for st in range(3):
+            tab10_index = 0 
             for i, index in enumerate(y):
                 if not (data[index][2] == "Estimador Linear" and st == 2):
-                    axs[st].plot(data[index][1][0][0, :], data[index][1][0][st+3, :], label=data[index][2])
+                    color = plt.cm.tab10(tab10_index)
+                    axs[st].plot(data[index][1][0][0, :], data[index][1][0][st+3, :], label=data[index][2], color=color)
+                    tab10_index += 1
+                else:
+                    # Skip one color in Tab10 colormap
+                    tab10_index = (tab10_index + 1) % 10  # Skip the next color
             axs[st].plot(data[index][5], data[index][4][st+2], 'k:', label='Alvo')
             axs[st].set_ylabel(label_st[st][1], fontsize=25, fontweight='bold')
             #axs[st].set_title(label_st[st][0], fontsize=25)
@@ -74,9 +80,9 @@ def compare_plots(dir, dynamics_name, data, delay = None):
 
     plt.close()
     performance = pd.DataFrame(list_performance, columns= ['Estimador', 'Mean', 'Std', 'Max', 'Min'])
-    csv_residual = f'{dynamics_name}_{delay}_residual_.csv'
+    csv_residual = f'{dynamics_name}_{delay}_residual_.xlsx'
     csv_residual = os.path.join(dir, csv_residual) if dir else csv_residual
-    performance.to_csv(csv_residual)
+    performance.to_excel(csv_residual)
 
 
 
