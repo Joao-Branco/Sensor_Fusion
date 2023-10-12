@@ -22,6 +22,7 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
     dir_results = Path(dir_result + exp)
     dir_results.mkdir()
 
+    position_error = []
     for pred, pred_mask in zip(predicts, predict_masks):
         if(ekf == True):
             state_filtered = state[:5,pred_mask]
@@ -33,7 +34,10 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
             err_abs = np.abs(state_filtered - pred[1:,:]) # ignore time row from pred
             
 
-        euclidean = np.sqrt(err_abs[0,:] ** 2 + err_abs[1,:] ** 2)
+        position_error.append(np.sqrt(err_abs[0,:] ** 2 + err_abs[1,:] ** 2))
+        #only calculating the last uav, i want to all uavs
+
+    euclidean = np.mean(position_error)
 
     x_noise = [_ for _ in range(n_uavs)]
     y_noise = [_ for _ in range(n_uavs)]
@@ -338,4 +342,4 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
 
     performance.to_excel( str(dir_results) + '/performance_share_'+ str(share) + '_ekf_' + str(ekf)+ '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '.xlsx')
 
-    return np.mean(euclidean), np.mean(dist_uavs), euclidean
+    return np.mean(euclidean), np.mean(dist_uavs), euclidean, dist_uavs
