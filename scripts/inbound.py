@@ -39,8 +39,8 @@ class Fusion:
         
         # Q ----Process Noise
         
-        R = np.array([      [10, 0],
-                            [0, 10]])
+        R = np.array([      [100, 0],
+                            [0, 100]])
         
         # R ----Measurement Noise
         
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     pub_estimation = rospy.Publisher('target_position', TargetTelemetry, queue_size=1)
     
     
-    f = 20
+    f = 5
     
     #frequency of the Kalman filter
     
