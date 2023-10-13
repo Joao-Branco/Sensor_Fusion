@@ -36,8 +36,8 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
 
         position_error.append(np.sqrt(err_abs[0,:] ** 2 + err_abs[1,:] ** 2))
         #only calculating the last uav, i want to all uavs
-
-    euclidean = np.mean(position_error)
+    position_error = np.array(position_error)
+    euclidean = np.mean(position_error, axis=0)
 
     x_noise = [_ for _ in range(n_uavs)]
     y_noise = [_ for _ in range(n_uavs)]
@@ -117,11 +117,14 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
 
     plt.xlabel('X (m)', fontsize=20, fontweight='bold')
     plt.ylabel('Y (m)', fontsize=20, fontweight='bold')
-    plt.legend(fontsize=15)
+    if (n_uavs > 0):
+        plt.legend(fontsize=10)
+    else:
+        plt.legend(fontsize=15)
     plt.grid()
 
 
-    plot_jpg = 'Dinamica_alvo_' + dinamics + '_share_' + str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) +  '.png'
+    plot_jpg = 'Dinamica_alvo_' + dinamics + '_share_' + str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '_n_uavs_' + str(n_uavs) + '_f_s_' + str(f_s) +  '.png'
     
     plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
     plt.savefig(plot_jpg)
@@ -342,4 +345,4 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
 
     performance.to_excel( str(dir_results) + '/performance_share_'+ str(share) + '_ekf_' + str(ekf)+ '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '.xlsx')
 
-    return np.mean(euclidean), np.mean(dist_uavs), euclidean, dist_uavs
+    return np.mean(euclidean), np.mean(dist_uavs), euclidean, np.mean(dist_uavs, axis=0)

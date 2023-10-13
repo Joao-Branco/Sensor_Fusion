@@ -88,12 +88,32 @@ def compare_plots(dir, dynamics_name, data, delay = None):
 def compare_plots_multi(dir, dynamics_name, data, delay = None):
 
     plt.rcParams['axes.prop_cycle'] = plt.cycler('color', plt.cm.tab10.colors)
+    label_st = [['X', "$\dot{x}$ (m/s)"], ['Y', "$\dot{y}$ (m/s)"], ['W', "$\dot{\psi}$ (rad/s)"]]
 
-    indices_by_name = {}
+    fig, axs = plt.subplots(3, figsize=(12, 8))
+    for st in range(3):
+        tab10_index = 0 
+        for i in data:
+            color = plt.cm.tab10(tab10_index)
+            estimative_mean = []
+            for j in i[1]:
+                estimative_mean.append(j[st+3, :])
+            axs[st].plot(i[1][0][0, :], np.mean(estimative_mean, axis=0), label=i[2], color=color)
+            tab10_index += 1
+        axs[st].plot(i[5], i[4][st+2], 'k:', label='Alvo')
+        axs[st].set_ylabel(label_st[st][1], fontsize=25, fontweight='bold')
+        #axs[st].set_title(label_st[st][0], fontsize=25)
+        axs[st].grid()
+    #plot_jpg = f'Estado{label_st[st][0]}_{x}_{delay}' +  '.png'
+    plot_jpg = f'{dynamics_name}_{delay}_states' +  '.png'
+    axs[2].set_xlabel('Tempo (s)', fontsize=25 , fontweight='bold')
+    handles, labels = axs[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper right', fontsize=20)
 
-    for target_name in  ['stoped_path', 'linear_path', 'sin_path', 'circular_path']:
-        indices = [index for index, inner_list in enumerate(data) if inner_list[3] == target_name]
-        indices_by_name[target_name] = indices
+    plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
+    plt.savefig(plot_jpg)
+
+    plt.close()
 
 
     mpl.rcParams['text.usetex'] = True
@@ -102,26 +122,33 @@ def compare_plots_multi(dir, dynamics_name, data, delay = None):
 
 
     list_performance = []
-    fig, axs = plt.subplots(2, figsize=(12, 8))
+    fig, axs = plt.subplots(3, figsize=(12, 8))
     for i in data:
-        
-        obs = np.transpose(np.array(i[6][0]))
-        interpolated_predicted_values_x = np.interp(obs[0,:], i[1][0][0, :], i[1][0][1,:])
-        interpolated_predicted_values_y = np.interp(obs[0,:], i[1][0][0, :], i[1][0][2,:])
+        position_residual = []
+        for j, obs in enumerate(i[6]):
+            obs = np.transpose(np.array(obs))
+            interpolated_predicted_values_x = np.interp(obs[0,:], i[1][j][0, :], i[1][j][1,:])
+            interpolated_predicted_values_y = np.interp(obs[0,:], i[1][j][0, :], i[1][j][2,:])
 
-        position_residual = np.sqrt((obs[1,:] - interpolated_predicted_values_x) ** 2 + (obs[2,:] - interpolated_predicted_values_y) ** 2)
-    
+            position_residual.append(np.sqrt((obs[1,:] - interpolated_predicted_values_x) ** 2 + (obs[2,:] - interpolated_predicted_values_y) ** 2))
+        position_residual = np.array(position_residual)
+        mean_residual = np.mean(position_residual, axis=0)
+
         # Calculate the residuals
         if (i[3] == dynamics_name):
-            axs[0].plot(obs[0,:], position_residual, label=i[2])
+            axs[0].plot(obs[0,:], mean_residual, label=i[2])
             axs[1].plot(i[1][0][0, :], i[0], label=i[2])
-            list_performance.append([i[2], np.mean(position_residual), np.std(position_residual), np.max(position_residual), np.min(position_residual)])
-            
-    axs[1].set_xlabel('Tempo (s)', fontsize=20, fontweight='bold')
-    axs[1].set_ylabel('Erro de Posição (m)', fontsize=20, fontweight='bold')
+            axs[2].plot(i[1][0][0, :], i[7], label=i[2])
+            list_performance.append([i[2], np.mean(mean_residual), np.std(mean_residual), np.max(mean_residual), np.min(mean_residual)])
+
+    axs[2].set_xlabel('Tempo (s)', fontsize=20, fontweight='bold')
+    axs[2].set_ylabel('Desvio Médio (m)', fontsize=15, fontweight='bold')
+    axs[2].grid()       
+    axs[1].set_ylabel('Distância Euclideana (m)', fontsize=15, fontweight='bold')
     axs[1].grid()
-    axs[0].set_ylabel('Valor Residual de Posição (m)', fontsize=20, fontweight='bold')
+    axs[0].set_ylabel('VRMP (m)', fontsize=15, fontweight='bold')
     axs[0].grid()
+    
     handles, labels = axs[0].get_legend_handles_labels()
 
     fig.legend(handles, labels, loc='upper right', fontsize=20)
