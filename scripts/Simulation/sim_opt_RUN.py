@@ -68,61 +68,62 @@ dynamics_lst = [target_dynamics.stoped_path,
 ekf_lst = [False, True]
 
 
+
 ##SINGLE#######
-dir = os.path.join(sim_dir, 'single')
-os.mkdir(dir)
-dir_plots_main, dir_results_main, dir_data_main, dir_compare_main = directories_create(dir)
+# dir = os.path.join(sim_dir, 'single')
+# os.mkdir(dir)
+# dir_plots_main, dir_results_main, dir_data_main, dir_compare_main = directories_create(dir)
 
-single_inter = iter_simulations.simulations(dynamic= dynamics_lst, ekf= ekf_lst, n_uavs= [1], sim_time= [60])
+# single_inter = iter_simulations.simulations(dynamic= dynamics_lst, ekf= ekf_lst, n_uavs= [1], sim_time= [60])
 
-data = []
-performance = []
-dict_plots = {}
-dict_results = {}
-dict_data = {}
-dyn_rep = {}
+# data = []
+# performance = []
+# dict_plots = {}
+# dict_results = {}
+# dict_data = {}
+# dyn_rep = {}
 
-for dina in dynamics_lst:
-    dict_plots[dina.__name__] = directories_create_dyn(dir_plots_main, dina)
-    dict_results[dina.__name__] = directories_create_dyn(dir_results_main, dina)
-    dict_data[dina.__name__] = directories_create_dyn(dir_data_main, dina)
-    time = np.arange(0, single_inter[0][1], 1/single_inter[0][3])
-    dyn = check_target_ret(dina, time)
-    dyn_rep[dina.__name__] = dyn
+# for dina in dynamics_lst:
+#     dict_plots[dina.__name__] = directories_create_dyn(dir_plots_main, dina)
+#     dict_results[dina.__name__] = directories_create_dyn(dir_results_main, dina)
+#     dict_data[dina.__name__] = directories_create_dyn(dir_data_main, dina)
+#     time = np.arange(0, single_inter[0][1], 1/single_inter[0][3])
+#     dyn = check_target_ret(dina, time)
+#     dyn_rep[dina.__name__] = dyn
 
 
-for iter in single_inter:
-    print(tuple(iter))
-    time = np.arange(0, iter[1], 1/iter[3])
-    #dyn = check_target_ret(iter[9], time)
-    dyn = dyn_rep.get(iter[9].__name__)
-    last_dyn = iter[9]
+# for iter in single_inter:
+#     print(tuple(iter))
+#     time = np.arange(0, iter[1], 1/iter[3])
+#     #dyn = check_target_ret(iter[9], time)
+#     dyn = dyn_rep.get(iter[9].__name__)
+#     last_dyn = iter[9]
 
-    dir_plots = dict_plots[iter[9].__name__]
-    dir_results = dict_results[iter[9].__name__]
-    dir_data = dict_data[iter[9].__name__]
+#     dir_plots = dict_plots[iter[9].__name__]
+#     dir_results = dict_results[iter[9].__name__]
+#     dir_data = dict_data[iter[9].__name__]
     
-    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks, x_obs = sim_core.sim(state= dyn, dir= dir_data, printt= iter[0], sim_time= iter[1], n_uavs= iter[2], f_sim= iter[3], f_kf= iter[4], f_sample= iter[5], f_share= iter[6], SENSOR_MEAN= iter[7][0], SENSOR_STD= iter[7][1], EKF= iter[8], SHARE_ON= iter[10], OUT_OF_ORDER= iter[11], DELAY_STRATEGY= iter[12], delay_d= iter[13], DELAY_MEAN= iter[14][0], DELAY_STD= iter[14][1], AUG= iter[15], PI= iter[16], CENTR= iter[17], Ring_on= iter[18]) 
-    accuracy, precision, euclidean, desvio_medio = sim_opt_plot.sim_plot(state= state, predicts= predicts, predict_masks= predict_masks,
-                                                            col_write= col_write, x= x, y= y, z_obs= z_obs, z_corr= z_corr,z_masks= z_masks,
-                                                            dir_plot= str(dir_plots), dir_result= str(dir_results), sensors= sensors, time= time,
-                                                            n_uavs= iter[2], f_s= iter[6],
-                                                            ekf= iter[8], share= iter[10], delay_strategy= iter[12], delay= iter[14][0], sensor_masks= sensor_masks, pi= iter[16])
+#     state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks, x_obs = sim_core.sim(state= dyn, dir= dir_data, printt= iter[0], sim_time= iter[1], n_uavs= iter[2], f_sim= iter[3], f_kf= iter[4], f_sample= iter[5], f_share= iter[6], SENSOR_MEAN= iter[7][0], SENSOR_STD= iter[7][1], EKF= iter[8], SHARE_ON= iter[10], OUT_OF_ORDER= iter[11], DELAY_STRATEGY= iter[12], delay_d= iter[13], DELAY_MEAN= iter[14][0], DELAY_STD= iter[14][1], AUG= iter[15], PI= iter[16], CENTR= iter[17], Ring_on= iter[18]) 
+#     accuracy, precision, euclidean, desvio_medio = sim_opt_plot.sim_plot(state= state, predicts= predicts, predict_masks= predict_masks,
+#                                                             col_write= col_write, x= x, y= y, z_obs= z_obs, z_corr= z_corr,z_masks= z_masks,
+#                                                             dir_plot= str(dir_plots), dir_result= str(dir_results), sensors= sensors, time= time,
+#                                                             n_uavs= iter[2], f_s= iter[6],
+#                                                             ekf= iter[8], share= iter[10], delay_strategy= iter[12], delay= iter[14][0], sensor_masks= sensor_masks, pi= iter[16])
     
-    performance.append([iter[8], str(iter[9].__name__), accuracy, precision, computer_cost])
-    if iter[8] == True:
-        label = "Estimador Rotacional"
-    else:
-        label = "Estimador Linear"
-    data.append([euclidean, predicts, label, iter[9].__name__, state, time, x_obs])
+#     performance.append([iter[8], str(iter[9].__name__), accuracy, precision, computer_cost])
+#     if iter[8] == True:
+#         label = "Estimador Rotacional"
+#     else:
+#         label = "Estimador Linear"
+#     data.append([euclidean, predicts, label, iter[9].__name__, state, time, x_obs])
 
 
-for dina in dynamics_lst:   
-    sim_opt_compare.compare_plots(dir_compare_main, dina.__name__, data)
+# for dina in dynamics_lst:   
+#     sim_opt_compare.compare_plots(dir_compare_main, dina.__name__, data)
 
-column_values = [ 'EKF', 'Dynamics', 'accuracy', 'precision', 'Computer_Cost']
-dataframe = pd.DataFrame(performance, columns = column_values) 
-dataframe.to_excel(str(dir) + '/performance.xlsx')
+# column_values = [ 'EKF', 'Dynamics', 'accuracy', 'precision', 'Computer_Cost']
+# dataframe = pd.DataFrame(performance, columns = column_values) 
+# dataframe.to_excel(str(dir) + '/performance.xlsx')
 
 ##CENTRALIZED#######
 dir_main = os.path.join(sim_dir, 'centralized')
@@ -134,50 +135,50 @@ os.mkdir(dir_main)
 #######################
 
 
-f_s_lst = [5, 10]
+# f_s_lst = [5, 10]
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-dir = os.path.join(dir_main, 'share_frequency')
-os.mkdir(dir)
+# dir = os.path.join(dir_main, 'share_frequency')
+# os.mkdir(dir)
 
-dir_plots_main, dir_results_main, dir_data_main, dir_compare_main = directories_create(dir)
+# dir_plots_main, dir_results_main, dir_data_main, dir_compare_main = directories_create(dir)
 
-dir_plots = directories_create_dyn(dir_plots_main, last_dyn)
-dir_results = directories_create_dyn(dir_results_main, last_dyn)
-dir_data = directories_create_dyn(dir_data_main, last_dyn)
+# dir_plots = directories_create_dyn(dir_plots_main, last_dyn)
+# dir_results = directories_create_dyn(dir_results_main, last_dyn)
+# dir_data = directories_create_dyn(dir_data_main, last_dyn)
 
-data = []
-performance = []
+# data = []
+# performance = []
 
-freq_s_inter = iter_simulations.simulations(dynamic= [last_dyn], ekf= [True], n_uavs= [3], f_share= f_s_lst)
+# freq_s_inter = iter_simulations.simulations(dynamic= [last_dyn], ekf= [True], n_uavs= [3], f_share= f_s_lst)
 
-uav_4 = iter_simulations.simulations(dynamic= [last_dyn], ekf= [True], n_uavs= [5], f_share= [10])
+# uav_4 = iter_simulations.simulations(dynamic= [last_dyn], ekf= [True], n_uavs= [5], f_share= [10])
 
-freq_s_inter.append(uav_4[0])
+# freq_s_inter.append(uav_4[0])
 
 
-for iter in freq_s_inter:
-    print(tuple(iter))
-    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks, x_obs = sim_core.sim(state= dyn, dir= dir_data, printt= iter[0], sim_time= iter[1], n_uavs= iter[2], f_sim= iter[3], f_kf= iter[4], f_sample= iter[5], f_share= iter[6], SENSOR_MEAN= iter[7][0], SENSOR_STD= iter[7][1], EKF= iter[8], SHARE_ON= iter[10], OUT_OF_ORDER= iter[11], DELAY_STRATEGY= iter[12], delay_d= iter[13], DELAY_MEAN= iter[14][0], DELAY_STD= iter[14][1], AUG= iter[15], PI= iter[16], CENTR= iter[17], Ring_on= iter[18]) 
-    accuracy, precision, euclidean, desvio_medio = sim_opt_plot.sim_plot(state= state, predicts= predicts, predict_masks= predict_masks,
-                                                            col_write= col_write, x= x, y= y, z_obs= z_obs, z_corr= z_corr,z_masks= z_masks,
-                                                            dir_plot= str(dir_plots), dir_result= str(dir_results), sensors= sensors, time= time,
-                                                            n_uavs= iter[2], f_s= iter[6],
-                                                            ekf= iter[8], share= iter[10], delay_strategy= iter[12], delay= iter[14][0], sensor_masks= sensor_masks, pi= iter[16])
+# for iter in freq_s_inter:
+#     print(tuple(iter))
+#     state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks, x_obs = sim_core.sim(state= dyn, dir= dir_data, printt= iter[0], sim_time= iter[1], n_uavs= iter[2], f_sim= iter[3], f_kf= iter[4], f_sample= iter[5], f_share= iter[6], SENSOR_MEAN= iter[7][0], SENSOR_STD= iter[7][1], EKF= iter[8], SHARE_ON= iter[10], OUT_OF_ORDER= iter[11], DELAY_STRATEGY= iter[12], delay_d= iter[13], DELAY_MEAN= iter[14][0], DELAY_STD= iter[14][1], AUG= iter[15], PI= iter[16], CENTR= iter[17], Ring_on= iter[18]) 
+#     accuracy, precision, euclidean, desvio_medio = sim_opt_plot.sim_plot(state= state, predicts= predicts, predict_masks= predict_masks,
+#                                                             col_write= col_write, x= x, y= y, z_obs= z_obs, z_corr= z_corr,z_masks= z_masks,
+#                                                             dir_plot= str(dir_plots), dir_result= str(dir_results), sensors= sensors, time= time,
+#                                                             n_uavs= iter[2], f_s= iter[6],
+#                                                             ekf= iter[8], share= iter[10], delay_strategy= iter[12], delay= iter[14][0], sensor_masks= sensor_masks, pi= iter[16])
     
-    accuracy = np.mean(accuracy)
-    performance.append([iter[6], accuracy, precision, computer_cost])
-    data.append([euclidean, predicts, f"{iter[2]} UAVS {iter[6]} Hz", iter[9].__name__, state, time, x_obs, desvio_medio])
+#     accuracy = np.mean(accuracy)
+#     performance.append([iter[6], accuracy, precision, computer_cost])
+#     data.append([euclidean, predicts, f"{iter[2]} UAVS {iter[6]} Hz", iter[9].__name__, state, time, x_obs, desvio_medio])
 
-sim_opt_compare.compare_plots_multi(dir_compare_main, iter[9].__name__, data)
+# sim_opt_compare.compare_plots_multi(dir_compare_main, iter[9].__name__, data)
 
-column_values = [ 'Freq. Share', 'accuracy', 'precision', 'Computer_Cost']
-dataframe = pd.DataFrame(performance, columns = column_values) 
-dataframe.to_excel(str(dir) + '/performance.xlsx')
+# column_values = [ 'Freq. Share', 'accuracy', 'precision', 'Computer_Cost']
+# dataframe = pd.DataFrame(performance, columns = column_values) 
+# dataframe.to_excel(str(dir) + '/performance.xlsx')
 
 
 
@@ -186,7 +187,7 @@ dataframe.to_excel(str(dir) + '/performance.xlsx')
 #######################
 
 
-delay_lst = [(0.1, 0.01)  , (0.5, 0.02) , (1, 0.05)]
+delay_lst = [(0.05, 0.01)  , (0.1, 0.02)]
 delay_strategy_list = [None, 
                        "extrapolate",
                        "augmented_state"]
@@ -200,7 +201,7 @@ delay_strategy_list = [None,
 dir = os.path.join(dir_main, 'delay_ctc')
 os.mkdir(dir)
 
-
+last_dyn = target_dynamics.sin_path
 
 dir_plots_main, dir_results_main, dir_data_main, dir_compare_main = directories_create(dir)
 
@@ -216,22 +217,25 @@ for (mean, std) in delay_lst:
 
 
 
-delay_inter = iter_simulations.simulations(dynamic= [last_dyn], ekf= [True], n_uavs= [3], f_share= [10], delay= delay_lst, delay_strategy= delay_strategy_list, share= [True])
+delay_inter = iter_simulations.simulations(dynamic= [target_dynamics.sin_path], ekf= [True], n_uavs= [3], f_share= [10], delay= delay_lst, delay_strategy= delay_strategy_list, share= [True])
     
 for iter in delay_inter:
+    time = np.arange(0, iter[1], 1/iter[3])
+    dyn = check_target_ret(target_dynamics.sin_path, time)
+    last_dyn = dyn 
     print(tuple(iter))
-    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks = sim_core.sim(state= dyn, dir= dir_data, printt= iter[0], sim_time= iter[1], n_uavs= iter[2], f_sim= iter[3], f_kf= iter[4], f_sample= iter[5], f_share= iter[6], SENSOR_MEAN= iter[7][0], SENSOR_STD= iter[7][1], EKF= iter[8], SHARE_ON= iter[10], OUT_OF_ORDER= iter[11], DELAY_STRATEGY= iter[12], delay_d= iter[13], DELAY_MEAN= iter[14][0], DELAY_STD= iter[14][1], AUG= iter[15], PI= iter[16], CENTR= iter[17], Ring_on= iter[18]) 
-    accuracy, precision, euclidean = sim_opt_plot.sim_plot(state= state, predicts= predicts, predict_masks= predict_masks,
+    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks, x_obs  = sim_core.sim(state= dyn, dir= dir_data, printt= iter[0], sim_time= iter[1], n_uavs= iter[2], f_sim= iter[3], f_kf= iter[4], f_sample= iter[5], f_share= iter[6], SENSOR_MEAN= iter[7][0], SENSOR_STD= iter[7][1], EKF= iter[8], SHARE_ON= iter[10], OUT_OF_ORDER= iter[11], DELAY_STRATEGY= iter[12], delay_d= iter[13], DELAY_MEAN= iter[14][0], DELAY_STD= iter[14][1], AUG= iter[15], PI= iter[16], CENTR= iter[17], Ring_on= iter[18]) 
+    accuracy, precision, euclidean, desvio_medio = sim_opt_plot.sim_plot(state= state, predicts= predicts, predict_masks= predict_masks,
                                                             col_write= col_write, x= x, y= y, z_obs= z_obs, z_corr= z_corr,z_masks= z_masks,
                                                             dir_plot= str(dir_plots), dir_result= str(dir_results), sensors= sensors, time= time,
                                                             n_uavs= iter[2], f_s= iter[6],
                                                             ekf= iter[8], share= iter[10], delay_strategy= iter[12], delay= iter[14][0], sensor_masks= sensor_masks, pi= iter[16])
     
     performance.append([iter[12], iter[14][0],  str(iter[9].__name__), accuracy, precision, computer_cost])
-    data[iter[14][0]].append([euclidean, predicts, f"{iter[12]}"])
+    data[iter[14][0]].append([euclidean, predicts, f"{iter[12]}", iter[9].__name__, state, time, x_obs, desvio_medio])
 
 for ddd in data:
-    sim_opt_compare.compare_plots(dir_compare_main, last_dyn.__name__, data[ddd], f"delay{ddd}")
+    sim_opt_compare.compare_plots_multi(dir_compare_main, last_dyn.__name__, data[ddd], f"delay{ddd}")
 
 column_values = [ 'Delay_strategy', 'Delay_Mean', 'Dynamics', 'accuracy', 'precision', 'Computer_Cost']
 dataframe = pd.DataFrame(performance, columns = column_values) 
@@ -275,7 +279,7 @@ delay_d_inter = iter_simulations.simulations(dynamic= [last_dyn], ekf= [True], n
     
 for iter in delay_d_inter:
     print(tuple(iter))
-    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks = sim_core.sim(state= dyn, dir= dir_data, printt= iter[0], sim_time= iter[1], n_uavs= iter[2], f_sim= iter[3], f_kf= iter[4], f_sample= iter[5], f_share= iter[6], SENSOR_MEAN= iter[7][0], SENSOR_STD= iter[7][1], EKF= iter[8], SHARE_ON= iter[10], OUT_OF_ORDER= iter[11], DELAY_STRATEGY= iter[12], delay_d= iter[13], DELAY_MEAN= iter[14][0], DELAY_STD= iter[14][1], AUG= iter[15], PI= iter[16], CENTR= iter[17], Ring_on= iter[18]) 
+    state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks, delays_matrix = sim_core.sim(state= dyn, dir= dir_data, printt= iter[0], sim_time= iter[1], n_uavs= iter[2], f_sim= iter[3], f_kf= iter[4], f_sample= iter[5], f_share= iter[6], SENSOR_MEAN= iter[7][0], SENSOR_STD= iter[7][1], EKF= iter[8], SHARE_ON= iter[10], OUT_OF_ORDER= iter[11], DELAY_STRATEGY= iter[12], delay_d= iter[13], DELAY_MEAN= iter[14][0], DELAY_STD= iter[14][1], AUG= iter[15], PI= iter[16], CENTR= iter[17], Ring_on= iter[18]) 
     accuracy, precision, euclidean = sim_opt_plot.sim_plot(state= state, predicts= predicts, predict_masks= predict_masks,
                                                             col_write= col_write, x= x, y= y, z_obs= z_obs, z_corr= z_corr,z_masks= z_masks,
                                                             dir_plot= str(dir_plots), dir_result= str(dir_results), sensors= sensors, time= time,
@@ -283,7 +287,7 @@ for iter in delay_d_inter:
                                                             ekf= iter[8], share= iter[10], delay_strategy= iter[12], delay= iter[14][0], sensor_masks= sensor_masks, pi= iter[16])
     
     performance.append([iter[12], iter[14][0],  str(iter[9].__name__), accuracy, precision, computer_cost])
-    data[iter[14][0]].append([euclidean, predicts, f"{iter[12]}"])
+    data[iter[14][0]].append([euclidean, predicts, f"{iter[12]}", iter[9].__name__, state, time, x_obs, desvio_medio delays_matrix])
 
 for ddd in data:
     sim_opt_compare.compare_plots(dir_compare_main, last_dyn.__name__, data[ddd], f"delay{ddd}")
