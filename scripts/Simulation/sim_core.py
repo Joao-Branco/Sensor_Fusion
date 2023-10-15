@@ -117,9 +117,10 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
 
 
     if (delay_d == True):
-        distance_matrix = calculate_distance_between_vertices(n_uavs, 200, ring= ring, ring_on= Ring_on)
+        distance_matrix = calculate_distance_between_vertices(n_uavs, 100, ring= ring, ring_on= Ring_on)
     else:
         distance_matrix = np.ones((n_uavs, n_uavs))
+        np.fill_diagonal(distance_matrix, 0)
 
     t_start = pytime.time()
     counter = 0
@@ -136,7 +137,10 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
                 # add this message to every other uav queue
                     for uav_j in range(n_uavs):
 
-                        delay = np.random.normal(DELAY_MEAN * distance_matrix[uav_i, uav_j], DELAY_STD)
+                        if (uav_i != uav_j):
+                            delay = np.random.normal(DELAY_MEAN * distance_matrix[uav_i, uav_j], DELAY_STD)
+                        else:
+                            delay = 0
 
                         # is we don't want out of order messages, recompute delay
                         while not OUT_OF_ORDER and t+delay < q_ts[uav_i][uav_j]:
@@ -147,7 +151,8 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
 
                         # update last share time for this uav
                         q_ts[uav_i][uav_j] = t + delay
-                        q_ts_check[uav_i][uav_j].append(delay)
+                        if (uav_i != uav_j):
+                            q_ts_check[uav_i][uav_j].append(delay)
                     t_share[uav_i] = t
 
                 l_d = []
@@ -272,10 +277,18 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
 
     stats_delay = [[[] for _ in range(n_uavs)] for _ in range(n_uavs)]
 
+    
+    delays_uav = []
+
+    for d in q_ts_check:
+        for ext in d:
+            delays_uav.extend(ext)
+
+
     for uav_i in range(n_uavs):
         for uav_j in range(n_uavs):
             stats_delay[uav_i][uav_j].append(np.mean(q_ts_check[uav_i][uav_j]))
             stats_delay[uav_i][uav_j].append(np.std(q_ts_check[uav_i][uav_j]))
     
 
-    return state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks, x_obs
+    return state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks, x_obs, delays_uav

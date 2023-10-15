@@ -18,7 +18,7 @@ conditions.append(lambda iteration: not (iteration[16] < 1 and iteration[17] is 
 conditions.append(lambda iteration: not (iteration[2] == 1 and iteration[10] is True)) # WHEN ONLY 1 UAV SHARE IS FALSE
 conditions.append(lambda iteration: not (iteration[12] == 'augmented_state' and not (
                                          iteration[15] >= math.floor(iteration[14][0] / (1 / iteration[4])) + math.floor(iteration[14][1] / (1 / iteration[4]))
-                                         and iteration[15] - (math.floor(iteration[14][0] / (1 / iteration[4])) + math.floor(iteration[14][1] / (1 / iteration[4]))) <= 1))) # WHEN NUMBER OF AUG SMALL TO CORRECT THE DELAY AND WHEN ITS TOO BIG TO CORRECT THE DELAY
+                                         and iteration[15] - (math.floor(iteration[14][0] / (1 / iteration[4])) + math.floor(iteration[14][1] / (1 / iteration[4]))) == 0))) # WHEN NUMBER OF AUG SMALL TO CORRECT THE DELAY AND WHEN ITS TOO BIG TO CORRECT THE DELAY
 #ONLY ONE OPTION OF AUG FOR EACH SET OF DELAY
 conditions.append(lambda iteration: not (iteration[6] == 0 and iteration[10] is True)) # WHEN share freq equals 0 and share on
 conditions.append(lambda iteration: not (iteration[6] > 0 and iteration[10] is False)) # WHEN share freq exists but doenst share on
