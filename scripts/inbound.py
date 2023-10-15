@@ -91,7 +91,7 @@ class Fusion:
         state.psi = 0
         state.timestamp = rospy.Time.now()
 
-        #rospy.loginfo('Kalman ' + str(self.uav_id) + '---------Prediction was made')
+        rospy.loginfo('Turn Rate---------%f ', self.kf.kf.x[4])
         return state
         
 
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     pub_estimation = rospy.Publisher('target_position', TargetTelemetry, queue_size=1)
     
     
-    f = 5
+    f = 20
     
     #frequency of the Kalman filter
     

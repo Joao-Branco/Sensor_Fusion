@@ -1,2 +1,4 @@
 sims/
 numerical_sims/
+scripts/__pycache__/
+scripts/Simulation/__pycache__/
