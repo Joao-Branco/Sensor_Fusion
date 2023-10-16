@@ -35,7 +35,7 @@ def simulations(printt = [False], sim_time = [60],  n_uavs = [1], f_sim = [200],
         if ('augmented_state' in delay_strategy):
                 AUG = [0]
                 for (dm, ds) in delay:
-                        AUG.append(math.floor(dm / (1 / f_kf[0])) + math.floor(ds / (1 / f_kf[0])))
+                        AUG.append(math.floor(dm / (1 / f_kf[0])) + 2 * math.floor(ds / (1 / f_kf[0])))
 
         for f in f_share:
                 if (f > 0 and True not in share):

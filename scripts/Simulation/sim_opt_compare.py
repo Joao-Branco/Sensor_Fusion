@@ -140,7 +140,7 @@ def compare_plots_multi(dir, dynamics_name, data, delay = None):
             axs[0].plot(obs[0,:], mean_residual, label=i[2])
             axs[1].plot(i[1][0][0, :], i[0], label=i[2])
             axs[2].plot(i[1][0][0, :], i[7], label=i[2])
-            list_performance.append([i[2], np.mean(mean_residual), np.std(mean_residual), np.max(mean_residual), np.min(mean_residual)])
+            list_performance.append([i[2], np.mean(mean_residual), np.std(mean_residual), np.max(mean_residual), np.min(mean_residual), np.mean(i[7]), np.std(i[7]), np.max(i[7]), np.min(i[7])])
 
     axs[2].set_xlabel('Tempo (s)', fontsize=20, fontweight='bold')
     axs[2].set_ylabel('Desvio Médio (m)', fontsize=15, fontweight='bold')
@@ -160,7 +160,7 @@ def compare_plots_multi(dir, dynamics_name, data, delay = None):
     plt.savefig(plot_jpg)
 
     plt.close()
-    performance = pd.DataFrame(list_performance, columns= ['Estimador', 'Mean', 'Std', 'Max', 'Min'])
+    performance = pd.DataFrame(list_performance, columns= ['Estimador', 'Mean_res', 'Std_res', 'Max_res', 'Min_res', 'Mean_des', 'Std_des', 'Max_des', 'Min_des'])
     csv_residual = f'{dynamics_name}_{delay}_residual_.xlsx'
     csv_residual = os.path.join(dir, csv_residual) if dir else csv_residual
     performance.to_excel(csv_residual)
@@ -243,30 +243,36 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
             performance.to_excel(csv_residual)
                 
 
-    fig, axs = plt.subplots(2, figsize=(12, 8))
+    list_performance = []
+    fig, axs = plt.subplots(2, figsize=(12, 8))  
     for i in data:
-       
-        # Calculate the residuals
-        if (i[3] == dynamics_name):
-            axs[0].plot(i[1][0][0, :], i[0], label=i[2])
-            axs[1].plot(i[1][0][0, :], i[7], label=i[2])
+        if i[3] == dynamics_name:
+            axs[2].plot(i[1][0][0, :], i[0], label=i[2])
+            axs[1].plot(i[1][0][0, :], i[7], label=i[2]) 
+            list_performance.append([i[2], np.mean(i[7]), np.std(i[7]), np.max(i[7]), np.min(i[7])])
 
-    axs[1].set_ylabel('Desvio Médio (m)', fontsize=15, fontweight='bold')
     axs[1].set_xlabel('Tempo (s)', fontsize=20, fontweight='bold')
-    axs[1].grid()       
+    axs[1].set_ylabel('Desvio Médio (m)', fontsize=15, fontweight='bold')
+    axs[1].grid()
     axs[0].set_ylabel('Distância Euclideana (m)', fontsize=15, fontweight='bold')
     axs[0].grid()
-    
+
     handles, labels = axs[0].get_legend_handles_labels()
 
     fig.legend(handles, labels, loc='upper right', fontsize=20)
 
-    plot_jpg = f'{dynamics_name}_{delay}_errors_' +   '.png'
+    plot_jpg = f'{dynamics_name}_{delay}_errors_' + '.png'
 
     plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
     plt.savefig(plot_jpg)
 
     plt.close()
+    performance = pd.DataFrame(list_performance, columns=['Estimador', 'Mean_des', 'Std_des', 'Max_des', 'Min_des'])
+    csv_residual = f'{dynamics_name}_{delay}_performance.xlsx'
+    csv_residual = os.path.join(dir, csv_residual) if dir else csv_residual
+    performance.to_excel(csv_residual)
+
+    
 
 
 
