@@ -5,6 +5,7 @@ import pandas as pd
 import os.path
 from pathlib import Path
 import matplotlib as mpl
+import math
 
 def compare_plots(dir, dynamics_name, data, delay = None):
 
@@ -122,15 +123,28 @@ def compare_plots_multi(dir, dynamics_name, data, delay = None):
 
 
     list_performance = []
-    fig, axs = plt.subplots(2, figsize=(12, 8))
+    fig, axs = plt.subplots(3, figsize=(12, 8))
     for i in data:
+        position_residual = []
+        for j, obs in enumerate(i[6]):
+            obs = np.transpose(np.array(obs))
+            interpolated_predicted_values_x = np.interp(obs[0,:], i[1][j][0, :], i[1][j][1,:])
+            interpolated_predicted_values_y = np.interp(obs[0,:], i[1][j][0, :], i[1][j][2,:])
+
+            position_residual.append(np.sqrt((obs[1,:] - interpolated_predicted_values_x) ** 2 + (obs[2,:] - interpolated_predicted_values_y) ** 2))
+        position_residual = np.array(position_residual)
+        mean_residual = np.mean(position_residual, axis=0)
 
         # Calculate the residuals
         if (i[3] == dynamics_name):
+            axs[0].plot(obs[0,:], mean_residual, label=i[2])
             axs[1].plot(i[1][0][0, :], i[0], label=i[2])
             axs[2].plot(i[1][0][0, :], i[7], label=i[2])
+            list_performance.append([i[2], np.mean(mean_residual), np.std(mean_residual), np.max(mean_residual), np.min(mean_residual)])
 
-    axs[1].set_xlabel('Tempo (s)', fontsize=20, fontweight='bold')      
+    axs[2].set_xlabel('Tempo (s)', fontsize=20, fontweight='bold')
+    axs[2].set_ylabel('Desvio Médio (m)', fontsize=15, fontweight='bold')
+    axs[2].grid()       
     axs[1].set_ylabel('Distância Euclideana (m)', fontsize=15, fontweight='bold')
     axs[1].grid()
     axs[0].set_ylabel('VRMP (m)', fontsize=15, fontweight='bold')
@@ -146,6 +160,10 @@ def compare_plots_multi(dir, dynamics_name, data, delay = None):
     plt.savefig(plot_jpg)
 
     plt.close()
+    performance = pd.DataFrame(list_performance, columns= ['Estimador', 'Mean', 'Std', 'Max', 'Min'])
+    csv_residual = f'{dynamics_name}_{delay}_residual_.xlsx'
+    csv_residual = os.path.join(dir, csv_residual) if dir else csv_residual
+    performance.to_excel(csv_residual)
 
 
 
@@ -188,7 +206,7 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
 
     for i in data:
         plt.figure(figsize=(9, 5))
-        n_bins = 30
+        n_bins = 40
         n, bins, patches = plt.hist(i[8], bins= n_bins, density=True)
         mu = i[9][0]
         sigma = i[9][1]
@@ -206,6 +224,49 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
         plt.savefig(plot_jpg)
 
         plt.close()
+
+
+        if (i[2] == "Estado Aumentado"):
+
+            aug = math.floor(mu / (1 / 20)) + math.floor(sigma / (1 / 20))
+            count = 0
+            for dela in i[8]:
+                st = math.floor(dela / (1/20))
+                if st > aug:
+                    count +=1
+            
+            print(count)
+
+            performance = pd.DataFrame([count], columns= ['Elementos desprezados'])
+            csv_residual = f'{dynamics_name}_{delay}_{i[2]}_aug_desprezados_.xlsx'
+            csv_residual = os.path.join(dir, csv_residual) if dir else csv_residual
+            performance.to_excel(csv_residual)
+                
+
+    fig, axs = plt.subplots(2, figsize=(12, 8))
+    for i in data:
+       
+        # Calculate the residuals
+        if (i[3] == dynamics_name):
+            axs[0].plot(i[1][0][0, :], i[0], label=i[2])
+            axs[1].plot(i[1][0][0, :], i[7], label=i[2])
+
+    axs[1].set_ylabel('Desvio Médio (m)', fontsize=15, fontweight='bold')
+    axs[1].set_xlabel('Tempo (s)', fontsize=20, fontweight='bold')
+    axs[1].grid()       
+    axs[0].set_ylabel('Distância Euclideana (m)', fontsize=15, fontweight='bold')
+    axs[0].grid()
+    
+    handles, labels = axs[0].get_legend_handles_labels()
+
+    fig.legend(handles, labels, loc='upper right', fontsize=20)
+
+    plot_jpg = f'{dynamics_name}_{delay}_errors_' +   '.png'
+
+    plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
+    plt.savefig(plot_jpg)
+
+    plt.close()
 
 
 
