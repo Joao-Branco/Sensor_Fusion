@@ -5,6 +5,14 @@ import pandas as pd
 import os.path
 from pathlib import Path
 import matplotlib as mpl
+import matplotlib
+matplotlib.use("pgf")
+matplotlib.rcParams.update({
+    "pgf.texsystem": "pdflatex",
+    'font.family': 'serif',
+    'text.usetex': True,
+    'pgf.rcfonts': False,
+})
 
 def circular_difference(angle1, angle2):
     signed_difference = angle2 - angle1
@@ -14,6 +22,8 @@ def circular_difference(angle1, angle2):
 
 def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, share, dir_plot, dir_result, sensors, time, f_s, pi = 1):
 
+    mpl.rcParams['text.usetex'] = True
+    
     parts = dir_plot.split('/')
     dinamics = parts[-1]
     exp = '/_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + 'freq_share_' + str(f_s) + 'pi_' + str(pi)+ 'n_uavs_' + str(n_uavs)
@@ -95,7 +105,7 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
 
     dist_uavs = np.array(dist_uavs)   
 
-    plt.figure(figsize=(9, 5))
+    plt.figure(figsize=(9, 6))
 
     plt.rcParams['axes.prop_cycle'] = plt.cycler('color', plt.cm.tab20.colors)
     
@@ -107,24 +117,29 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
             plt.plot(sensor_x, sensor_y, 'o', markersize=1, label='Observações')
         else:
             plt.plot(x_[:col_write], y_[:col_write], '+', markersize=3, label='UAV ' + str(i + 1))
-            plt.plot(sensor_x, sensor_y, 'o', markersize=1, label='Observações' + str(i + 1))
+            plt.plot(sensor_x, sensor_y, 'o', markersize=1, label='Observações ' + str(i + 1))
     plt.plot(x,y, 'k:',linewidth='1', label="Alvo")
     if (x[0] != x[-1]):
         plt.plot(x[0],y[0], 'og', markersize=10)
         plt.plot(x[-1],y[-1], 'or', markersize=10)
     else:
-        plt.plot(x[0],y[0], 'ok', markersize=15)
+        plt.plot(x[0],y[0], 'ok', markersize=17)
 
     plt.xlabel('X (m)', fontsize=20, fontweight='bold')
     plt.ylabel('Y (m)', fontsize=20, fontweight='bold')
+
+    # Access the axis object for the entire figure
+    fig_ax = plt.gca()
+
+    plt.tick_params(axis='both', labelsize=15)
     if (n_uavs > 0):
-        plt.legend(fontsize=10)
+        plt.legend(fontsize=15)
     else:
         plt.legend(fontsize=15)
     plt.grid()
 
 
-    plot_jpg = 'Dinamica_alvo_' + dinamics + '_share_' + str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '_n_uavs_' + str(n_uavs) + '_f_s_' + str(f_s) +  '.png'
+    plot_jpg = 'Dinamica_alvo_' + dinamics + '_share_' + str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '_n_uavs_' + str(n_uavs) + '_f_s_' + str(f_s) +  '.pgf'
     
     plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
     plt.savefig(plot_jpg)
