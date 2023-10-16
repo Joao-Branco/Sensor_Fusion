@@ -91,7 +91,7 @@ class Fusion:
         state.psi = 0
         state.timestamp = rospy.Time.now()
 
-        rospy.loginfo('Turn Rate---------%f ', self.kf.kf.x[4])
+        #rospy.loginfo('Turn Rate---------%f ', self.kf.kf.x[4])
         return state
         
 
