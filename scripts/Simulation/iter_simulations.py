@@ -17,8 +17,8 @@ conditions.append(lambda iteration: not (iteration[15] > 0 and iteration[12] != 
 conditions.append(lambda iteration: not (iteration[16] < 1 and iteration[17] is True)) # WHEN PI  IS NOT 1 IT IS ALWAYS DISTRIBUTED
 conditions.append(lambda iteration: not (iteration[2] == 1 and iteration[10] is True)) # WHEN ONLY 1 UAV SHARE IS FALSE
 conditions.append(lambda iteration: not (iteration[12] == 'augmented_state' and not (
-                                         iteration[15] >= math.floor(iteration[14][0] / (1 / iteration[4])) + math.floor(iteration[14][1] / (1 / iteration[4]))
-                                         and iteration[15] - (math.floor(iteration[14][0] / (1 / iteration[4])) + math.floor(iteration[14][1] / (1 / iteration[4]))) == 0))) # WHEN NUMBER OF AUG SMALL TO CORRECT THE DELAY AND WHEN ITS TOO BIG TO CORRECT THE DELAY
+                                         iteration[15] >= math.ceil(iteration[14][0] / (1 / iteration[4])) + math.ceil(iteration[14][1] / (1 / iteration[4]))
+                                         and iteration[15] - (math.ceil(iteration[14][0] / (1 / iteration[4])) + math.ceil(iteration[14][1] / (1 / iteration[4]))) == 0))) # WHEN NUMBER OF AUG SMALL TO CORRECT THE DELAY AND WHEN ITS TOO BIG TO CORRECT THE DELAY
 #ONLY ONE OPTION OF AUG FOR EACH SET OF DELAY
 conditions.append(lambda iteration: not (iteration[6] == 0 and iteration[10] is True)) # WHEN share freq equals 0 and share on
 conditions.append(lambda iteration: not (iteration[6] > 0 and iteration[10] is False)) # WHEN share freq exists but doenst share on
@@ -35,7 +35,7 @@ def simulations(printt = [False], sim_time = [60],  n_uavs = [1], f_sim = [200],
         if ('augmented_state' in delay_strategy):
                 AUG = [0]
                 for (dm, ds) in delay:
-                        AUG.append(math.floor(dm / (1 / f_kf[0])) + 2 * math.floor(ds / (1 / f_kf[0])))
+                        AUG.append(math.ceil(dm / (1 / f_kf[0])) + math.ceil(ds / (1 / f_kf[0])))
 
         for f in f_share:
                 if (f > 0 and True not in share):

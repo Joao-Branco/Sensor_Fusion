@@ -4,6 +4,7 @@ from pathlib import Path
 import sim_opt_kalman
 import sim_printing
 import os
+from itertools import chain
 
 def calculate_distance_between_vertices(n, r, ring, ring_on = True):
     # Calculate the central angle between each pair of vertices
@@ -109,6 +110,7 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
     q = [[] for _ in range(n_uavs)]
     q_ts = [[0 for _ in range(n_uavs)] for _ in range(n_uavs)] # last share times for i uav in j
     q_ts_check = [[[] for _ in range(n_uavs)] for _ in range(n_uavs)] # check
+    delays_print = [[] for _ in range(n_uavs)] # check delays
     z_obs = [[]  for _ in range(n_uavs)] # z received
     z_corr = [[]  for _ in range(n_uavs)] # z with correction of delay 
     z_masks = [[]  for _ in range(n_uavs)]
@@ -153,6 +155,7 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
                         q_ts[uav_i][uav_j] = t + delay
                         if (uav_i != uav_j):
                             q_ts_check[uav_i][uav_j].append(delay)
+                            delays_print[uav_i].append(delay)
                     t_share[uav_i] = t
 
                 l_d = []
@@ -278,11 +281,10 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
     stats_delay = [[[] for _ in range(n_uavs)] for _ in range(n_uavs)]
 
     
-    delays_uav = []
 
-    for d in q_ts_check:
-        for ext in d:
-            delays_uav.extend(ext)
+            
+        
+
 
 
     for uav_i in range(n_uavs):
@@ -291,4 +293,4 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
             stats_delay[uav_i][uav_j].append(np.std(q_ts_check[uav_i][uav_j]))
     
 
-    return state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks, x_obs, delays_uav
+    return state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks, x_obs, delays_print

@@ -232,12 +232,14 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
     for i in data:
         plt.figure(figsize=(9, 6))
         n_bins = 40
-        n, bins, patches = plt.hist(i[8], bins= n_bins, density=True)
+        n, bins, patches = plt.hist(i[8], bins= n_bins, density=False, label= ['UAV 1', 'UAV 2', 'UAV 3'])
         mu = i[9][0]
         sigma = i[9][1]
         y = ((1 / (np.sqrt(2 * np.pi) * sigma)) *
         np.exp(-0.5 * (1 / sigma * (bins - mu))**2))
-        plt.plot(bins, y, '--')
+        plt.plot(bins, y, 'k--')
+        if (i[2] == "Estado Aumentado"):
+            plt.axvline(i[10], color='red', label = 'Valor Limite')
         plt.xlabel('Atrasos (s)', fontsize=30)
         plt.ylabel('Densidade de probabilidade', fontsize=20)
         plt.legend(fontsize=15)
@@ -249,17 +251,25 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
         plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
         plt.savefig(plot_jpg)
 
+        plot_jpg = f'{dynamics_name}_{delay}_{i[2]}_densidade_' +   '.png'
+
+        plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
+        plt.savefig(plot_jpg)
+
         plt.close()
 
 
         if (i[2] == "Estado Aumentado"):
 
-            aug = math.floor(mu / (1 / 20)) + math.floor(sigma / (1 / 20))
+            aug = i[10]
+            mesurments_missed = [0, 0, 0]
             count = 0
             for dela in i[8]:
-                st = math.floor(dela / (1/20))
-                if st > aug:
-                    count +=1
+                for d in dela:
+                    st = math.floor(d / (1/20))
+                    if st > aug:
+                        count +=1
+            
             
             print(count)
 
