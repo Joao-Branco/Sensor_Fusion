@@ -21,7 +21,7 @@ def compare_plots(dir, dynamics_name, data, delay = None):
 
     indices_by_name = {}
 
-    for target_name in  ['stoped_path', 'linear_path', 'sin_path', 'circular_path']:
+    for target_name in  ['linear_path', 'sin_path']:
         indices = [index for index, inner_list in enumerate(data) if inner_list[3] == target_name]
         indices_by_name[target_name] = indices
 
@@ -40,18 +40,18 @@ def compare_plots(dir, dynamics_name, data, delay = None):
                 else:
                     # Skip one color in Tab10 colormap
                     tab10_index = (tab10_index + 1) % 10  # Skip the next color
-            axs[st].plot(data[index][5], data[index][4][st+2], 'k:', label='Alvo')
-            axs[st].set_ylabel(label_st[st][1], fontsize=25, fontweight='bold')
+            axs[st].plot(data[index][5], data[index][4][st+2], 'k:', linewidth='4', label='Alvo')
+            axs[st].set_ylabel(label_st[st][1], fontsize=35, fontweight='bold')
             #axs[st].set_title(label_st[st][0], fontsize=25)
             axs[st].grid()
-            axs[st].tick_params(axis='both', labelsize=17)
+            axs[st].tick_params(axis='both', labelsize=20)
                            
 
         #plot_jpg = f'Estado{label_st[st][0]}_{x}_{delay}' +  '.png'
         plot_jpg = f'{x}_{delay}_states' +  '.pgf'
-        axs[2].set_xlabel('Tempo (s)', fontsize=25 , fontweight='bold')
+        axs[2].set_xlabel('Tempo (s)', fontsize=30 , fontweight='bold')
         handles, labels = axs[0].get_legend_handles_labels()
-        fig.legend(handles, labels, loc='upper right', fontsize=20)
+        fig.legend(handles, labels, loc='upper right', fontsize=25)
     
         plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
         plt.savefig(plot_jpg)
@@ -76,18 +76,18 @@ def compare_plots(dir, dynamics_name, data, delay = None):
             axs[1].plot(i[1][0][0, :], i[0], label=i[2])
             list_performance.append([i[2], np.mean(position_residual), np.std(position_residual), np.max(position_residual), np.min(position_residual)])
             
-    axs[1].set_xlabel('Tempo (s)', fontsize=20, fontweight='bold')
+    axs[1].set_xlabel('Tempo (s)', fontsize=30, fontweight='bold')
     axs[1].set_ylabel('Erro de Posição (m)', fontsize=20, fontweight='bold')
     axs[1].grid()
     axs[0].set_ylabel('Valor Residual de Posição (m)', fontsize=20, fontweight='bold')
     axs[0].grid()
-    axs[0].tick_params(axis='both', labelsize=17)
-    axs[1].tick_params(axis='both', labelsize=17)
+    axs[0].tick_params(axis='both', labelsize=20)
+    axs[1].tick_params(axis='both', labelsize=20)
     
     handles, labels = axs[0].get_legend_handles_labels()
     
 
-    fig.legend(handles, labels, loc='upper right', fontsize=20)
+    fig.legend(handles, labels, loc='upper right', fontsize=25)
 
     plot_jpg = f'{dynamics_name}_{delay}_errors_' +   '.pgf'
 
@@ -116,18 +116,18 @@ def compare_plots_multi(dir, dynamics_name, data, delay = None):
                 estimative_mean.append(j[st+3, :])
             axs[st].plot(i[1][0][0, :], np.mean(estimative_mean, axis=0), label=i[2], color=color)
             tab10_index += 1
-        axs[st].plot(i[5], i[4][st+2], 'k:', label='Alvo')
-        axs[st].set_ylabel(label_st[st][1], fontsize=25, fontweight='bold')
+        axs[st].plot(i[5], i[4][st+2], 'k:', linewidth='4', label='Alvo')
+        axs[st].set_ylabel(label_st[st][1], fontsize=35, fontweight='bold')
         #axs[st].set_title(label_st[st][0], fontsize=25)
         axs[st].grid()
-        axs[st].tick_params(axis='both', labelsize=17)
+        axs[st].tick_params(axis='both', labelsize=20)
 
 
     #plot_jpg = f'Estado{label_st[st][0]}_{x}_{delay}' +  '.png'
     plot_jpg = f'{dynamics_name}_{delay}_states' +  '.pgf'
-    axs[2].set_xlabel('Tempo (s)', fontsize=25 , fontweight='bold')
+    axs[2].set_xlabel('Tempo (s)', fontsize=30 , fontweight='bold')
     handles, labels = axs[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper right', fontsize=20)
+    fig.legend(handles, labels, loc='upper right', fontsize=25)
 
     plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
     plt.savefig(plot_jpg)
@@ -161,21 +161,21 @@ def compare_plots_multi(dir, dynamics_name, data, delay = None):
             axs[2].plot(i[1][0][0, :], i[7], label=i[2])
             list_performance.append([i[2], np.mean(mean_residual), np.std(mean_residual), np.max(mean_residual), np.min(mean_residual), np.mean(i[7]), np.std(i[7]), np.max(i[7]), np.min(i[7])])
 
-    axs[2].set_xlabel('Tempo (s)', fontsize=20, fontweight='bold')
-    axs[2].set_ylabel('DMP (m)', fontsize=20, fontweight='bold')
+    axs[2].set_xlabel('Tempo (s)', fontsize=30, fontweight='bold')
+    axs[2].set_ylabel('DMP (m)', fontsize=30, fontweight='bold')
     axs[2].grid()       
-    axs[1].set_ylabel('EPM (m)', fontsize=20, fontweight='bold')
+    axs[1].set_ylabel('EPM (m)', fontsize=30, fontweight='bold')
     axs[1].grid()
-    axs[0].set_ylabel('VRMP (m)', fontsize=20, fontweight='bold')
+    axs[0].set_ylabel('VRMP (m)', fontsize=30, fontweight='bold')
     axs[0].grid()
-    axs[0].tick_params(axis='both', labelsize=17)
-    axs[1].tick_params(axis='both', labelsize=17)
-    axs[2].tick_params(axis='both', labelsize=17)
+    axs[0].tick_params(axis='both', labelsize=20)
+    axs[1].tick_params(axis='both', labelsize=20)
+    axs[2].tick_params(axis='both', labelsize=20)
     
     
     handles, labels = axs[0].get_legend_handles_labels()
 
-    fig.legend(handles, labels, loc='upper right', fontsize=20)
+    fig.legend(handles, labels, loc='upper right', fontsize=25)
 
     plot_jpg = f'{dynamics_name}_{delay}_errors_' +   '.pgf'
 
@@ -206,16 +206,16 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
             axs[st].plot(i[1][0][0, :], np.mean(estimative_mean, axis=0), label=i[2], color=color)
             tab10_index += 1
         axs[st].plot(i[5], i[4][st+2], 'k:', label='Alvo')
-        axs[st].set_ylabel(label_st[st][1], fontsize=25, fontweight='bold')
+        axs[st].set_ylabel(label_st[st][1], fontsize=30, fontweight='bold')
         #axs[st].set_title(label_st[st][0], fontsize=25)
         axs[st].grid()
-        axs[st].tick_params(axis='both', labelsize=17)
+        axs[st].tick_params(axis='both', labelsize=20)
 
     #plot_jpg = f'Estado{label_st[st][0]}_{x}_{delay}' +  '.png'
     plot_jpg = f'{dynamics_name}_{delay}_states' +  '.pgf'
-    axs[2].set_xlabel('Tempo (s)', fontsize=25 , fontweight='bold')
+    axs[2].set_xlabel('Tempo (s)', fontsize=30 , fontweight='bold')
     handles, labels = axs[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper right', fontsize=20)
+    fig.legend(handles, labels, loc='upper right', fontsize=25)
 
     plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
     plt.savefig(plot_jpg)
@@ -238,11 +238,11 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
         y = ((1 / (np.sqrt(2 * np.pi) * sigma)) *
         np.exp(-0.5 * (1 / sigma * (bins - mu))**2))
         plt.plot(bins, y, '--')
-        plt.xlabel('Atrasos (s)', fontsize=15)
-        plt.ylabel('Densidade de probabilidade', fontsize=15)
-        plt.legend(fontsize=10)
+        plt.xlabel('Atrasos (s)', fontsize=30)
+        plt.ylabel('Densidade de probabilidade', fontsize=20)
+        plt.legend(fontsize=15)
         plt.grid()
-        plt.tick_params(axis='both', labelsize=17)
+        plt.tick_params(axis='both', labelsize=20)
 
         plot_jpg = f'{dynamics_name}_{delay}_{i[2]}_densidade_' +   '.pgf'
 
@@ -277,17 +277,17 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
             axs[1].plot(i[1][0][0, :], i[7], label=i[2]) 
             list_performance.append([i[2], np.mean(i[7]), np.std(i[7]), np.max(i[7]), np.min(i[7])])
 
-    axs[1].set_xlabel('Tempo (s)', fontsize=20, fontweight='bold')
-    axs[1].set_ylabel('DMP (m)', fontsize=20, fontweight='bold')
+    axs[1].set_xlabel('Tempo (s)', fontsize=30, fontweight='bold')
+    axs[1].set_ylabel('DMP (m)', fontsize=30, fontweight='bold')
     axs[1].grid()
-    axs[0].set_ylabel('EPM (m)', fontsize=20, fontweight='bold')
+    axs[0].set_ylabel('EPM (m)', fontsize=30, fontweight='bold')
     axs[0].grid()
-    axs[0].tick_params(axis='both', labelsize=17)
-    axs[1].tick_params(axis='both', labelsize=17)
+    axs[0].tick_params(axis='both', labelsize=20)
+    axs[1].tick_params(axis='both', labelsize=20)
 
     handles, labels = axs[0].get_legend_handles_labels()
 
-    fig.legend(handles, labels, loc='upper right', fontsize=20)
+    fig.legend(handles, labels, loc='upper right', fontsize=25)
 
     plot_jpg = f'{dynamics_name}_{delay}_errors_' + '.pgf'
 

@@ -105,7 +105,7 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
 
     dist_uavs = np.array(dist_uavs)   
 
-    plt.figure(figsize=(9, 6))
+    plt.figure(figsize=(10, 6))
 
     plt.rcParams['axes.prop_cycle'] = plt.cycler('color', plt.cm.tab20.colors)
     
@@ -118,7 +118,7 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
         else:
             plt.plot(x_[:col_write], y_[:col_write], '+', markersize=3, label='UAV ' + str(i + 1))
             plt.plot(sensor_x, sensor_y, 'o', markersize=1, label='Observações ' + str(i + 1))
-    plt.plot(x,y, 'k:',linewidth='1', label="Alvo")
+    plt.plot(x,y, 'k:',linewidth='2', label="Alvo")
     if (x[0] != x[-1]):
         plt.plot(x[0],y[0], 'og', markersize=10)
         plt.plot(x[-1],y[-1], 'or', markersize=10)
@@ -132,14 +132,21 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
     fig_ax = plt.gca()
 
     plt.tick_params(axis='both', labelsize=15)
-    if (n_uavs > 0):
+    if ( n_uavs == 1):
         plt.legend(fontsize=15)
     else:
-        plt.legend(fontsize=15)
+        plt.legend(fontsize=12)
+
     plt.grid()
 
 
     plot_jpg = 'Dinamica_alvo_' + dinamics + '_share_' + str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '_n_uavs_' + str(n_uavs) + '_f_s_' + str(f_s) +  '.pgf'
+    
+    plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
+    plt.savefig(plot_jpg)
+
+
+    plot_jpg = 'Dinamica_alvo_' + dinamics + '_share_' + str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '_n_uavs_' + str(n_uavs) + '_f_s_' + str(f_s) +  '.png'
     
     plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
     plt.savefig(plot_jpg)
