@@ -193,8 +193,7 @@ last_dyn = target_dynamics.sin_path
 #######################
 
 
-delay_lst = [(0.1, 0.005), (0.5, 0.025), (1.25, 0.1)]
-delay_lst = [(0.1, 0.005)]
+delay_lst = [(0.1, 0.005), (0.5, 0.025), (1.25, 0.1), (1.75, 0.2)]
 delay_strategy_list = [None, 
                        "extrapolate",
                        "augmented_state"]
@@ -225,7 +224,7 @@ for (mean, std) in delay_lst:
 
 
 
-delay_inter = iter_simulations.simulations(dynamic= [target_dynamics.sin_path], ekf= [True], n_uavs= [3], f_share= [10], delay= delay_lst, delay_strategy= delay_strategy_list, share= [True])
+delay_inter = iter_simulations.simulations(dynamic= [target_dynamics.sin_path], ekf= [True], n_uavs= [3], f_share= [15], delay= delay_lst, delay_strategy= delay_strategy_list, share= [True])
     
 for iter in delay_inter:
     time = np.arange(0, iter[1], 1/iter[3])
@@ -247,7 +246,7 @@ for iter in delay_inter:
         label = "Extrapolação"
     else:   
         label = "Estado Aumentado"
-    data[iter[14][0]].append([euclidean, predicts, label, iter[9].__name__, state, time, x_obs, desvio_medio, delay_matrix, iter[14], iter[15]/iter[4]])
+    data[iter[14][0]].append([euclidean, predicts, label, iter[9].__name__, state, time, x_obs, desvio_medio, delay_matrix, iter[14], iter[15]/iter[4], z_obs, z_corr, z_masks])
 
 for ddd in data:
     sim_opt_compare.compare_plots_multi_delay(dir_compare_main, iter[9].__name__, data[ddd], f"delay{ddd}")

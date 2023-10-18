@@ -262,28 +262,50 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
         if (i[2] == "Estado Aumentado"):
 
             aug = i[10]
-            mesurments_missed = [0, 0, 0]
-            count = 0
-            for dela in i[8]:
+            counter_list = []
+            for uav_dela , dela in enumerate(i[8]):
+                counter_list.append([f'UAV {uav_dela}', 0, 0])
                 for d in dela:
-                    st = math.floor(d / (1/20))
-                    if st > aug:
-                        count +=1
+                    if d > aug:
+                        counter_list[uav_dela][1] += 1 
+                    
+                    counter_list[uav_dela][2] += 1 
             
             
-            print(count)
 
-            performance = pd.DataFrame([count], columns= ['Elementos desprezados'])
+            performance = pd.DataFrame(counter_list, columns= ['UAV' ,'Elementos desprezados', 'Total de elementos'])
             csv_residual = f'{dynamics_name}_{delay}_{i[2]}_aug_desprezados_.xlsx'
             csv_residual = os.path.join(dir, csv_residual) if dir else csv_residual
             performance.to_excel(csv_residual)
+
+        if (i[2] == "Extrapolação"):
+
+            state = i[4]
+            counter_corr = []
+            uav_corr = 0
+            for z_obs, z_corr, z_masks in zip(i[11], i[12], i[13]):
+
+                counter_corr.append([f'UAV {uav_corr}', 0, z_masks.shape[0]])
+                for enu, tt in enumerate(z_masks):
+                    d_obs = np.sqrt((state[0][tt] - z_obs[0][enu]) ** 2 + (state[1][tt] - z_obs[1][enu]) ** 2 )
+                    d_corr = np.sqrt((state[0][tt] - z_corr[0][enu]) ** 2 + (state[1][tt] - z_corr[1][enu]) ** 2)
+
+                    if(d_corr < d_obs):
+                        counter_corr[uav_corr][1] += 1 
+                uav_corr += 1
+
+            performance = pd.DataFrame(counter_corr, columns= ['UAV' ,'Elementos corrigidos', 'total'])
+            csv_residual = f'{dynamics_name}_{delay}_{i[2]}_extra_corrigidos_.xlsx'
+            csv_residual = os.path.join(dir, csv_residual) if dir else csv_residual
+            performance.to_excel(csv_residual)
+            
                 
 
     list_performance = []
     fig, axs = plt.subplots(2, figsize=(13, 9))  
     for i in data:
         if i[3] == dynamics_name:
-            axs[2].plot(i[1][0][0, :], i[0], label=i[2])
+            axs[0].plot(i[1][0][0, :], i[0], label=i[2])
             axs[1].plot(i[1][0][0, :], i[7], label=i[2]) 
             list_performance.append([i[2], np.mean(i[7]), np.std(i[7]), np.max(i[7]), np.min(i[7])])
 
