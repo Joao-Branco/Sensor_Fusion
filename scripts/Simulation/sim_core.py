@@ -5,6 +5,7 @@ import sim_opt_kalman
 import sim_printing
 import os
 from itertools import chain
+import random
 
 def calculate_distance_between_vertices(n, r, ring, ring_on = True):
     # Calculate the central angle between each pair of vertices
@@ -69,7 +70,7 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
     sensors = [gen_sensor_data(x,y, SENSOR_MEAN = SENSOR_MEAN, SENSOR_STD= SENSOR_STD, PHASE= 2 * np.pi * i / n_uavs, time= time) for i in range(n_uavs) ]
 
     state, kfs, x0 = sim_opt_kalman.Kalman_sim(n_uavs= n_uavs, EKF= EKF, f_kf= f_kf, x= x, y= y, vx= vx, vy= vy, ww= ww, delay_strategy= DELAY_STRATEGY, aug= AUG, pi= PI, centr= CENTR)
-    dir = os.path.join(dir, f"EKF_{EKF}share_{SHARE_ON}_freq_share_{f_share}_strategy_{DELAY_STRATEGY}_delay_{DELAY_MEAN}_pi_{PI}_nuavs{n_uavs}")
+    dir = os.path.join(dir, f"EKF_{EKF}share_{SHARE_ON}_freq_share_{f_share}_strategy_{DELAY_STRATEGY}_delay_{DELAY_MEAN}_pi_{PI}_nuavs{n_uavs}_sensor_{f_sample}")
     os.mkdir(dir)
     for uav_i in range(n_uavs):
         dir_uav = os.path.join(dir, f'uav_{uav_i}')
@@ -147,6 +148,7 @@ def sim(dir : Path, state : np, DELAY_STRATEGY : str = None, EKF : bool = True, 
                         # is we don't want out of order messages, recompute delay
                         while not OUT_OF_ORDER and t+delay < q_ts[uav_i][uav_j]:
                             delay = np.random.normal(DELAY_MEAN * distance_matrix[uav_i, uav_j], DELAY_STD)
+
 
                         q[uav_j].append((t + delay, t, np.array([[x_], [y_]]) , uav_i))
 

@@ -52,6 +52,7 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug, pi, cen
         qw = 1e-10 ** 2
 
 
+
         q = np.array([[qv, 0, 0],
                         [0, qv, 0],
                         [0, 0, qw]])
@@ -67,6 +68,8 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug, pi, cen
         G = np.transpose(G)
 
         qv = 0.03322 ** 2
+
+        
             
         q = np.array([[qv, 0],
                         [0, qv]])
@@ -85,12 +88,14 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug, pi, cen
                                 [0, 0, 2.3496e-1, 0, 0],
                                 [0, 0, 0, 2.3496e-1, 0],
                                 [0, 0, 0, 0, 6.08288e-2]])
+
         
     else:
         P = np.array([          [1.027, 0, 0, 0],
                                 [0, 1.027, 0, 0],
                                 [0, 0, 2.85133, 0],
                                 [0, 0, 0, 2.85133]])
+
     
     # R ----Measurement Noise
 
@@ -106,6 +111,9 @@ def Kalman_sim(n_uavs, EKF, f_kf, x, y, vx, vy, ww, delay_strategy, aug, pi, cen
                             [state[2,0]],
                             [state[3,0]],
                             [state[4,0]]])
+                        
+        
+
 
     else:
 

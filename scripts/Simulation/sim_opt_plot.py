@@ -20,13 +20,13 @@ def circular_difference(angle1, angle2):
     return normalized_difference
 
 
-def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, share, dir_plot, dir_result, sensors, time, f_s, pi = 1):
+def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_uavs : int, col_write, x, y,  z_obs, z_corr, z_masks, delay, delay_strategy, ekf, share, dir_plot, dir_result, sensors, time, f_s, f_sensor, pi = 1):
 
     mpl.rcParams['text.usetex'] = True
     
     parts = dir_plot.split('/')
     dinamics = parts[-1]
-    exp = '/_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + 'freq_share_' + str(f_s) + 'pi_' + str(pi)+ 'n_uavs_' + str(n_uavs)
+    exp = '/_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + 'freq_share_' + str(f_s) + 'pi_' + str(pi)+ 'n_uavs_' + str(n_uavs) + '_f_sensor_' + str(f_sensor)
     dir_plots = Path(dir_plot + exp)
     dir_plots.mkdir()
     dir_results = Path(dir_result + exp)
@@ -140,13 +140,13 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
     plt.grid()
 
 
-    plot_jpg = 'Dinamica_alvo_' + dinamics + '_share_' + str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '_n_uavs_' + str(n_uavs) + '_f_s_' + str(f_s) +  '.pgf'
+    plot_jpg = 'Dinamica_alvo_' + dinamics + '_share_' + str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '_n_uavs_' + str(n_uavs) + '_f_s_' + str(f_s) + '_f_sensor_' + str(f_sensor)  +  '.pgf'
     
     plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
     plt.savefig(plot_jpg)
 
 
-    plot_jpg = 'Dinamica_alvo_' + dinamics + '_share_' + str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '_n_uavs_' + str(n_uavs) + '_f_s_' + str(f_s) +  '.png'
+    plot_jpg = 'Dinamica_alvo_' + dinamics + '_share_' + str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '_n_uavs_' + str(n_uavs) + '_f_s_' + str(f_s)+ '_f_sensor_' + str(f_sensor) +  '.png'
     
     plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
     plt.savefig(plot_jpg)
