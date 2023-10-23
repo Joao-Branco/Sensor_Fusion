@@ -204,32 +204,32 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
     plt.rcParams['axes.prop_cycle'] = plt.cycler('color', plt.cm.tab10.colors)
     label_st = [['X', "$\dot{x}$ (m/s)"], ['Y', "$\dot{y}$ (m/s)"], ['W', "$\dot{\psi}$ (rad/s)"]]
 
-    fig, axs = plt.subplots(3, figsize=(13, 9))
-    for st in range(3):
-        tab10_index = 0 
-        for i in data:
-            color = plt.cm.tab10(tab10_index)
-            estimative_mean = []
-            for j in i[1]:
-                estimative_mean.append(j[st+3, :])
-            axs[st].plot(i[1][0][0, :], np.mean(estimative_mean, axis=0), label=i[2], color=color)
-            tab10_index += 1
-            axs[st].plot(i[5], i[4][st+2], 'k:', label='Alvo')
-        axs[st].set_ylabel(label_st[st][1], fontsize=30, fontweight='bold')
-        #axs[st].set_title(label_st[st][0], fontsize=25)
-        axs[st].grid()
-        axs[st].tick_params(axis='both', labelsize=20)
+    # fig, axs = plt.subplots(3, figsize=(13, 9))
+    # for st in range(3):
+    #     tab10_index = 0 
+    #     for i in data:
+    #         color = plt.cm.tab10(tab10_index)
+    #         estimative_mean = []
+    #         for j in i[1]:
+    #             estimative_mean.append(j[st+3, :])
+    #         axs[st].plot(i[1][0][0, :], np.mean(estimative_mean, axis=0), label=i[2], color=color)
+    #         tab10_index += 1
+    #         axs[st].plot(i[5], i[4][st+2], 'k:', label='Alvo')
+    #     axs[st].set_ylabel(label_st[st][1], fontsize=30, fontweight='bold')
+    #     axs[st].set_title(label_st[st][0], fontsize=25)
+    #     axs[st].grid()
+    #     axs[st].tick_params(axis='both', labelsize=20)
 
-    #plot_jpg = f'Estado{label_st[st][0]}_{x}_{delay}' +  '.png'
-    plot_jpg = f'{dynamics_name}_{delay}_states' +  '.pgf'
-    axs[2].set_xlabel('Tempo (s)', fontsize=30 , fontweight='bold')
-    handles, labels = axs[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper right', fontsize=25)
+    # plot_jpg = f'Estado{label_st[st][0]}_{}_{delay}' +  '.png'
+    # plot_jpg = f'{dynamics_name}_{delay}_states' +  '.pgf'
+    # axs[2].set_xlabel('Tempo (s)', fontsize=30 , fontweight='bold')
+    # handles, labels = axs[0].get_legend_handles_labels()
+    # fig.legend(handles, labels, loc='upper right', fontsize=25)
 
-    plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
-    plt.savefig(plot_jpg)
+    # plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
+    # plt.savefig(plot_jpg)
 
-    plt.close()
+    # plt.close()
 
 
     mpl.rcParams['text.usetex'] = True
@@ -247,7 +247,7 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
         y = ((1 / (np.sqrt(2 * np.pi) * sigma)) *
         np.exp(-0.5 * (1 / sigma * (bins - mu))**2))
         plt.plot(bins, y, 'k--')
-        if (i[12] == "augmented_state"):
+        if (i[14] == "augmented_state"):
             plt.axvline(i[10], color='red', label = 'Valor Limite')
         plt.xlabel('Atrasos (s)', fontsize=25)
         plt.ylabel('Densidade de probabilidade', fontsize=20)
@@ -258,12 +258,12 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
         plot_jpg = f'{dynamics_name}_{delay}_{i[2]}_densidade_' +   '.pgf'
 
         plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
-       #plt.savefig(plot_jpg)
+        plt.savefig(plot_jpg)
 
         plot_jpg = f'{dynamics_name}_{delay}_{i[2]}_densidade_' +   '.png'
 
         plot_jpg = os.path.join(dir, plot_jpg) if dir else plot_jpg
-        #plt.savefig(plot_jpg)
+        plt.savefig(plot_jpg)
 
         plt.close()
 
@@ -285,7 +285,7 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
             performance = pd.DataFrame(counter_list, columns= ['UAV' ,'Elementos desprezados', 'Total de elementos'])
             csv_residual = f'{dynamics_name}_{delay}_{i[2]}_aug_desprezados_.xlsx'
             csv_residual = os.path.join(dir, csv_residual) if dir else csv_residual
-            #performance.to_excel(csv_residual)
+            performance.to_excel(csv_residual)
 
         if (i[14] == "extrapolate"):
 
@@ -306,7 +306,7 @@ def compare_plots_multi_delay(dir, dynamics_name, data, delay = None):
             performance = pd.DataFrame(counter_corr, columns= ['UAV' ,'Elementos corrigidos', 'total'])
             csv_residual = f'{dynamics_name}_{delay}_{i[2]}_extra_corrigidos_.xlsx'
             csv_residual = os.path.join(dir, csv_residual) if dir else csv_residual
-            #performance.to_excel(csv_residual)
+            performance.to_excel(csv_residual)
             
                 
 

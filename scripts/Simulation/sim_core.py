@@ -47,6 +47,10 @@ def gen_sensor_data(x, y, SENSOR_MEAN, SENSOR_STD, PHASE, time):
     y_noise = y + 6.27 * np.sin(0.01 * 2 * np.pi * time + 0.29 + PHASE) + 0.3
 
     return [x_noise + np.random.normal(SENSOR_MEAN, SENSOR_STD + 0.26, size=time.size) , y_noise + np.random.normal(SENSOR_MEAN, SENSOR_STD - 0.38, size=time.size)]
+    
+    return [x +  np.random.normal(SENSOR_MEAN, SENSOR_STD, size=time.size) , y + np.random.normal(SENSOR_MEAN, SENSOR_STD, size=time.size)]
+
+
 
 def kalman_steps(uav, l_d, dir, printt, counter):
     if (printt == True):

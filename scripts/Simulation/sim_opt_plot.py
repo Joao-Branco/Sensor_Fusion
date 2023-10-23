@@ -6,6 +6,7 @@ import os.path
 from pathlib import Path
 import matplotlib as mpl
 import matplotlib
+import scipy
 matplotlib.use("pgf")
 matplotlib.rcParams.update({
     "pgf.texsystem": "pdflatex",
@@ -154,15 +155,20 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
     plt.close()
 
 
-    plt.figure(figsize=(6, 6))
-    
+    plt.figure(figsize=(9, 7))
+    plt.rcParams['axes.prop_cycle'] = plt.cycler('color', plt.cm.tab10.colors)
+    x_noise_all = []
+
     for i in range(n_uavs):
-        plt.plot(t_noise[i], x_noise[i], 'o', markersize=0.5, label='UAV_obs' + str(i + 1))
+        plt.plot(t_noise[i], x_noise[i], 'o', markersize=0.5, label='Observações' + str(i + 1))
+        x_noise_all.extend(x_noise[i])
+
     plt.title("Posição", fontsize=20)
     plt.xlabel('t (s)', fontsize=15)
     plt.ylabel('X (m)', fontsize=15)
     plt.legend(fontsize=10)
     plt.grid()
+
 
 
     plot_jpg = 'Observations_x_alvo_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) +  '.png'
@@ -172,16 +178,18 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
 
     plt.close()
 
-    plt.figure(figsize=(6, 6))
-    
+    plt.figure(figsize=(9, 7))
+    y_noise_all = []
     for i in range(n_uavs):
-        y_noise[i]
-        plt.plot(t_noise[i], y_noise[i], 'o', markersize=0.5, label='UAV_obs' + str(i + 1))
+        y_noise_all.extend(y_noise[i])
+        plt.plot(t_noise[i], y_noise[i], 'o', markersize=0.5, label='Observações ' + str(i + 1))
     plt.title("Posição", fontsize=20)
     plt.xlabel('t (s)', fontsize=15)
     plt.ylabel('Y (m)', fontsize=15)
     plt.legend(fontsize=10)
     plt.grid()
+
+
 
 
     plot_jpg = 'Observations_y_alvo_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) +  '.png'
@@ -366,5 +374,59 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
     performance = pd.DataFrame([np.mean(euclidean), np.mean(dist_uavs), np.std(euclidean), np.max(euclidean), np.min(euclidean)], index = ['Accuracy', 'Precision', 'Std', 'Max', 'Min'])
 
     performance.to_excel( str(dir_results) + '/performance_share_'+ str(share) + '_ekf_' + str(ekf)+ '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '.xlsx')
+
+
+
+    # z_sum =[]
+    # for z_uav in z_obs:
+    #     z = []
+    #     t = []
+    #     for z_time in z_uav:
+    #         z.append(z_time[0])
+    #         t.append(z_time[1])
+            
+    #     z_array = np.array(z)
+    #     zz = z_array.reshape(len(z_array), 2)
+    #     z_sum.append(zz)
+
+    # z_print = np.sum(z_sum, axis=0)
+    # plt.figure(figsize=(6, 6))
+    # plt.rcParams['axes.prop_cycle'] = plt.cycler('color', plt.cm.tab10.colors)
+    
+    # plt.plot(t, z_print[:,0],'o', markersize=0.5, label='X')
+    # plt.plot(t, z_print[:,1],'o', markersize=0.5, label='Y')
+    # plt.xlabel('t (s)', fontsize=15)
+    # plt.ylabel('Bias (m)', fontsize=15)
+    # plt.legend(fontsize=10)
+    # plt.grid()
+
+
+    # plot_jpg = 'Bias_alvo_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) +  '.png'
+    
+    # plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
+    # plt.savefig(plot_jpg)
+
+    # plt.close()
+
+    anderson_x = scipy.stats.anderson(x_noise_all, dist='norm')
+    anderson_y = scipy.stats.anderson(y_noise_all, dist='norm')
+    performance = pd.DataFrame([np.mean(x_noise_all), np.mean(y_noise_all), np.std(x_noise_all), np.std(y_noise_all)], index = ['Mean X', 'Mean Y', 'Std X', 'Std Y'])
+
+
+
+    performance.to_excel( str(dir_results) + '/bias_share_'+ str(share) + '_ekf_' + str(ekf)+ '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) + '.xlsx')
+
+
+    with open(str(dir_results) + '/anderson.txt', 'w') as f:
+        print(anderson_x, file= f)
+        print('###################\n\n\n\n\n\n', file = f)
+        print('Y', file = f)
+        print(anderson_y, file= f)
+
+
+
+
+
+
 
     return np.mean(euclidean), np.mean(dist_uavs), euclidean, np.mean(dist_uavs, axis=0)
