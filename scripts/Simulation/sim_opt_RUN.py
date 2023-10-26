@@ -7,6 +7,9 @@ import matplotlib.font_manager as fm
 import pandas as pd
 import numpy as np
 import os
+import cProfile
+import pstats
+import io
 
 
 
@@ -229,28 +232,44 @@ for (mean, std) in delay_lst:
 
 
 
-delay_inter_10 = iter_simulations.simulations(dynamic= [target_dynamics.sin_path], ekf= [True], n_uavs= [3], f_share= [10], delay= delay_lst, delay_strategy= delay_strategy_list, share= [True], f_sample=[10])
-#delay_inter_5 = iter_simulations.simulations(dynamic= [target_dynamics.sin_path], ekf= [True], n_uavs= [3], f_share= [5, 1], delay= delay_lst, delay_strategy= delay_strategy_list, share= [True], f_sample=[5])
+#delay_inter_10 = iter_simulations.simulations(dynamic= [target_dynamics.sin_path], ekf= [True], n_uavs= [3], f_share= [10], delay= delay_lst, delay_strategy= delay_strategy_list, share= [True], f_sample=[10])
+delay_inter_5 = iter_simulations.simulations(dynamic= [target_dynamics.sin_path], ekf= [True], n_uavs= [3], f_share= [5], delay= delay_lst, delay_strategy= delay_strategy_list, share= [True], f_sample=[10])
 #delay_inter_1 = iter_simulations.simulations(dynamic= [target_dynamics.sin_path], ekf= [True], n_uavs= [3], f_share= [1], delay= delay_lst, delay_strategy= delay_strategy_list, share= [True], f_sample=[1])
 
 
-for iter in delay_inter_10:
+
+for iter in delay_inter_5:
+    pr = cProfile.Profile()
     time = np.arange(0, iter[1], 1/iter[3])
     dyn = check_target_ret(target_dynamics.sin_path, time)
     last_dyn = dyn 
     print(tuple(iter))
+    pr.enable()
     state, predicts, predict_masks, z_obs, z_corr, z_masks, col_write, x, y, computer_cost, sensors, time, sensor_masks, x_obs, delay_matrix  = sim_core.sim(state= dyn, dir= dir_data, printt= iter[0], sim_time= iter[1], n_uavs= iter[2], f_sim= iter[3], f_kf= iter[4], f_sample= iter[5], f_share= iter[6], SENSOR_MEAN= iter[7][0], SENSOR_STD= iter[7][1], EKF= iter[8], SHARE_ON= iter[10], OUT_OF_ORDER= iter[11], DELAY_STRATEGY= iter[12], delay_d= iter[13], DELAY_MEAN= iter[14][0], DELAY_STD= iter[14][1], AUG= iter[15], PI= iter[16], CENTR= iter[17], Ring_on= iter[18]) 
+    pr.disable()
     accuracy, precision, euclidean, desvio_medio = sim_opt_plot.sim_plot(state= state, predicts= predicts, predict_masks= predict_masks,
                                                             col_write= col_write, x= x, y= y, z_obs= z_obs, z_corr= z_corr,z_masks= z_masks,
                                                             dir_plot= str(dir_plots), dir_result= str(dir_results), sensors= sensors, time= time,
                                                             n_uavs= iter[2], f_s= iter[6],
                                                             ekf= iter[8], share= iter[10], delay_strategy= iter[12], delay= iter[14][0], sensor_masks= sensor_masks, pi= iter[16], f_sensor= iter[5])
     
+    print(tuple(iter))
+    pr.print_stats()
 
-    
-    performance.append([iter[12], iter[14][0],  str(iter[9].__name__), accuracy, precision, computer_cost])
+    # # Load the profiling statistics file
+    # stats = pstats.Stats(str(dir_results) + f"/{iter}_prof.txt")
 
 
+    # # Extract the data you want from the Stats object
+    # data_prof = []
+    # for func_name, (ncalls, tottime, cumtime, percall, cumpercall) in stats.stats.items():
+    #     data_prof.append([func_name, ncalls, tottime, cumtime, percall, cumpercall])
+
+    # # Create a DataFrame from the extracted data
+    # df = pd.DataFrame(data_prof, columns=['Function', 'Calls', 'TotalTime', 'CumTime', 'PerCall', 'CumPerCall'])
+
+    # # Save profiling results to an Excel file
+    # df.to_excel(str(dir_results) + f"/{iter}profile_results.xlsx", sheet_name='Profile Results', index=False)
 
     if iter[12] == None:
         label = f"Sem correção"# {iter[5]}/{iter[6]} Hz"

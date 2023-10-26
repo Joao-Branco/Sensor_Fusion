@@ -160,7 +160,7 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
     x_noise_all = []
 
     for i in range(n_uavs):
-        plt.plot(t_noise[i], x_noise[i], 'o', markersize=0.5, label='Observações' + str(i + 1))
+        plt.plot(t_noise[i], x_noise[i], 'o', markersize=0.5, label='Observações ' + str(i + 1))
         x_noise_all.extend(x_noise[i])
 
     plt.title("Posição", fontsize=20)
@@ -176,13 +176,18 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
     plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
     plt.savefig(plot_jpg)
 
+    plot_jpg = 'Observations_x_alvo_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) +  '.pgf'
+    
+    plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
+    plt.savefig(plot_jpg)
+
     plt.close()
 
     plt.figure(figsize=(9, 7))
     y_noise_all = []
     for i in range(n_uavs):
         y_noise_all.extend(y_noise[i])
-        plt.plot(t_noise[i], y_noise[i], 'o', markersize=0.5, label='Observações ' + str(i + 1))
+        plt.plot(t_noise[i], y_noise[i], 'o', markersize=0.5, label='UAV ' + str(i + 1))
     plt.title("Posição", fontsize=20)
     plt.xlabel('t (s)', fontsize=15)
     plt.ylabel('Y (m)', fontsize=15)
@@ -193,6 +198,10 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
 
 
     plot_jpg = 'Observations_y_alvo_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) +  '.png'
+    
+    plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
+    plt.savefig(plot_jpg)
+    plot_jpg = 'Observations_y_alvo_share_'+ str(share) + '_ekf_' + str(ekf) + '_strategy_' + str(delay_strategy) + '_mean_' + str(delay) +  '.pgf'
     
     plot_jpg = os.path.join(dir_plots, plot_jpg) if dir_plots else plot_jpg
     plt.savefig(plot_jpg)
@@ -407,7 +416,9 @@ def sim_plot(sensor_masks, state : np, predicts : list, predict_masks : list, n_
     # plt.savefig(plot_jpg)
 
     # plt.close()
-
+    # plt.figure()
+    # plt.hist(x_noise_all, bins= 100)
+    # plt.show()
     anderson_x = scipy.stats.anderson(x_noise_all, dist='norm')
     anderson_y = scipy.stats.anderson(y_noise_all, dist='norm')
     performance = pd.DataFrame([np.mean(x_noise_all), np.mean(y_noise_all), np.std(x_noise_all), np.std(y_noise_all)], index = ['Mean X', 'Mean Y', 'Std X', 'Std Y'])
