@@ -66,15 +66,17 @@ class Fusion:
             
         for i in range(uav_total):
             if (i != uav_id):
-                rospy.Subscriber('/uav' + str(i) + '/target_position_geolocation', TargetTelemetry, self.target_callback_fuse)
+                rospy.Subscriber('/uav' + str(i) + '/target_position_geolocation', TargetTelemetry, self.target_callback_fuse, callback_args=i)
+ 
+
                 
 
             
 
 
-        self.kf = kf( H = H, H_fuse = H_fuse , Q = Q , R = R, x0= x0, dt = dt, aug= 3, P= P)
+        self.kf = kf( H = H, H_fuse = H_fuse , Q = Q , R = R, x0= x0, dt = dt, aug= 0, P= P)
         
-        self.kf = dkf(kf= self.kf, delay_strategy= 'augmented_state', centr= False)
+        self.kf = dkf(kf= self.kf, delay_strategy= 'extrapolate', centr= True)
 
         
     def predict(self):
@@ -102,11 +104,11 @@ class Fusion:
 
 
 
-    def target_callback_fuse(self, msg):
-        measurment = np.array([[msg.x_pos], [msg.y_pos], [msg.vx], [msg.vy], [msg.omega]])
-        t_now = rospy.Time.now().to_nsec() * 1e-9
-        t_z = msg.timestamp.to_nsec() * 1e-9
-        self.kf.update_fuse(z= measurment, t_now= t_now, t_z= t_z)
+    def target_callback_fuse(self, msg, uav_id):
+        measurment = np.array([[msg.x_pos], [msg.y_pos]])
+        t_now = float(rospy.Time.now().to_nsec() * 1e-9)
+        t_z = float(msg.timestamp.to_nsec() * 1e-9)
+        self.kf.update_fuse(z= measurment, t_now= t_now, t_z= t_z, uav_i= uav_id)
         
 
 

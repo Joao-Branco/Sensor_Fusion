@@ -8,9 +8,9 @@
         <param name = "uav_id" value = "$(arg ID)"/>
     </node>
 
-    <node pkg="topic_tools" type="throttle" name="throttle_$(arg ID)" required="True" output="screen" 
-    args= "messages /uav$(arg ID)/target_position_geolocation 5 /uav$(arg ID)/target_position_throttle">   
-    </node>
+    <!-- <node pkg="topic_tools" type="throttle" name="throttle_$(arg ID)" required="True" output="screen" 
+    args= "messages /uav$(arg ID)/target_position_geolocation 20 /uav$(arg ID)/target_position_throttle">   
+    </node> -->
 
 
 </launch>

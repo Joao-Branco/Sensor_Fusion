@@ -2,6 +2,8 @@
 <launch>
 
     <param name="total_uav" value="2"/>
+    <param name="delay_mean" value="0.0001"/>
+    <param name="delay_std" value="0.00000001"/>
 
     <node pkg="sensor_fusion" type="target.py" name="target" required="True" output="screen">
 	</node>

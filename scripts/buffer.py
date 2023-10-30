@@ -9,13 +9,16 @@ from std_msgs.msg import Float64
 
 
 class Throttle:
-    def __init__(self, uav_id):
+    def __init__(self, uav_id, uav_total):
         self.id = uav_id
-        self.buffer = []
+        self.buffers = [list() for i in range(uav_total)]
         self.sub_throttle = rospy.Subscriber('/uav' + str(uav_id) + '/target_position_throttle', TargetTelemetry, self.target_callback_throttle)
 
     def target_callback_throttle(self, msg):
-        self.buffer.append(msg)
+        for i, buf in enumerate(self.buffers):
+            if i == self.id:
+                continue
+            buf.append(msg)
         
 
 class Positions:
@@ -26,7 +29,7 @@ class Positions:
 
     def position_callback(self, msg):
         print(msg)
-        self.UAVDistance.update_distance(uav_index= self.id, x= msg.Pose.Point.x, y= msg.Pose.Point.x)
+        self.UAVDistance.update_distance(uav_index= self.id, x= msg.Pose.Point.x, y= msg.Pose.Point.y)
         self.UAVDistance.update_delay_matrix()
 
         print(self.UAVDistance.get_distance_matrix())
@@ -86,7 +89,7 @@ if __name__ == "__main__":
     d = UAVDistanceMatrix(num_uavs= uav_total, delay_constant= mean)
     for i in range(uav_total):
         pub_fuse.append(rospy.Publisher('/uav' + str(i) + '/target_position_geolocation', TargetTelemetry, queue_size=10))
-        sub_throttle.append(Throttle(i))
+        sub_throttle.append(Throttle(i, uav_total))
         sub_position.append(Positions(uav_id= i, UAVDistance= d))
         pub_delay.append(rospy.Publisher('/uav' + str(i) + '/delay', Float64, queue_size=10))
 
@@ -97,19 +100,32 @@ if __name__ == "__main__":
 
 
     while not rospy.is_shutdown():
+        # for each source UAV
         for i in range(uav_total):
-            if len(sub_throttle[i].buffer) > 0:
-                for j in range(uav_total):
+            # for each destination UAV
+            # check the outbound buffer for all other UAVs
+            for j in range(uav_total):
+                if i == j: # don't add delay to self
+                    continue
+
+                # check outbound buffer from uav i to uav j
+                if len(sub_throttle[i].buffers[j]) > 0:
+                    # is it time to send the first message?
                     mean_delay = d.get_delay_matrix()
-                    delay = np.random.normal(mean_delay[i,j],std) 
-                    timestamp = sub_throttle[i].buffer[0].timestamp.to_nsec() * 1e-9
-                    time_now = rospy.Time.now().to_nsec() * 1e-9
+                    delay = -1
+                    while delay < 0:
+                        delay = np.random.normal(mean_delay[i,j],std) 
+                        print(sub_throttle[i].buffers[0])
+                        timestamp = sub_throttle[i].buffers[0].timestamp.to_nsec() * 1e-9
+                        time_now = rospy.Time.now().to_nsec() * 1e-9
             
                     if time_now - timestamp >= delay and delay > 0:
+                        out_msg = sub_throttle[i].buffers[j].pop(0)
                         pub_delay[j].publish(delay)
                         #rospy.loginfo("\n\n\nBuffer delay %f  ------ timestamp  %f", delay , timestamp)
-                        pub_fuse[j].publish(sub_throttle[i].buffer[0])
-                sub_throttle[i].buffer.pop(0)
+                        pub_fuse[j].publish(out_msg)
+                        
+
         
         rospy.sleep(0)
 

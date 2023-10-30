@@ -285,7 +285,11 @@ class DelayKalmanFilter:
             if(self.last_msgs.get(uav_i) != None):
                 last_z, last_t_z = self.last_msgs[uav_i] # last predict made by other UAV
                 self.delay_est = t_now - t_z # delay present in the predict received
-                z_corrected = z + (z - last_z) / (t_z - last_t_z) * self.delay_est # extrapolation of all the state vector to the actual time
+                dt = float(t_z - last_t_z)
+                if (dt != 0):
+                    z_corrected = z + (z - last_z) / dt * self.delay_est # extrapolation of all the state vector to the actual time
+                else:
+                    z_corrected = z
                 self.last_z_share = z_corrected
                 self.last_z_obs = z
             else:
