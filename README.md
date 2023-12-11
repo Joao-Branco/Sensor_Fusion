@@ -8,6 +8,6 @@ The python scripts to run the numerical simulations are in [Simulation Folder](h
 
 ## ROS Scripts
 
-The python scripts to run the ROS nodes are in Folder [Scripts Folder](https://github.com/Joao-Branco/Off_boardpy/tree/main/scripts)
+The python scripts to run the ROS nodes are in [Scripts Folder](https://github.com/Joao-Branco/Off_boardpy/tree/main/scripts)
 
 
